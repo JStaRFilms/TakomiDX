@@ -1,12 +1,12 @@
-# TakomiUX Orchestrator Master Plan
+# TakomiDX Orchestrator Master Plan
 
 **Session:** `orch-20260307-030731`  
 **Mode:** `takomi / mode-orchestrator`  
-**Source Spec:** `docs/features/TakomiUX_Agent_Workspace_Platform_Spec.md`
+**Source Spec:** `docs/features/TakomiDX_Agent_Workspace_Platform_Spec.md`
 
 ## Objective
 
-Turn the TakomiUX platform spec into an execution-ready build plan with clean task boundaries, explicit dependencies, and zero filler.
+Turn the TakomiDX platform spec into an execution-ready build plan with clean task boundaries, explicit dependencies, and zero filler.
 
 ## Current State
 
@@ -35,8 +35,8 @@ This is greenfield implementation planning.
 | `avoid-feature-creep` | `C:/Users/johno/.agents/skills/avoid-feature-creep/SKILL.md` | MVP discipline |
 | `monorepo-management` | `C:/Users/johno/.agents/skills/monorepo-management/SKILL.md` | Clean repo and package boundaries |
 | `nextjs-standards` | `C:/Users/johno/.agents/skills/nextjs-standards/SKILL.md` | Mission Control web app standards |
-| `frontend-design` | `C:/Users/johno/.agents/skills/frontend-design/SKILL.md` | Control-plane UX quality |
-| `webapp-testing` | `C:/Users/johno/.agents/skills/webapp-testing/SKILL.md` | Browser verification and UX validation |
+| `frontend-design` | `C:/Users/johno/.agents/skills/frontend-design/SKILL.md` | Control-plane DX quality |
+| `webapp-testing` | `C:/Users/johno/.agents/skills/webapp-testing/SKILL.md` | Browser verification and DX validation |
 | `code-review` | `C:/Users/johno/.agents/skills/code-review/SKILL.md` | Final quality gate |
 | `sync-docs` | `C:/Users/johno/.agents/skills/sync-docs/SKILL.md` | Documentation alignment |
 
@@ -47,7 +47,7 @@ This is greenfield implementation planning.
 | `mode-orchestrator` | `C:/Users/johno/.agents/skills/takomi/workflows/mode-orchestrator.md` | Session coordination |
 | `vibe-primeAgent` | `C:/Users/johno/.agents/skills/takomi/workflows/vibe-primeAgent.md` | Context priming for every task |
 | `mode-architect` | `C:/Users/johno/.agents/skills/takomi/workflows/mode-architect.md` | Architecture and boundary-setting |
-| `vibe-design` | `C:/Users/johno/.agents/skills/takomi/workflows/vibe-design.md` | UX/system design execution |
+| `vibe-design` | `C:/Users/johno/.agents/skills/takomi/workflows/vibe-design.md` | DX/system design execution |
 | `vibe-build` | `C:/Users/johno/.agents/skills/takomi/workflows/vibe-build.md` | Implementation tasks |
 | `review_code` | `C:/Users/johno/.agents/skills/takomi/workflows/review_code.md` | Final review and stabilization |
 | `vibe-syncDocs` | `C:/Users/johno/.agents/skills/takomi/workflows/vibe-syncDocs.md` | Final doc sync |
@@ -61,7 +61,7 @@ This is greenfield implementation planning.
 | 02 | Workspace lifecycle and persistence | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 01 | Wave 2 |
 | 03 | Runtime executor and developer edge routing | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 01, 02 | Wave 3 |
 | 04 | Auth broker and session routing | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 03 | Wave 4A |
-| 05 | Mission Control UI shell and workspace UX | design/code | `vibe-design` | `takomi`, `nextjs-standards`, `frontend-design`, `avoid-feature-creep` | 01, 02, 03 | Wave 4B |
+| 05 | Mission Control UI shell and workspace DX | design/code | `vibe-design` | `takomi`, `nextjs-standards`, `frontend-design`, `avoid-feature-creep` | 01, 02, 03 | Wave 4B |
 | 06 | Observability and policy engine | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 02, 03 | Wave 4C |
 | 07 | Browser sidecar and validation bundles | code/test | `vibe-build` | `takomi`, `webapp-testing`, `avoid-feature-creep` | 03, 05, 06 | Wave 5A |
 | 08 | VS Code extension and editor hooks | code | `vibe-build` | `takomi`, `nextjs-standards`, `avoid-feature-creep` | 05, 06, 07 | Wave 5B |
@@ -103,7 +103,7 @@ flowchart LR
 
 ## Progress Checklist
 
-- [ ] Task 01 complete
+- [x] Task 01 complete
 - [ ] Task 02 complete
 - [ ] Task 03 complete
 - [ ] Task 04 complete

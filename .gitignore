@@ -26,6 +26,8 @@ build/
 .next/
 coverage/
 .npm
+.turbo/
+.takomi/
 *.log
 
 # --- IDEs ---

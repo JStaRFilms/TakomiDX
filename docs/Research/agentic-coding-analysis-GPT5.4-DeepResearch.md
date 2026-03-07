@@ -2,7 +2,7 @@
 
 ## Context and root causes
 
-The video “Agentic Coding Has A HUGE Problem” (published around 11 February 2026) frames the problem as *not* primarily model capability, but the mismatch between agentic workflows (many semi-autonomous workers) and today’s local developer UX: terminals, browsers, ports, and OS windowing don’t compose cleanly once you try to run several agents at once. citeturn13search1turn0search21
+The video “Agentic Coding Has A HUGE Problem” (published around 11 February 2026) frames the problem as *not* primarily model capability, but the mismatch between agentic workflows (many semi-autonomous workers) and today’s local developer dx: terminals, browsers, ports, and OS windowing don’t compose cleanly once you try to run several agents at once. citeturn13search1turn0search21
 
 A useful way to formalise the thesis is: **multi-agent local development is a multi-tenant systems problem hiding inside a single-user desktop**. The pain points described—parallel task execution feeling “rough”, port collisions at `localhost`, OAuth redirect fragility, and difficulty tracking which agent did what—are canonical symptoms of missing multi-tenancy primitives: stable identities, isolation boundaries, routing, and observability. citeturn13search1turn2search2
 
@@ -20,7 +20,7 @@ The “roughness” is largely orchestration overhead: concurrent agents compete
 
 **Solution A: Hybrid “single-window control plane” using terminal multiplexing + named agent jobs**  
 **Stack:** terminal multiplexer concepts (sessions/windows/panes) + a small custom agent launcher that creates one “agent session” per task, names it, and routes notifications back to that session.  
-**Why this stack:** terminal multiplexers are already designed for multiple concurrent processes and persistent sessions; you add just enough bespoke glue to give each agent a stable identity and ergonomic navigation. tmux formalises “sessions/windows/panes”; WezTerm adds workspace-oriented multiplexing that can persist until closed. citeturn6search0turn6search1turn6search12  
+**Why this stack:** terminal multiplexers are already designed for multiple concurrent processes and persistent sessions; you add just enough bespoke glue to give each agent a stable identity and ergonomic navigation. tmdx formalises “sessions/windows/panes”; WezTerm adds workspace-oriented multiplexing that can persist until closed. citeturn6search0turn6search1turn6search12  
 **How it addresses parallelism:** instead of five independent terminals, you get one structured “agent switchboard” where each agent has a stable slot and name, reducing cognitive overhead more than any model upgrade will.
 
 **Solution B: Hybrid “container-per-agent” with hard resource budgets**  
@@ -30,7 +30,7 @@ The “roughness” is largely orchestration overhead: concurrent agents compete
 
 **Solution C: Custom build “agent scheduler” with explicit concurrency controls**  
 **Stack:** from-scratch local daemon (“agentd”) + pluggable executors (local process, container, microVM) + a simple policy engine: max parallel agents, per-agent time/token budgets, auto-pausing and resumable execution.  
-**Why this stack:** the underlying problem is *workload management*; building a scheduler makes parallelism first-class rather than accidental. Linux namespace-based isolation and microVMs exist precisely to run multiple workloads without interference; your daemon becomes the missing desktop control plane. citeturn7search0turn7search1  
+**Why this stack:** the underlying problem is *workload management*; building a scheduler makes parallelism first-class rather than accidental. Lindx namespace-based isolation and microVMs exist precisely to run multiple workloads without interference; your daemon becomes the missing desktop control plane. citeturn7search0turn7search1  
 **How it addresses parallelism:** you stop “running 5 things” and start *scheduling* 5 things (with priorities, budgets, and pre-emption)—the same conceptual jump cloud platforms made years ago.
 
 ## Local networking and port management
@@ -90,7 +90,7 @@ This is fundamentally a missing *UI-level index* over agent sessions and their r
 
 **Solution A: Hybrid “session identity everywhere”**  
 **Stack:** terminal multiplexer sessions + strict naming conventions + structured notifications that include: agent name, repo/branch, preview URL, and current status.  
-**Why this stack:** tmux-style session models exist precisely to group terminals into persistent, navigable units. citeturn6search0turn6search18  
+**Why this stack:** tmdx-style session models exist precisely to group terminals into persistent, navigable units. citeturn6search0turn6search18  
 **How it fixes the “ding”:** notifications stop being generic and become actionable (“Agent: billing-fix / Preview: https://billing.localhost / Status: tests failed”). This is low complexity but disproportionately improves usability.
 
 **Solution B: Custom build “Agent Mission Control” local dashboard**  
@@ -151,7 +151,7 @@ The risk is amplified if AI-generated PRs contain more issues on average, creati
 Even if you can create multiple windows, most OS-level task switching is not “workspace as a durable object with attached services, URLs, and logs.”
 
 **Solution A: Hybrid “agent workspaces as first-class terminal workspaces”**  
-**Stack:** use terminal emulators that already support persistent multiplexing/workspaces and “layout on startup”, then wrap an agent launcher around it. WezTerm explicitly supports multiplexing and workspace recipes; tmux formalises panes/windows/sessions. citeturn6search1turn6search12turn6search0  
+**Stack:** use terminal emulators that already support persistent multiplexing/workspaces and “layout on startup”, then wrap an agent launcher around it. WezTerm explicitly supports multiplexing and workspace recipes; tmdx formalises panes/windows/sessions. citeturn6search1turn6search12turn6search0  
 **Why this stack:** it’s the lightest path to “agent desktop” semantics without rewriting an OS shell.
 
 **Solution B: Custom build “Agent Desktop Manager” (local micro-VM/container desktops)**  
@@ -177,8 +177,8 @@ Even if you can create multiple windows, most OS-level task switching is not “
 **Why this stack:** if the terminal is becoming the control plane again, then a terminal with structured blocks, agent steering, and central management is a direct response to CLI-only fragmentation.  
 **Trade-off:** proprietary adoption, but rapid time-to-value.
 
-**Solution C: Custom build “editor-driven agent framework” with explicit UX hooks**  
-**Stack:** write an IDE extension + local agent runner + UI primitives (progress, notifications, status bar items, side-panel “Agent Tasks”). VS Code provides documented UX affordances for notifications and progress surfaces that are designed for background work visibility without constant context switching. citeturn12search3turn12search6turn12search0  
+**Solution C: Custom build “editor-driven agent framework” with explicit dx hooks**  
+**Stack:** write an IDE extension + local agent runner + UI primitives (progress, notifications, status bar items, side-panel “Agent Tasks”). VS Code provides documented dx affordances for notifications and progress surfaces that are designed for background work visibility without constant context switching. citeturn12search3turn12search6turn12search0  
 **Why this stack:** it puts agent state where developers already reason about change: diffs, files, and tests. It also creates a path to integrate preview links, trace IDs, and environment controls into the code review loop.
 
 ## A strong synthesis: turn “localhost chaos” into a local platform
@@ -191,4 +191,4 @@ Across all eight issues, the unifying fix is to **stop treating local dev as a p
 - **Observability by default:** OpenTelemetry GenAI spans exported to a trace backend (open or proprietary) so failures are explainable and replayable. citeturn10search1turn10search2turn0search12  
 - **Verification-first PR workflow:** preview environments and evidence artefacts so PRs are *validated*, not dumped. citeturn5search2turn9search21turn5search0  
 
-The biggest practical insight is that **agentic coding isn’t just “coding faster”**. It pushes local development into the same problem space as multi-service production systems—except the “operators” are individual developers. Once you accept that, the solution space becomes much clearer: borrow the proven primitives of platform engineering (routing, isolation, observability, controlled workflows) and package them into a developer-native UX. citeturn7search0turn10search1turn4search6
+The biggest practical insight is that **agentic coding isn’t just “coding faster”**. It pushes local development into the same problem space as multi-service production systems—except the “operators” are individual developers. Once you accept that, the solution space becomes much clearer: borrow the proven primitives of platform engineering (routing, isolation, observability, controlled workflows) and package them into a developer-native dx. citeturn7search0turn10search1turn4search6

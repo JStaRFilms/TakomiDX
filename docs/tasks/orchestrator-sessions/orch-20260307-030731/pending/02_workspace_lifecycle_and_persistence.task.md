@@ -20,7 +20,7 @@
 
 ## Objective
 
-Implement the workspace lifecycle so TakomiUX can create, persist, restore, archive, and delete durable workspace capsules backed by git worktrees and local metadata.
+Implement the workspace lifecycle so TakomiDX can create, persist, restore, archive, and delete durable workspace capsules backed by git worktrees and local metadata.
 
 ## Dependencies
 

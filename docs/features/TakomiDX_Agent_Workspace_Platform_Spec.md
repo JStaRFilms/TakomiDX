@@ -1,8 +1,8 @@
-# TakomiUX Agent Workspace Platform Spec
+# TakomiDX Agent Workspace Platform Spec
 
 ## Overview
 
-TakomiUX is a local-first agent orchestration platform for multi-agent coding workflows. It exists to solve the mismatch between modern coding agents and the current desktop environment.
+TakomiDX is a local-first agent orchestration platform for multi-agent coding workflows. It exists to solve the mismatch between modern coding agents and the current desktop environment.
 
 The core product thesis is:
 
@@ -10,7 +10,7 @@ The core product thesis is:
 
 Today's operating systems treat development as a single-user, single-focus workflow. Agentic coding breaks that assumption. Multiple agents need stable identity, isolated runtime state, stable preview routing, traceability, and a control plane that lets a human supervise work without getting lost in tabs, ports, or PR noise.
 
-TakomiUX turns a developer machine into a structured, multi-tenant local platform with the following guarantees:
+TakomiDX turns a developer machine into a structured, multi-tenant local platform with the following guarantees:
 
 - Every agent gets a durable workspace.
 - Every workspace gets stable identity.
@@ -19,7 +19,7 @@ TakomiUX turns a developer machine into a structured, multi-tenant local platfor
 - Every run gets a trace, cost record, and replayable event log.
 - Every code change must be validated through a runnable review loop, not dumped as an opaque PR.
 
-This document defines how the product should work end to end, including system architecture, UX patterns, implementation guidance, data model, and phased rollout.
+This document defines how the product should work end to end, including system architecture, DX patterns, implementation guidance, data model, and phased rollout.
 
 ## Product Goals
 
@@ -50,7 +50,7 @@ This document defines how the product should work end to end, including system a
 
 ## Core Product Thesis
 
-TakomiUX should be designed around the concept of a **workspace capsule**.
+TakomiDX should be designed around the concept of a **workspace capsule**.
 
 A workspace capsule is the main unit of execution and supervision. It bundles:
 
@@ -104,7 +104,7 @@ The goal is not to maximize lines of code produced. The goal is to maximize trus
 
 ### 6. Observability is a product feature
 
-Tracing, cost visibility, and replay are not internal plumbing. They are core UX.
+Tracing, cost visibility, and replay are not internal plumbing. They are core DX.
 
 ### 7. Incremental adoption
 
@@ -130,7 +130,7 @@ Wants policy controls, spend limits, security boundaries, and reproducible envir
 
 ## The Mental Model
 
-TakomiUX should feel like a local mission control system for autonomous workers.
+TakomiDX should feel like a local mission control system for autonomous workers.
 
 Each workspace is a card, not a terminal tab.
 
@@ -597,7 +597,7 @@ sequenceDiagram
     MC-->>U: card appears with preview and status
 ```
 
-### UX example
+### DX example
 
 The user clicks `New Workspace`.
 
@@ -631,7 +631,7 @@ sequenceDiagram
     App-->>UI: session established
 ```
 
-### UX example
+### DX example
 
 The workspace card shows a pill:
 
@@ -656,7 +656,7 @@ The user can click `Inspect` and see the exact callback route and provider error
 
 ### Flow 3: Agent runs, hits an issue, and requests help
 
-### UX example
+### DX example
 
 The card status changes from `running` to `awaiting_human`.
 
@@ -717,7 +717,7 @@ A workspace is complete when:
 - human review is recorded
 - output is accepted, archived, or sent back for another iteration
 
-## Detailed UX Specification
+## Detailed DX Specification
 
 ### Workspace Grid
 
@@ -823,7 +823,7 @@ Notifications must always answer:
 - `An agent needs input`
 - `Server error`
 
-### Error Handling UX
+### Error Handling DX
 
 ### Preview boot failure
 
@@ -929,7 +929,7 @@ If the same failing tool call repeats several times:
 
 ### Goal
 
-Solve the main local UX failures with minimal platform invention.
+Solve the main local DX failures with minimal platform invention.
 
 ### Scope
 
@@ -1041,7 +1041,7 @@ Solve the main local UX failures with minimal platform invention.
 
 ## Product Summary
 
-TakomiUX should not be built as "yet another agent terminal".
+TakomiDX should not be built as "yet another agent terminal".
 
 It should be built as a local developer platform with:
 

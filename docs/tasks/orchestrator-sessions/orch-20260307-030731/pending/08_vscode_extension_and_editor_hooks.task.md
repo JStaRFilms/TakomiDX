@@ -47,7 +47,7 @@ Expose workspace awareness inside VS Code so developers can inspect previews, tr
 
 - [ ] Make it easy to jump from workspace to code location or repo path.
 - [ ] Ensure extension behavior matches Mission Control terminology and statuses.
-- [ ] Add basic tests or verification steps for the extension UX.
+- [ ] Add basic tests or verification steps for the extension DX.
 
 ## Definition of Done
 

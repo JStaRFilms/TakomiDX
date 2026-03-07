@@ -23,7 +23,7 @@
 
 ## Objective
 
-Establish the implementation foundation for TakomiUX so all downstream tasks have stable structure, shared contracts, and a clear build target.
+Establish the implementation foundation for TakomiDX so all downstream tasks have stable structure, shared contracts, and a clear build target.
 
 ## Scope
 
@@ -50,31 +50,31 @@ Excluded:
 
 ### Phase 1: Finalize MVP stack
 
-- [ ] Confirm Mission Control is web-first for MVP.
-- [ ] Confirm container runtime is the default isolation backend.
-- [ ] Confirm VS Code is the only editor integration target for MVP.
-- [ ] Document explicit non-goals in implementation docs.
+- [x] Confirm Mission Control is web-first for MVP.
+- [x] Confirm container runtime is the default isolation backend.
+- [x] Confirm VS Code is the only editor integration target for MVP.
+- [x] Document explicit non-goals in implementation docs.
 
 ### Phase 2: Create repo structure
 
-- [ ] Create top-level app/service/package directories.
-- [ ] Create a shared package for contracts, schemas, and event types.
-- [ ] Define naming conventions for workspaces, runs, routes, and artifacts.
-- [ ] Establish a local data directory strategy for runtime metadata.
+- [x] Create top-level app/service/package directories.
+- [x] Create a shared package for contracts, schemas, and event types.
+- [x] Define naming conventions for workspaces, runs, routes, and artifacts.
+- [x] Establish a local data directory strategy for runtime metadata.
 
 ### Phase 3: Scaffold app shells
 
-- [ ] Create a minimal Mission Control app shell with routing and layout.
-- [ ] Create a minimal `agentd` service shell with health endpoint and config loading.
-- [ ] Create shared config loading and validation strategy.
-- [ ] Add placeholder modules for future components without implementing feature logic.
+- [x] Create a minimal Mission Control app shell with routing and layout.
+- [x] Create a minimal `agentd` service shell with health endpoint and config loading.
+- [x] Create shared config loading and validation strategy.
+- [x] Add placeholder modules for future components without implementing feature logic.
 
 ### Phase 4: Tooling and quality gates
 
-- [ ] Set up formatting and linting.
-- [ ] Set up test runners for both web and service layers.
-- [ ] Add root-level scripts for bootstrap, dev, build, and test.
-- [ ] Ensure the scaffold can be installed and run locally without ambiguity.
+- [x] Set up formatting and linting.
+- [x] Set up test runners for both web and service layers.
+- [x] Add root-level scripts for bootstrap, dev, build, and test.
+- [x] Ensure the scaffold can be installed and run locally without ambiguity.
 
 ## Definition of Done
 

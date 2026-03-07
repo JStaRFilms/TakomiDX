@@ -63,6 +63,6 @@ Implement isolated runtime boot plus stable preview routing so each workspace ca
 
 ## Constraints
 
-- no manual port assignment UX
+- no manual port assignment DX
 - no proxy-specific logic leaked into UI
 - do not start auth work in this task

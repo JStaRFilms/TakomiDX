@@ -1,8 +1,8 @@
-# TakomiUX Founder / Investor Product Brief
+# TakomiDX Founder / Investor Product Brief
 
 ## One-Line Thesis
 
-TakomiUX is the local operating layer for the agentic software era: a platform that turns a developer machine from a chaotic collection of terminals, ports, and browser tabs into a structured control plane for multiple coding agents.
+TakomiDX is the local operating layer for the agentic software era: a platform that turns a developer machine from a chaotic collection of terminals, ports, and browser tabs into a structured control plane for multiple coding agents.
 
 ## The Short Version
 
@@ -19,7 +19,7 @@ Modern operating systems, development tools, and localhost workflows were design
 - agents feel like black boxes
 - cloud agents dump PRs no one wants to verify
 
-TakomiUX solves that by creating a local-first agent workspace platform. Every agent gets an isolated workspace, a stable hostname, traceable behavior, browser-aware validation, and a clear place in a unified Mission Control interface.
+TakomiDX solves that by creating a local-first agent workspace platform. Every agent gets an isolated workspace, a stable hostname, traceable behavior, browser-aware validation, and a clear place in a unified Mission Control interface.
 
 The shift is simple but important:
 
@@ -38,7 +38,7 @@ Once more than one or two agents are active, the user loses trust in the environ
 - an agent loops, stalls, or burns tokens without clear explanation
 - a background agent opens a PR, but reviewing it locally is annoying enough that it often gets ignored
 
-This is not a model-quality problem. It is an infrastructure and UX problem.
+This is not a model-quality problem. It is an infrastructure and DX problem.
 
 Coding agents introduced a multi-tenant workload into a single-tenant desktop.
 
@@ -61,11 +61,11 @@ The right primitives are:
 - validation loops
 - human supervision surfaces
 
-That is the category TakomiUX is creating.
+That is the category TakomiDX is creating.
 
 ## The Product
 
-TakomiUX gives every agent a durable workspace capsule that includes:
+TakomiDX gives every agent a durable workspace capsule that includes:
 
 - a git worktree
 - an isolated runtime
@@ -95,13 +95,13 @@ The user sees:
 
 ## Product Experience
 
-TakomiUX is designed around a few core experiences.
+TakomiDX is designed around a few core experiences.
 
 ### 1. Workspace Creation
 
 The user creates a task like "Fix billing auth callback."
 
-TakomiUX provisions:
+TakomiDX provisions:
 
 - a worktree
 - a branch
@@ -141,7 +141,7 @@ This turns one of the worst debugging experiences in local development into a ma
 
 Agents do not just write code and stop. They validate against a live preview using browser automation, screenshots, console diagnostics, and review bundles.
 
-This is how TakomiUX avoids becoming another PR-dumping workflow.
+This is how TakomiDX avoids becoming another PR-dumping workflow.
 
 ### 6. Traceability and Control
 
@@ -171,7 +171,7 @@ As agents become more capable, developers naturally try to run more of them in p
 
 There are agent terminals, coding assistants, cloud agents, and remote IDEs. But there is still no clear winner for the local operating layer that makes multi-agent coding reliable and legible.
 
-That gap is where TakomiUX fits.
+That gap is where TakomiDX fits.
 
 ## Who It Is For
 
@@ -211,14 +211,14 @@ Helpful inside the editor, but they do not solve runtime isolation, stable routi
 
 Strong primitives, but not a productized control plane for coding agents.
 
-TakomiUX does not compete by being another coding model. It competes by being the system that makes coding models operationally usable.
+TakomiDX does not compete by being another coding model. It competes by being the system that makes coding models operationally usable.
 
 ## Why We Win
 
-TakomiUX sits at the intersection of three layers that are currently fragmented:
+TakomiDX sits at the intersection of three layers that are currently fragmented:
 
 - local runtime orchestration
-- developer UX
+- developer DX
 - agent observability and validation
 
 That combination matters.
@@ -230,7 +230,7 @@ Most tools pick one:
 - cloud runner
 - trace viewer
 
-TakomiUX unifies them around one object: the workspace capsule.
+TakomiDX unifies them around one object: the workspace capsule.
 
 This creates a stronger product loop:
 
@@ -253,7 +253,7 @@ It is the combination of:
 - review and validation workflow
 - interaction data around how humans supervise agents
 
-Over time, TakomiUX can build durable advantage through:
+Over time, TakomiDX can build durable advantage through:
 
 - agent-aware traces and replay
 - policy controls for cost, safety, and approvals
@@ -302,7 +302,7 @@ The GTM should be product-led and narrative-driven:
 
 The story should be easy to understand:
 
-> Coding agents got better. The environment did not. TakomiUX fixes the environment.
+> Coding agents got better. The environment did not. TakomiDX fixes the environment.
 
 That message is clear, sharp, and easy to demo.
 
@@ -345,7 +345,7 @@ Stay disciplined on the MVP and focus on the single strongest wedge: local multi
 ### 2. Existing platforms absorb the category
 
 Mitigation:
-Move faster on the local operating layer and own the workflow glue between runtime, UX, and validation.
+Move faster on the local operating layer and own the workflow glue between runtime, DX, and validation.
 
 ### 3. Developer workflow fragmentation
 
@@ -355,11 +355,11 @@ Meet users where they already work: browser, local runtime, and VS Code first.
 ### 4. Too much infrastructure, not enough delight
 
 Mitigation:
-Keep the control-plane UX central. The product must feel dramatically better, not merely more correct.
+Keep the control-plane DX central. The product must feel dramatically better, not merely more correct.
 
 ## What Success Looks Like
 
-TakomiUX wins when a developer can say:
+TakomiDX wins when a developer can say:
 
 "I can run five coding agents at once, know exactly what each one is doing, trust the previews and auth flows, and review the output without getting lost."
 
@@ -372,7 +372,7 @@ Software development is moving from single-user tooling to human-supervised flee
 The models are arriving first.
 The operating layer is missing.
 
-TakomiUX is that layer.
+TakomiDX is that layer.
 
 It gives developers a way to run, route, observe, validate, and approve multiple coding agents on one machine without chaos.
 
@@ -382,12 +382,12 @@ This is the control plane for the next generation of software development.
 
 ### 10-second version
 
-TakomiUX is the local operating layer for coding agents. It turns agent chaos on `localhost` into a structured, observable workspace platform.
+TakomiDX is the local operating layer for coding agents. It turns agent chaos on `localhost` into a structured, observable workspace platform.
 
 ### 30-second version
 
-Coding agents can now do meaningful work, but the local environment is not built to run many of them well. Ports collide, auth breaks, terminals get lost, and PRs become untrusted dumps. TakomiUX fixes that by giving every agent an isolated workspace, a stable hostname, validation artifacts, and a unified Mission Control surface. It is the local control plane for agentic software development.
+Coding agents can now do meaningful work, but the local environment is not built to run many of them well. Ports collide, auth breaks, terminals get lost, and PRs become untrusted dumps. TakomiDX fixes that by giving every agent an isolated workspace, a stable hostname, validation artifacts, and a unified Mission Control surface. It is the local control plane for agentic software development.
 
 ### Category statement
 
-TakomiUX is building agent workspace infrastructure for software teams: the control plane between coding models and real development environments.
+TakomiDX is building agent workspace infrastructure for software teams: the control plane between coding models and real development environments.

@@ -7,4 +7,4 @@ created: 2026-03-07
 tags: [creativeos]
 ---
 
-# TakomiUX
+# TakomiDX

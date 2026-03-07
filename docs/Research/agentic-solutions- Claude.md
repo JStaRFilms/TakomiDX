@@ -7,8 +7,8 @@
 **Solution A — Custom Agent Orchestrator (Custom Build)**
 Build a lightweight local daemon ("AgentD") that accepts task definitions via a simple config file or CLI command. It spawns agents as isolated child processes, tracks their lifecycle, and exposes a unified status API. Think of it as `pm2` but purpose-built for agentic workloads. Chosen because existing process managers lack the semantic awareness (task name, agent type, cost) that multi-agent workflows require.
 
-**Solution B — tmux + TUI Dashboard (Hybrid)**
-Pair a scriptable `tmux` session manager with a custom Rust/Go TUI (terminal UI) that displays all running agents in a split dashboard with live status, cost, and output previews. The TUI subscribes to structured log streams from each agent. Chosen because it reuses battle-tested terminal multiplexing infrastructure while adding the missing semantic layer cheaply.
+**Solution B — tmdx + TUI Dashboard (Hybrid)**
+Pair a scriptable `tmdx` session manager with a custom Rust/Go TUI (terminal UI) that displays all running agents in a split dashboard with live status, cost, and output previews. The TUI subscribes to structured log streams from each agent. Chosen because it reuses battle-tested terminal multiplexing infrastructure while adding the missing semantic layer cheaply.
 
 **Solution C — VS Code Extension with Parallel Task Runner (Integrated Stack)**
 A VS Code extension that integrates with the Tasks API and existing agent CLIs (Claude Code, Aider, etc.), launching agents as named background tasks with a custom sidebar panel showing progress, output, and status. Leverages the existing editor surface most developers already live in. Chosen because it meets developers where they already are without requiring a new environment.
@@ -47,7 +47,7 @@ Automatically provision a stable public tunnel URL per agent workspace at startu
 A standalone Electron or Tauri desktop app that serves as a unified dashboard for all running agents. Each agent has a "card" showing its name, current task, status, and a live tail of its output. Notifications route to the specific card rather than a generic OS ding. Chosen because it gives agents a dedicated visual surface equivalent to a project management board.
 
 **Solution B — Zellij + Semantic Layout Plugin (Hybrid)**
-Use Zellij (a modern terminal multiplexer with a Wasm plugin system) and write a plugin that auto-generates named panes per agent, color-codes them by status, and routes OS notifications with agent context. Chosen because Zellij's plugin API makes it far more extensible than tmux for building semantic awareness on top of terminal sessions.
+Use Zellij (a modern terminal multiplexer with a Wasm plugin system) and write a plugin that auto-generates named panes per agent, color-codes them by status, and routes OS notifications with agent context. Chosen because Zellij's plugin API makes it far more extensible than tmdx for building semantic awareness on top of terminal sessions.
 
 **Solution C — Slack/Discord Bot as Agent Notification Bus (Integrated Stack)**
 Route all agent status updates and completion events through a local bot that posts to a dedicated Slack or Discord channel per agent. Uses webhooks so no infrastructure is needed. Developers already monitor these platforms, making the notification channel natural rather than new. Chosen for near-zero implementation cost and high integration with existing team workflows.
@@ -83,7 +83,7 @@ Pair the coding agent with a separate "review agent" whose only job is to check 
 ## Problem 7: OS/Desktop Paradigm Limitations
 
 **Solution A — Per-Agent Virtual Desktop Profiles (Custom Build)**
-Build a macOS/Linux daemon that, on agent launch, creates a new virtual desktop space and opens a pre-configured set of windows (terminal for that agent, browser pointed at its dev server, editor focused on its working directory) in that space. On agent completion, the desktop is archived. Chosen because it maps directly to the mental model Theo describes — each agent gets "its own desktop."
+Build a macOS/Lindx daemon that, on agent launch, creates a new virtual desktop space and opens a pre-configured set of windows (terminal for that agent, browser pointed at its dev server, editor focused on its working directory) in that space. On agent completion, the desktop is archived. Chosen because it maps directly to the mental model Theo describes — each agent gets "its own desktop."
 
 **Solution B — Containerized Dev Environments with a Web UI (Hybrid)**
 Use Devcontainers or Nix Flakes to define per-agent isolated environments, each with a full browser-accessible IDE (VS Code Server / code-server) and browser preview. A simple web portal lists all running environments with links. Chosen because it makes agent isolation a first-class concern and the web UI acts as the "fleet overview" that the OS currently lacks.

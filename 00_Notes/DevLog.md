@@ -1,4 +1,4 @@
-# TakomiUX — Development Log
+# TakomiDX — Development Log
 
 **Project spawned:** 2026-03-07  
 **Client:** N/A

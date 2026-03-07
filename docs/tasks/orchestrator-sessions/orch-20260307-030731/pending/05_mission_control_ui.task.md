@@ -50,7 +50,7 @@ Build the Mission Control user experience that makes workspaces understandable, 
 - [ ] Add approval surfaces and current-action callouts.
 - [ ] Make failures and next actions obvious above the fold.
 
-### Phase 4: UX refinement
+### Phase 4: DX refinement
 
 - [ ] Ensure notifications and banners always include workspace identity.
 - [ ] Add skeleton states, empty states, and failure states.

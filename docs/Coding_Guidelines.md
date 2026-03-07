@@ -1,3 +1,3 @@
 # Coding_Guidelines.md
-Project: TakomiUX
+Project: TakomiDX
 Created: 2026-03-07

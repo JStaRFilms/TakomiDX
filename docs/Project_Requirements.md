@@ -1,3 +1,3 @@
 # Project_Requirements.md
-Project: TakomiUX
+Project: TakomiDX
 Created: 2026-03-07

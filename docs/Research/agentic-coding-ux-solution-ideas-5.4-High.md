@@ -1,4 +1,4 @@
-# Agentic Coding UX and OS Friction
+# Agentic Coding dx and OS Friction
 
 ## Scope
 
@@ -32,7 +32,7 @@ Build a local "agent supervisor" desktop app that creates a named workspace per 
 
 **Suggested stack:** Rust or Tauri desktop shell, local process supervisor, SQLite for session state, embedded terminal, browser webviews, MCP-compatible task runner.
 
-**Why this stack:** A custom desktop supervisor directly attacks the UX problem instead of patching terminal workflows. Rust/Tauri keeps the app lightweight while still giving deep OS integration.
+**Why this stack:** A custom desktop supervisor directly attacks the dx problem instead of patching terminal workflows. Rust/Tauri keeps the app lightweight while still giving deep OS integration.
 
 ### Idea B: Containerized Task Grid (hybrid)
 
@@ -122,13 +122,13 @@ Create a desktop shell where the primary object is a task card, not a terminal t
 
 **Suggested stack:** Tauri desktop app, local event bus, structured task metadata, OS notifications with resume actions.
 
-**Why this stack:** It fixes the UX at the object model level. Instead of teaching users to manage terminals better, it makes terminals secondary.
+**Why this stack:** It fixes the dx at the object model level. Instead of teaching users to manage terminals better, it makes terminals secondary.
 
 ### Idea B: Terminal Multiplexer Plus Metadata Layer (hybrid)
 
-Keep tmux, WezTerm, or Warp, but add a thin metadata service that tags panes by task, displays live status, and routes alerts with semantic labels like "Agent B failed tests" rather than "pane 7 beeped."
+Keep tmdx, WezTerm, or Warp, but add a thin metadata service that tags panes by task, displays live status, and routes alerts with semantic labels like "Agent B failed tests" rather than "pane 7 beeped."
 
-**Suggested stack:** tmux or WezTerm APIs, local daemon, file-based state, notification bridge.
+**Suggested stack:** tmdx or WezTerm APIs, local daemon, file-based state, notification bridge.
 
 **Why this stack:** This is a pragmatic upgrade path for power users who already live in the terminal and do not want a full new desktop product.
 
@@ -216,7 +216,7 @@ Create a new shell where each agent runs inside a persistent "workspace desktop"
 
 ### Idea B: Workspace Overlay on Existing OS (hybrid)
 
-Keep macOS, Windows, or Linux, but add an orchestration layer that groups windows, processes, and browser profiles into named task spaces with one-click save/restore.
+Keep macOS, Windows, or Lindx, but add an orchestration layer that groups windows, processes, and browser profiles into named task spaces with one-click save/restore.
 
 **Suggested stack:** Raycast or PowerToys extensions, browser profile automation, terminal API hooks, editor workspace plugins.
 

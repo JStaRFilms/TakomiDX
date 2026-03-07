@@ -1,0 +1,32 @@
+{
+  "name": "takomidx",
+  "private": true,
+  "packageManager": "pnpm@10.29.2",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.29.2"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install",
+    "dev": "turbo run dev --parallel --filter=@takomi/mission-control --filter=@takomi/agentd",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@next/eslint-plugin-next": "^15.2.1",
+    "@types/node": "^22.13.10",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.6",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1",
+    "vitest": "^3.0.8"
+  }
+}
