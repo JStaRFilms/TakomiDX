@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TakomiDX — V3: Deep Space</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Surface */
+            --bg-void: #060a14;
+            --bg-surface: #0d1424;
+            --bg-elevated: #141d32;
+            --bg-hover: #192540;
+            --bg-input: #080d19;
+
+            /* Borders */
+            --border-dim: rgba(96, 165, 250, 0.06);
+            --border-subtle: rgba(96, 165, 250, 0.12);
+            --border-medium: rgba(96, 165, 250, 0.22);
+            --border-strong: rgba(96, 165, 250, 0.4);
+
+            /* Text */
+            --text-primary: #e8edf8;
+            --text-secondary: rgba(232, 237, 248, 0.55);
+            --text-tertiary: rgba(232, 237, 248, 0.28);
+
+            /* Accent */
+            --blue: #60a5fa;
+            --blue-dim: rgba(96, 165, 250, 0.1);
+            --blue-glow: 0 4px 24px rgba(96, 165, 250, 0.2), 0 0 80px rgba(96, 165, 250, 0.06);
+            --teal: #2dd4bf;
+            --teal-dim: rgba(45, 212, 191, 0.1);
+
+            /* Semantic */
+            --status-running: #2dd4bf;
+            --status-queued: #64748b;
+            --status-booting: #60a5fa;
+            --status-waiting: #fbbf24;
+            --status-failed: #f87171;
+            --status-completed: #34d399;
+            --status-validating: #a78bfa;
+            --status-archived: #475569;
+
+            /* Fonts */
+            --font-sans: 'Instrument Sans', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+
+            /* Radius */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Starfield + nebula */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, rgba(96, 165, 250, 0.05), transparent),
+                radial-gradient(ellipse 600px 500px at 80% 80%, rgba(45, 212, 191, 0.04), transparent),
+                radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.4), transparent),
+                radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.3), transparent),
+                radial-gradient(1px 1px at 50% 10%, rgba(255, 255, 255, 0.5), transparent),
+                radial-gradient(1px 1px at 70% 40%, rgba(255, 255, 255, 0.25), transparent),
+                radial-gradient(1px 1px at 90% 70%, rgba(255, 255, 255, 0.35), transparent),
+                radial-gradient(1px 1px at 15% 80%, rgba(255, 255, 255, 0.3), transparent),
+                radial-gradient(1px 1px at 45% 45%, rgba(255, 255, 255, 0.4), transparent),
+                radial-gradient(1px 1px at 85% 15%, rgba(255, 255, 255, 0.3), transparent);
+            background-size: 100% 100%;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .ds-header {
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 40px;
+            margin-bottom: 56px;
+        }
+
+        .ds-header__badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--teal);
+            background: var(--teal-dim);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            padding: 4px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+
+        .ds-header__title {
+            font-family: var(--font-sans);
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            color: var(--text-primary);
+        }
+
+        .ds-header__sub {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            max-width: 600px;
+            line-height: 1.7;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section__label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        /* Color Swatches */
+        .swatches {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .swatch {
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+
+        .swatch__color {
+            height: 64px;
+        }
+
+        .swatch__info {
+            padding: 10px 12px;
+            background: var(--bg-surface);
+        }
+
+        .swatch__name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .swatch__hex {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+
+        /* Typography */
+        .type-specimen {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(12px);
+        }
+
+        .type-specimen h1 {
+            font-family: var(--font-sans);
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .type-specimen h2 {
+            font-family: var(--font-sans);
+            font-size: 30px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-top: 20px;
+        }
+
+        .type-specimen h3 {
+            font-family: var(--font-sans);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-top: 16px;
+        }
+
+        .type-specimen p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            max-width: 640px;
+        }
+
+        .type-specimen code {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            background: var(--blue-dim);
+            color: var(--blue);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .type-meta {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 12px;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn--primary {
+            background: var(--blue);
+            color: var(--bg-void);
+            border-color: var(--blue);
+        }
+
+        .btn--primary:hover {
+            box-shadow: var(--blue-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn--ghost {
+            background: transparent;
+            color: var(--blue);
+            border-color: var(--border-medium);
+        }
+
+        .btn--ghost:hover {
+            background: var(--blue-dim);
+            border-color: var(--blue);
+        }
+
+        .btn--danger {
+            background: transparent;
+            color: var(--status-failed);
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+
+        .btn--danger:hover {
+            background: rgba(248, 113, 113, 0.08);
+            border-color: var(--status-failed);
+        }
+
+        .btn--disabled {
+            background: var(--bg-elevated);
+            color: var(--text-tertiary);
+            border-color: var(--border-dim);
+            cursor: not-allowed;
+        }
+
+        /* Status Badges */
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 5px 14px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .badge--running {
+            color: var(--status-running);
+            background: rgba(45, 212, 191, 0.08);
+            border: 1px solid rgba(45, 212, 191, 0.16);
+        }
+
+        .badge--running::before {
+            background: var(--status-running);
+            box-shadow: 0 0 10px var(--status-running);
+            animation: pulse 2s infinite;
+        }
+
+        .badge--queued {
+            color: var(--status-queued);
+            background: rgba(100, 116, 139, 0.1);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .badge--queued::before {
+            background: var(--status-queued);
+        }
+
+        .badge--booting {
+            color: var(--status-booting);
+            background: rgba(96, 165, 250, 0.08);
+            border: 1px solid rgba(96, 165, 250, 0.16);
+        }
+
+        .badge--booting::before {
+            background: var(--status-booting);
+            animation: pulse 1.5s infinite;
+        }
+
+        .badge--waiting {
+            color: var(--status-waiting);
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.16);
+        }
+
+        .badge--waiting::before {
+            background: var(--status-waiting);
+            animation: pulse 3s infinite;
+        }
+
+        .badge--failed {
+            color: var(--status-failed);
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+        }
+
+        .badge--failed::before {
+            background: var(--status-failed);
+        }
+
+        .badge--completed {
+            color: var(--status-completed);
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.15);
+        }
+
+        .badge--completed::before {
+            background: var(--status-completed);
+        }
+
+        .badge--validating {
+            color: var(--status-validating);
+            background: rgba(167, 139, 250, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.16);
+        }
+
+        .badge--validating::before {
+            background: var(--status-validating);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: rgba(13, 20, 36, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+        }
+
+        .card:hover {
+            background: rgba(20, 29, 50, 0.9);
+            border-color: var(--border-medium);
+            box-shadow: 0 8px 40px rgba(96, 165, 250, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card__slug {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .card__repo {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .card__metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .card__metric-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-family: var(--font-mono);
+        }
+
+        .card__metric-value {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+
+        .card__action-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            padding: 10px 14px;
+            background: rgba(96, 165, 250, 0.04);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--blue);
+        }
+
+        .card--failed .card__action-text {
+            border-left-color: var(--status-failed);
+            background: rgba(248, 113, 113, 0.04);
+        }
+
+        .card--waiting .card__action-text {
+            border-left-color: var(--status-waiting);
+            background: rgba(251, 191, 36, 0.04);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-dim);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            background: rgba(13, 20, 36, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            margin-bottom: 16px;
+            backdrop-filter: blur(12px);
+        }
+
+        .navbar__brand {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .navbar__brand span {
+            color: var(--text-tertiary);
+            font-weight: 400;
+            margin: 0 6px;
+        }
+
+        .navbar__links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .navbar__link {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .navbar__link:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .navbar__link--active {
+            color: var(--blue);
+            background: var(--blue-dim);
+        }
+
+        .navbar__status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--status-running);
+        }
+
+        .navbar__status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--status-running);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--status-running);
+            animation: pulse 2s infinite;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            border: 1px dashed var(--border-subtle);
+            border-radius: var(--radius-lg);
+            background: var(--bg-surface);
+        }
+
+        .empty-state__icon {
+            font-size: 40px;
+            color: var(--blue);
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+
+        .empty-state__title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .empty-state__desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 360px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <header class="ds-header">
+            <div class="ds-header__badge">Design System V3</div>
+            <h1 class="ds-header__title">Deep Space</h1>
+            <p class="ds-header__sub">Observatory command center. Deep navy void with orbital blue and teal telemetry
+                accents. Starfield depth, frosted glass panels, and clean instrument-grade readability.</p>
+        </header>
+
+        <section class="section">
+            <h2 class="section__label">01 / Color Palette</h2>
+            <div class="swatches">
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#060a14"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Void</div>
+                        <div class="swatch__hex">#060a14</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#0d1424"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Surface</div>
+                        <div class="swatch__hex">#0d1424</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#141d32"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Elevated</div>
+                        <div class="swatch__hex">#141d32</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#60a5fa"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Blue</div>
+                        <div class="swatch__hex">#60a5fa</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#2dd4bf"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Teal</div>
+                        <div class="swatch__hex">#2dd4bf</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#fbbf24"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Warning</div>
+                        <div class="swatch__hex">#fbbf24</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#f87171"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Danger</div>
+                        <div class="swatch__hex">#f87171</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#a78bfa"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Validate</div>
+                        <div class="swatch__hex">#a78bfa</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">02 / Typography</h2>
+            <div class="type-specimen">
+                <h1>Ground Control</h1>
+                <h2>Orbital Workspaces</h2>
+                <h3>Telemetry Dashboard</h3>
+                <p>Every workspace capsule is an object in orbit — tracked, observable, attributable. No signal gets
+                    lost. Every <code>status change</code> is instrument-grade readable.</p>
+                <div class="type-meta">Display: Instrument Sans 700 · Mono: Space Mono 400</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">03 / Buttons</h2>
+            <div class="btn-row">
+                <button class="btn btn--primary">Open Detail</button>
+                <button class="btn btn--ghost">View Preview</button>
+                <button class="btn btn--danger">Terminate</button>
+                <button class="btn btn--disabled" disabled>Archived</button>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">04 / Status Model</h2>
+            <div class="badges">
+                <span class="badge badge--running">Running</span>
+                <span class="badge badge--booting">Booting</span>
+                <span class="badge badge--queued">Queued</span>
+                <span class="badge badge--waiting">Awaiting Human</span>
+                <span class="badge badge--validating">Validating</span>
+                <span class="badge badge--completed">Completed</span>
+                <span class="badge badge--failed">Failed</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">05 / Navigation</h2>
+            <nav class="navbar">
+                <div class="navbar__brand">TakomiDX <span>/</span> Mission Control</div>
+                <div class="navbar__links">
+                    <a class="navbar__link navbar__link--active" href="#">Workspaces</a>
+                    <a class="navbar__link" href="#">Activity</a>
+                    <a class="navbar__link" href="#">Settings</a>
+                </div>
+                <div class="navbar__status">agentd connected</div>
+            </nav>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">06 / Workspace Cards</h2>
+            <div class="card-grid">
+                <article class="card">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">billing-auth-fix</div>
+                            <div class="card__repo">takomidx · agent/billing-auth-fix</div>
+                        </div>
+                        <span class="badge badge--running">Running</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">14m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$1.82</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-running)">Healthy</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Locking repo contracts for downstream tasks.</div>
+                </article>
+                <article class="card card--waiting">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">checkout-redesign</div>
+                            <div class="card__repo">takomidx · agent/checkout-redesign</div>
+                        </div>
+                        <span class="badge badge--waiting">Awaiting Human</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">6m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$0.64</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-running)">Healthy</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Approval needed: review screenshot bundle before merge.</div>
+                </article>
+                <article class="card card--failed">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">api-rate-limiter</div>
+                            <div class="card__repo">takomidx · agent/api-rate-limiter</div>
+                        </div>
+                        <span class="badge badge--failed">Failed</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">22m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$3.47</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-failed)">Failed</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Container crashed: exit code 137 (OOM). Retry or increase limits.
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">07 / Form Elements</h2>
+            <div class="form-group">
+                <label class="form-label">Workspace Slug</label>
+                <input class="form-input" type="text" placeholder="billing-auth-fix">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Repository Path</label>
+                <input class="form-input" type="text" placeholder="/repos/takomidx">
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">08 / Empty State</h2>
+            <div class="empty-state">
+                <div class="empty-state__icon">◎</div>
+                <div class="empty-state__title">No active workspaces</div>
+                <div class="empty-state__desc">Launch a workspace to begin tracking agent missions from ground control.
+                </div>
+                <button class="btn btn--primary" style="margin-top:20px">+ New Workspace</button>
+            </div>
+        </section>
+
+    </div>
+</body>
+
+</html>

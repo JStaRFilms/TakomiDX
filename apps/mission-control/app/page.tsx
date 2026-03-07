@@ -1,6 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { PlaceholderPanel } from "@/components/panels/placeholder-panel";
-import { WorkspaceCard } from "@/components/workspaces/workspace-card";
+import { WorkspaceGrid } from "@/features/workspaces/components/workspace-grid";
 import { sampleWorkspaces } from "@/features/workspaces/data/sample-workspaces";
 import { resolveMissionControlEnv } from "@/lib/env";
 
@@ -8,67 +7,34 @@ export default function HomePage() {
   const env = resolveMissionControlEnv();
 
   return (
-    <AppShell
-      eyebrow="Mission Control"
-      title="Supervise workspace capsules, not terminal tabs."
-      description="This MVP shell locks the routes, layout, and naming conventions for TakomiDX. Live orchestration arrives in downstream tasks."
-      aside={
-        <div className="rounded-[28px] border border-[color:var(--color-line)] bg-[color:var(--color-panel)] p-5 shadow-[8px_8px_0_0_var(--color-line)]">
-          <p className="text-xs uppercase tracking-[0.24em] text-black/60">
-            Active MVP decisions
-          </p>
-          <dl className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-black/60">Mission Control</dt>
-              <dd className="font-semibold">Web-first</dd>
+    <AppShell>
+      <div className="space-y-6 pt-6">
+        <div className="mx-auto w-full max-w-6xl px-4 lg:px-6">
+          <header className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <h1 className="font-mono text-2xl font-semibold tracking-[-0.03em] text-[var(--color-ink)]">
+                Workspace Grid
+              </h1>
+              <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
+                Supervise active workspace capsules without terminal hunting.
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-black/60">Runtime backend</dt>
-              <dd className="font-semibold uppercase">
+
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1 font-mono text-[11px] text-[var(--color-ink-faint)]">
+                backend
+              </span>
+              <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-1 font-mono text-xs text-[var(--color-accent)]">
                 {env.shared.TAKOMI_RUNTIME_BACKEND}
-              </dd>
+              </span>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-black/60">Editor target</dt>
-              <dd className="font-semibold uppercase">
-                {env.shared.TAKOMI_EDITOR_TARGET}
-              </dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="text-black/60">Preview domain</dt>
-              <dd className="font-semibold">
-                {env.public.NEXT_PUBLIC_TAKOMI_PREVIEW_DOMAIN}
-              </dd>
-            </div>
-          </dl>
+          </header>
         </div>
-      }
-    >
-      <section className="grid gap-4 lg:grid-cols-3">
-        {sampleWorkspaces.map((workspace) => (
-          <WorkspaceCard key={workspace.id} workspace={workspace} />
-        ))}
-      </section>
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <PlaceholderPanel
-          title="Workspace Activity Feed"
-          description="Reserved for semantic events from agentd and downstream observability tasks."
-          items={[
-            "Branch and preview registration events",
-            "Validation and review bundle milestones",
-            "Approval requests and loop detection notices",
-          ]}
-        />
-        <PlaceholderPanel
-          title="Review Queue"
-          description="Reserved for screenshots, diff summaries, and validation outcomes."
-          items={[
-            "Preview launch checklist",
-            "Console and network regression summary",
-            "Approval and archival disposition",
-          ]}
-        />
-      </section>
+
+        <section>
+          <WorkspaceGrid initialWorkspaces={sampleWorkspaces} />
+        </section>
+      </div>
     </AppShell>
   );
 }

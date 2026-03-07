@@ -2,53 +2,62 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 interface AppShellProps {
-  aside?: ReactNode;
   children: ReactNode;
-  description: string;
-  eyebrow: string;
-  title: string;
+  breadcrumbs?: Array<{ label: string; href?: string }>;
 }
 
-export function AppShell({
-  aside,
-  children,
-  description,
-  eyebrow,
-  title,
-}: AppShellProps) {
+export function AppShell({ children, breadcrumbs }: AppShellProps) {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-5 py-6 lg:px-8">
-      <header className="grid gap-4 rounded-[36px] border border-[color:var(--color-line)] bg-[color:var(--color-panel)] p-6 shadow-[10px_10px_0_0_var(--color-line)] lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.24em] text-black/60">
-            <span>{eyebrow}</span>
-            <span className="rounded-full border border-[color:var(--color-line)] px-3 py-1 text-black">
-              MVP Foundation
+    <div className="min-h-screen flex flex-col">
+      <nav className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/88 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 lg:px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] font-mono text-sm font-bold text-[var(--color-canvas)]">
+              T
+            </div>
+            <span className="font-mono text-sm font-semibold text-[var(--color-ink)]">
+              TakomiDX
             </span>
-          </div>
-          <div className="space-y-2">
-            <h1 className="max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl">
-              {title}
-            </h1>
-            <p className="max-w-2xl text-base leading-7 text-black/70">
-              {description}
-            </p>
-          </div>
-          <nav className="flex flex-wrap gap-3 text-sm">
+          </Link>
+
+          <div className="flex items-center gap-2">
             <Link
-              className="rounded-full border border-[color:var(--color-line)] bg-[color:var(--color-accent)] px-4 py-2 font-semibold text-white"
               href="/"
+              className="hidden rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 font-mono text-xs text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] sm:inline-flex"
             >
-              Workspace Grid
+              Workspaces
             </Link>
-            <span className="rounded-full border border-dashed border-[color:var(--color-line)] px-4 py-2 text-black/60">
-              Detail routes locked for downstream tasks
-            </span>
+            <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 font-mono text-xs text-[var(--color-ink-faint)]">
+              <span className="mr-1 text-[var(--color-primary)]">●</span>
+              agentd
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div className="mx-auto w-full max-w-6xl px-4 pt-3 lg:px-6">
+          <nav className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--color-ink-faint)]">
+            {breadcrumbs.map((crumb, index) => (
+              <span key={crumb.label} className="flex items-center gap-1.5">
+                {index > 0 && <span className="text-[var(--color-border-bright)]">/</span>}
+                {crumb.href ? (
+                  <Link
+                    href={crumb.href}
+                    className="transition-colors hover:text-[var(--color-primary)]"
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span className="text-[var(--color-ink-muted)]">{crumb.label}</span>
+                )}
+              </span>
+            ))}
           </nav>
         </div>
-        <div className="grid gap-4">{aside}</div>
-      </header>
-      <div className="grid gap-4">{children}</div>
-    </main>
+      )}
+
+      <main className="w-full flex-1 pb-10">{children}</main>
+    </div>
   );
 }
