@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useEffectEvent, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkspaceRuntimeState, WorkspaceSummary } from "@takomi/contracts";
 import { deriveRuntimeWorkspaceStatus } from "@/features/workspaces/data/workspace-detail-data";
@@ -93,57 +93,6 @@ export function WorkspaceOperatorPanel({
         ? "Runtime Booting"
         : "Start Runtime";
 
-  const refreshRuntimeMonitor = useEffectEvent(async () => {
-    if (!activeRuntime) {
-      return;
-    }
-
-    setIsPollingRuntime(true);
-
-    try {
-      const [refreshedRuntime, liveLogs] = await Promise.all([
-        requestJson<WorkspaceRuntimeState>(
-          `/api/workspaces/${workspace.id}/runtime/refresh-health`,
-          {
-            method: "POST",
-          },
-        ),
-        requestJson<RuntimeLogsResponse>(
-          `/api/workspaces/${workspace.id}/runtime/logs?tail=120`,
-        ),
-      ]);
-
-      setLiveRuntime(refreshedRuntime);
-      setRuntimeLogs(liveLogs.logs.trim());
-      setRuntimeMonitorError(null);
-      setLastRuntimeRefreshAt(
-        new Intl.DateTimeFormat(undefined, {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }).format(new Date()),
-      );
-
-      if (
-        refreshedRuntime.lifecycle !== activeRuntime.lifecycle ||
-        refreshedRuntime.healthStatus !== activeRuntime.healthStatus ||
-        refreshedRuntime.lastError !== activeRuntime.lastError
-      ) {
-        startTransition(() => {
-          router.refresh();
-        });
-      }
-    } catch (monitorError) {
-      setRuntimeMonitorError(
-        monitorError instanceof Error
-          ? monitorError.message
-          : "Runtime polling failed.",
-      );
-    } finally {
-      setIsPollingRuntime(false);
-    }
-  });
-
   useEffect(() => {
     if (!activeRuntime) {
       setRuntimeLogs("");
@@ -156,6 +105,55 @@ export function WorkspaceOperatorPanel({
       return;
     }
 
+    const currentRuntime = activeRuntime;
+
+    async function refreshRuntimeMonitor() {
+      setIsPollingRuntime(true);
+
+      try {
+        const [refreshedRuntime, liveLogs] = await Promise.all([
+          requestJson<WorkspaceRuntimeState>(
+            `/api/workspaces/${workspace.id}/runtime/refresh-health`,
+            {
+              method: "POST",
+            },
+          ),
+          requestJson<RuntimeLogsResponse>(
+            `/api/workspaces/${workspace.id}/runtime/logs?tail=120`,
+          ),
+        ]);
+
+        setLiveRuntime(refreshedRuntime);
+        setRuntimeLogs(liveLogs.logs.trim());
+        setRuntimeMonitorError(null);
+        setLastRuntimeRefreshAt(
+          new Intl.DateTimeFormat(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }).format(new Date()),
+        );
+
+        if (
+          refreshedRuntime.lifecycle !== currentRuntime.lifecycle ||
+          refreshedRuntime.healthStatus !== currentRuntime.healthStatus ||
+          refreshedRuntime.lastError !== currentRuntime.lastError
+        ) {
+          startTransition(() => {
+            router.refresh();
+          });
+        }
+      } catch (monitorError) {
+        setRuntimeMonitorError(
+          monitorError instanceof Error
+            ? monitorError.message
+            : "Runtime polling failed.",
+        );
+      } finally {
+        setIsPollingRuntime(false);
+      }
+    }
+
     void refreshRuntimeMonitor();
     const pollIntervalMs = runtimeStatus === "booting" ? 2500 : 8000;
     const intervalId = window.setInterval(() => {
@@ -165,7 +163,7 @@ export function WorkspaceOperatorPanel({
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [activeRuntime, refreshRuntimeMonitor, runtimeStatus]);
+  }, [activeRuntime, router, runtimeStatus, workspace.id]);
 
   async function runAction(
     label: string,

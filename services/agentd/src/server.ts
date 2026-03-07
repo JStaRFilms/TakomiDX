@@ -25,6 +25,10 @@ import {
   createWorkspaceManager,
   createWorkspaceManagerBoundary,
 } from "./modules/workspace-manager";
+import {
+  buildEditorCompanionWorkspaceDetail,
+  buildEditorCompanionWorkspaceItem,
+} from "./modules/editor-companion";
 import { createServer as createHttpServer, type IncomingMessage } from "node:http";
 import path from "node:path";
 import {
@@ -200,6 +204,33 @@ export function createAgentdServer(config: AgentdConfig) {
     };
   }
 
+  function buildWorkspaceContext(workspaceId: string) {
+    const workspace = workspaceManager.get(workspaceId);
+
+    if (!workspace) {
+      return null;
+    }
+
+    const runtime = runtimeExecutor.get(workspaceId);
+    const run =
+      observability.getActiveRun(workspaceId) ??
+      observability.listRuns(workspaceId)[0] ??
+      null;
+    const recentEvents = observability.listEvents({ workspaceId }).slice(0, 50);
+
+    return {
+      workspace,
+      runtime,
+      run,
+      recentEvents,
+      recentSpans: run ? observability.listSpans(run.id).slice(0, 50) : [],
+      authSessions: authBroker.list(workspaceId),
+      validationSummary: validationBundles.getSummary(workspaceId),
+      validationBundle: validationBundles.getBundle(workspaceId),
+      reviewBundle: validationBundles.getReviewBundle(workspaceId),
+    };
+  }
+
   return createHttpServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
     let result: Response;
@@ -239,6 +270,9 @@ export function createAgentdServer(config: AgentdConfig) {
     const missionControlWorkspaceMatch = url.pathname.match(
       /^\/api\/v1\/mission-control\/workspaces\/(ws_[a-z0-9]{8,})$/,
     );
+    const editorWorkspaceMatch = url.pathname.match(
+      /^\/api\/v1\/editor\/workspaces\/(ws_[a-z0-9]{8,})$/,
+    );
     const observabilityRunMatch = url.pathname.match(
       /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})$/,
     );
@@ -275,6 +309,33 @@ export function createAgentdServer(config: AgentdConfig) {
           ),
         ],
       });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/editor/workspaces"
+    ) {
+      result = json({
+        items: workspaceManager
+          .list()
+          .filter((workspace) => workspace.status !== "archived")
+          .map((workspace) => buildWorkspaceContext(workspace.id))
+          .filter((context) => context !== null)
+          .map((context) => buildEditorCompanionWorkspaceItem(context)),
+      });
+    } else if (request.method === "GET" && editorWorkspaceMatch) {
+      const workspaceId = editorWorkspaceMatch[1]!;
+      const context = buildWorkspaceContext(workspaceId);
+
+      result = context
+        ? json({
+            item: buildEditorCompanionWorkspaceDetail(context),
+          })
+        : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/mission-control/workspaces"

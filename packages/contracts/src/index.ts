@@ -679,6 +679,70 @@ export const workspaceRuntimeStateSchema = z.object({
   lastError: z.string().min(1).nullable(),
 });
 
+export const editorCompanionActionTargetSchema = z.enum([
+  "workspace",
+  "preview",
+  "logs",
+  "trace",
+  "validation",
+  "approvals",
+  "repo",
+  "worktree",
+]);
+export const editorCompanionActionLocationTypeSchema = z.enum([
+  "mission_control_path",
+  "preview_url",
+  "filesystem_path",
+]);
+export const editorCompanionActionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  target: editorCompanionActionTargetSchema,
+  locationType: editorCompanionActionLocationTypeSchema,
+  location: z.string().min(1),
+  description: z.string().min(1).nullable().default(null),
+});
+export const editorCompanionApprovalStateSchema = z.object({
+  status: z.enum(["clear", "pending"]),
+  title: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
+});
+export const editorCompanionWorkspaceItemSchema = z.object({
+  id: workspaceIdSchema,
+  slug: workspaceSlugSchema,
+  repoName: z.string().min(1),
+  branch: z.string().min(1),
+  status: workspaceStatusSchema,
+  health: healthStatusSchema,
+  agentType: z.string().min(1),
+  lastAction: z.string().min(1),
+  previewHost: previewDomainSchema,
+  previewUrl: z.string().url().nullable().default(null),
+  worktreePath: z.string().min(1).nullable().default(null),
+  repoPath: z.string().min(1),
+  activeRunId: runIdSchema.nullable().default(null),
+  validation: workspaceValidationSummarySchema,
+  approval: editorCompanionApprovalStateSchema,
+  actions: z.array(editorCompanionActionSchema).default([]),
+});
+export const editorCompanionWorkspaceListResponseSchema = z.object({
+  items: z.array(editorCompanionWorkspaceItemSchema),
+});
+export const editorCompanionWorkspaceDetailSchema = z.object({
+  workspace: editorCompanionWorkspaceItemSchema,
+  metadata: workspaceMetadataSchema,
+  runtime: workspaceRuntimeStateSchema.nullable(),
+  run: agentRunSummarySchema.nullable(),
+  recentEvents: z.array(agentEventSchema).default([]),
+  recentSpans: z.array(agentTraceSpanSchema).default([]),
+  authSessions: z.array(authSessionSchema).default([]),
+  validationBundle: validationBundleSchema.nullable().default(null),
+  reviewBundle: reviewBundleSchema.nullable().default(null),
+});
+export const editorCompanionWorkspaceDetailResponseSchema = z.object({
+  item: editorCompanionWorkspaceDetailSchema,
+});
+
 export type RuntimeType = z.infer<typeof runtimeTypeSchema>;
 export type EditorTarget = z.infer<typeof editorTargetSchema>;
 export type WorkspaceBranchType = z.infer<typeof workspaceBranchTypeSchema>;
@@ -767,6 +831,28 @@ export type WorkspaceValidationSummary = z.infer<
 export type ValidationBundle = z.infer<typeof validationBundleSchema>;
 export type ReviewBundle = z.infer<typeof reviewBundleSchema>;
 export type WorkspaceSummary = z.infer<typeof workspaceSummarySchema>;
+export type EditorCompanionActionTarget = z.infer<
+  typeof editorCompanionActionTargetSchema
+>;
+export type EditorCompanionActionLocationType = z.infer<
+  typeof editorCompanionActionLocationTypeSchema
+>;
+export type EditorCompanionAction = z.infer<typeof editorCompanionActionSchema>;
+export type EditorCompanionApprovalState = z.infer<
+  typeof editorCompanionApprovalStateSchema
+>;
+export type EditorCompanionWorkspaceItem = z.infer<
+  typeof editorCompanionWorkspaceItemSchema
+>;
+export type EditorCompanionWorkspaceListResponse = z.infer<
+  typeof editorCompanionWorkspaceListResponseSchema
+>;
+export type EditorCompanionWorkspaceDetail = z.infer<
+  typeof editorCompanionWorkspaceDetailSchema
+>;
+export type EditorCompanionWorkspaceDetailResponse = z.infer<
+  typeof editorCompanionWorkspaceDetailResponseSchema
+>;
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;
 export type WorkspaceRuntimeConfig = z.infer<typeof workspaceRuntimeConfigSchema>;

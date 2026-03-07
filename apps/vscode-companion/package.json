@@ -1,0 +1,184 @@
+{
+  "name": "takomi-vscode-companion",
+  "displayName": "TakomiDX",
+  "description": "Thin VS Code companion for TakomiDX workspaces.",
+  "private": true,
+  "version": "0.0.0",
+  "publisher": "takomi",
+  "categories": [
+    "Other"
+  ],
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onView:takomi.workspaces",
+    "onCommand:takomi.refresh",
+    "onCommand:takomi.openWorkspace",
+    "onCommand:takomi.openPreview",
+    "onCommand:takomi.openLogs",
+    "onCommand:takomi.openTrace",
+    "onCommand:takomi.openValidation",
+    "onCommand:takomi.openApprovals",
+    "onCommand:takomi.revealWorktree",
+    "onCommand:takomi.revealRepo"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "takomi",
+          "title": "TakomiDX",
+          "icon": "media/takomi.svg"
+        }
+      ]
+    },
+    "views": {
+      "takomi": [
+        {
+          "id": "takomi.workspaces",
+          "name": "Workspaces"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "takomi.refresh",
+        "title": "Refresh Workspaces",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openWorkspace",
+        "title": "Open Workspace Overview",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openPreview",
+        "title": "Open Workspace Preview",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openLogs",
+        "title": "Open Workspace Logs",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openTrace",
+        "title": "Open Workspace Trace",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openValidation",
+        "title": "Open Workspace Validation",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.openApprovals",
+        "title": "Open Workspace Approvals",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.revealWorktree",
+        "title": "Reveal Workspace Worktree",
+        "category": "TakomiDX"
+      },
+      {
+        "command": "takomi.revealRepo",
+        "title": "Reveal Workspace Repo",
+        "category": "TakomiDX"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "takomi.refresh",
+          "when": "view == takomi.workspaces",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "takomi.openWorkspace",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "inline"
+        },
+        {
+          "command": "takomi.openPreview",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "inline"
+        },
+        {
+          "command": "takomi.openLogs",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        },
+        {
+          "command": "takomi.openTrace",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        },
+        {
+          "command": "takomi.openValidation",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        },
+        {
+          "command": "takomi.openApprovals",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        },
+        {
+          "command": "takomi.revealWorktree",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        },
+        {
+          "command": "takomi.revealRepo",
+          "when": "view == takomi.workspaces && viewItem == takomiWorkspace",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TakomiDX",
+      "properties": {
+        "takomi.agentdBaseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:4000",
+          "description": "Base URL for the local Takomi agentd service."
+        },
+        "takomi.missionControlBaseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:3000",
+          "description": "Base URL for the local Takomi Mission Control app."
+        },
+        "takomi.logsTail": {
+          "type": "number",
+          "default": 120,
+          "minimum": 20,
+          "maximum": 400,
+          "description": "Number of runtime log lines to fetch for the editor log view."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup src/extension.ts --format cjs --clean --out-dir dist --external vscode --sourcemap",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@takomi/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@takomi/tsconfig": "workspace:*",
+    "@types/node": "^22.13.10",
+    "@types/vscode": "^1.95.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8",
+    "vscode": "^1.1.37"
+  }
+}

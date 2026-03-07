@@ -20,7 +20,7 @@ This is greenfield implementation planning.
 ## Current Execution Notes
 
 - Task 00 completed the Genesis backfill for requirements, standards, issue files, builder guidance, and verification baseline.
-- Task 04 is in progress and must be reconciled against Task 00 outputs during downstream integration review.
+- Task 08 completed the VS Code companion integration and is ready for downstream integration review.
 
 ## Scope Guardrails
 
@@ -121,5 +121,5 @@ flowchart LR
 - [x] Task 05 complete
 - [x] Task 06 complete
 - [x] Task 07 complete
-- [ ] Task 08 complete
+- [x] Task 08 complete
 - [ ] Task 09 complete

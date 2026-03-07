@@ -6,6 +6,7 @@ TakomiDX is a local-first workspace orchestration platform for multi-agent codin
 
 - Mission Control is a web-first Next.js shell in `apps/mission-control`.
 - `agentd` is a local control-plane service shell in `services/agentd`.
+- The VS Code companion lives in `apps/vscode-companion`.
 - Shared contracts live in `packages/contracts`.
 - Runtime metadata is stored under `.takomi/` and is not committed.
 
@@ -14,6 +15,7 @@ TakomiDX is a local-first workspace orchestration platform for multi-agent codin
 ```text
 apps/
   mission-control/
+  vscode-companion/
 services/
   agentd/
 packages/
@@ -35,6 +37,21 @@ pnpm build
 pnpm lint
 pnpm typecheck
 pnpm test
+```
+
+VS Code companion commands:
+
+```bash
+pnpm --filter takomi-vscode-companion build
+pnpm --filter takomi-vscode-companion typecheck
+pnpm --filter takomi-vscode-companion test
+```
+
+The extension expects these local defaults unless you override them in VS Code settings:
+
+```text
+agentd:          http://127.0.0.1:4000
+Mission Control: http://127.0.0.1:3000
 ```
 
 ## Browser Runtime Testing
@@ -67,4 +84,4 @@ Notes:
 - Takomi now mounts shared Docker volumes for the `corepack` cache and the pnpm store, so later runs can reuse downloaded package data instead of fetching everything again.
 - `node_modules` still lives in the mounted workspace, which means the worktree keeps its installed dependency tree between container restarts.
 - Mission Control now polls runtime health and tails container logs while the runtime is booting or running, so the workspace page shows when Docker is still downloading, installing, or waiting for the app to answer health checks.
-- The `*.takomi.localhost` preview host is not fully live yet. `agentd` currently writes local reverse-proxy manifests, but a machine-local edge proxy still has to be wired up before those custom hosts answer in the browser. Until then, use the local fallback preview URL shown in Mission Control.
+- The `*.takomi.localhost` preview host is not fully live yet. `agentd` currently writes local reverse-proxy manifests, but a machine-local edge proxy still has to be wired up before those custom hosts answer in the browser. Until then, use the local fallback preview URL shown in Mission Control or surfaced by the VS Code companion.

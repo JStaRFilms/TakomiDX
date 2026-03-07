@@ -4,6 +4,8 @@ import {
   createManualFallbackUrl,
   createAuthBrokerCallbackUrl,
   createAuthBrokerHost,
+  editorCompanionWorkspaceDetailResponseSchema,
+  editorCompanionWorkspaceListResponseSchema,
   reviewBundleSchema,
   modelUsageSchema,
   policyDecisionSchema,
@@ -327,6 +329,140 @@ describe("@takomi/contracts", () => {
       }),
     ).toMatchObject({
       validationStatus: "passed",
+    });
+  });
+
+  it("validates editor companion workspace list payloads", () => {
+    expect(
+      editorCompanionWorkspaceListResponseSchema.parse({
+        items: [
+          {
+            id: "ws_abcd1234",
+            slug: "billing-fix",
+            repoName: "takomi",
+            branch: "agent/billing-fix",
+            status: "awaiting_human",
+            health: "healthy",
+            agentType: "Codex",
+            lastAction: "Policy paused the run for filesystem.destructive.",
+            previewHost: "billing-fix.takomi.localhost",
+            previewUrl: "http://billing-fix.takomi.localhost/",
+            worktreePath: "C:/repos/.takomi/worktrees/ws_abcd1234",
+            repoPath: "C:/repos/takomi",
+            activeRunId: "run_abcd1234",
+            validation: {
+              status: "failed",
+              summary: "Validation failed with 1 failed checks, 1 console errors, and 0 network failures.",
+              lastValidatedAt: "2026-03-07T03:07:31.000Z",
+              bundleId: "bundle_001",
+            },
+            approval: {
+              status: "pending",
+              title: "Approval required",
+              detail: "Filesystem destructive command needs a human decision.",
+            },
+            actions: [
+              {
+                id: "preview",
+                label: "Open preview",
+                target: "preview",
+                locationType: "preview_url",
+                location: "http://billing-fix.takomi.localhost/",
+                description: "Inspect the live preview inside VS Code.",
+              },
+            ],
+          },
+        ],
+      }),
+    ).toMatchObject({
+      items: [
+        {
+          approval: {
+            status: "pending",
+          },
+        },
+      ],
+    });
+  });
+
+  it("validates editor companion workspace detail payloads", () => {
+    expect(
+      editorCompanionWorkspaceDetailResponseSchema.parse({
+        item: {
+          workspace: {
+            id: "ws_abcd1234",
+            slug: "billing-fix",
+            repoName: "takomi",
+            branch: "agent/billing-fix",
+            status: "running",
+            health: "healthy",
+            agentType: "Codex",
+            lastAction: "Running validation bundle.",
+            previewHost: "billing-fix.takomi.localhost",
+            previewUrl: "http://billing-fix.takomi.localhost/",
+            worktreePath: "C:/repos/.takomi/worktrees/ws_abcd1234",
+            repoPath: "C:/repos/takomi",
+            activeRunId: "run_abcd1234",
+            validation: {
+              status: "passed",
+              summary: "Validation passed with 2 checks, 0 console errors, and 0 network failures.",
+              lastValidatedAt: "2026-03-07T03:07:31.000Z",
+              bundleId: "bundle_001",
+            },
+            approval: {
+              status: "clear",
+              title: "No approvals pending",
+              detail: null,
+            },
+            actions: [
+              {
+                id: "trace",
+                label: "Open trace",
+                target: "trace",
+                locationType: "mission_control_path",
+                location: "/workspaces/ws_abcd1234/trace",
+                description: "Inspect the latest spans for this workspace.",
+              },
+            ],
+          },
+          metadata: {
+            id: "ws_abcd1234",
+            slug: "billing-fix",
+            repoPath: "C:/repos/takomi",
+            worktreePath: "C:/repos/.takomi/worktrees/ws_abcd1234",
+            branch: "agent/billing-fix",
+            baseBranch: "main",
+            branchType: "agent",
+            runtimeType: "container",
+            previewHost: "billing-fix.takomi.localhost",
+            status: "running",
+            createdAt: "2026-03-07T03:07:31.000Z",
+            updatedAt: "2026-03-07T03:17:31.000Z",
+            archivedAt: null,
+            lastError: null,
+            artifacts: {
+              root: "C:/repos/.takomi/workspaces/ws_abcd1234",
+              logsDir: "C:/repos/.takomi/workspaces/ws_abcd1234/logs",
+              tracesDir: "C:/repos/.takomi/workspaces/ws_abcd1234/traces",
+              reviewDir: "C:/repos/.takomi/workspaces/ws_abcd1234/review",
+              browserDir: "C:/repos/.takomi/workspaces/ws_abcd1234/browser",
+            },
+          },
+          runtime: null,
+          run: null,
+          recentEvents: [],
+          recentSpans: [],
+          authSessions: [],
+          validationBundle: null,
+          reviewBundle: null,
+        },
+      }),
+    ).toMatchObject({
+      item: {
+        workspace: {
+          status: "running",
+        },
+      },
     });
   });
 });

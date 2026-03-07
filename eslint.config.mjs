@@ -12,7 +12,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/node_modules/**",
       "**/next-env.d.ts",
-      ".takomi/**",
+      "**/.takomi/**",
     ],
   },
   js.configs.recommended,
@@ -45,3 +45,4 @@ export default tseslint.config(
     },
   },
 );
+
