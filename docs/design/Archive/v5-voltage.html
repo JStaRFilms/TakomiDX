@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TakomiDX — V5: Voltage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Surface */
+            --bg-void: #0a0a0a;
+            --bg-surface: #131313;
+            --bg-elevated: #1c1c1c;
+            --bg-hover: #242424;
+            --bg-input: #0e0e0e;
+
+            /* Borders */
+            --border-dim: rgba(200, 255, 0, 0.05);
+            --border-subtle: rgba(200, 255, 0, 0.1);
+            --border-medium: rgba(200, 255, 0, 0.2);
+            --border-strong: rgba(200, 255, 0, 0.4);
+
+            /* Text */
+            --text-primary: #f0f0f0;
+            --text-secondary: rgba(240, 240, 240, 0.55);
+            --text-tertiary: rgba(240, 240, 240, 0.28);
+
+            /* Accent */
+            --volt: #c8ff00;
+            --volt-dim: rgba(200, 255, 0, 0.08);
+            --volt-glow: 0 0 20px rgba(200, 255, 0, 0.25), 0 0 60px rgba(200, 255, 0, 0.08);
+            --hot: #ff3d00;
+            --hot-dim: rgba(255, 61, 0, 0.1);
+
+            /* Semantic */
+            --status-running: #c8ff00;
+            --status-queued: #525252;
+            --status-booting: #38bdf8;
+            --status-waiting: #fbbf24;
+            --status-failed: #ff3d00;
+            --status-completed: #4ade80;
+            --status-validating: #c084fc;
+            --status-archived: #404040;
+
+            /* Fonts */
+            --font-sans: 'Manrope', sans-serif;
+            --font-mono: 'Azeret Mono', monospace;
+
+            /* Radius */
+            --radius-sm: 3px;
+            --radius-md: 6px;
+            --radius-lg: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Circuit board grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(200, 255, 0, 0.02) 1px, transparent 1px),
+                linear-gradient(rgba(200, 255, 0, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        /* Corner accent lines */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--volt), var(--hot), var(--volt));
+            z-index: 9999;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 48px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .ds-header {
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 40px;
+            margin-bottom: 56px;
+        }
+
+        .ds-header__badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--volt);
+            background: var(--volt-dim);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+
+        .ds-header__title {
+            font-family: var(--font-sans);
+            font-size: 44px;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            color: var(--text-primary);
+            text-transform: uppercase;
+        }
+
+        .ds-header__sub {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            max-width: 600px;
+            line-height: 1.7;
+        }
+
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section__label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--volt);
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        /* Swatches */
+        .swatches {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .swatch {
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .swatch__color {
+            height: 64px;
+        }
+
+        .swatch__info {
+            padding: 10px 12px;
+            background: var(--bg-surface);
+        }
+
+        .swatch__name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+        }
+
+        .swatch__hex {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+
+        /* Typography */
+        .type-specimen {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 16px;
+        }
+
+        .type-specimen h1 {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 1.05;
+            text-transform: uppercase;
+        }
+
+        .type-specimen h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            margin-top: 20px;
+        }
+
+        .type-specimen h3 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0em;
+            line-height: 1.3;
+            margin-top: 16px;
+        }
+
+        .type-specimen p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            max-width: 640px;
+        }
+
+        .type-specimen code {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            background: var(--volt-dim);
+            color: var(--volt);
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .type-meta {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 12px;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 22px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .btn--primary {
+            background: var(--volt);
+            color: var(--bg-void);
+            border-color: var(--volt);
+        }
+
+        .btn--primary:hover {
+            box-shadow: var(--volt-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn--ghost {
+            background: transparent;
+            color: var(--volt);
+            border-color: var(--border-medium);
+        }
+
+        .btn--ghost:hover {
+            background: var(--volt-dim);
+            border-color: var(--volt);
+        }
+
+        .btn--danger {
+            background: transparent;
+            color: var(--status-failed);
+            border-color: rgba(255, 61, 0, 0.3);
+        }
+
+        .btn--danger:hover {
+            background: var(--hot-dim);
+            border-color: var(--status-failed);
+        }
+
+        .btn--disabled {
+            background: var(--bg-elevated);
+            color: var(--text-tertiary);
+            border-color: var(--border-dim);
+            cursor: not-allowed;
+            text-transform: none;
+        }
+
+        /* Badges */
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            flex-shrink: 0;
+        }
+
+        /* Square dots for voltage feel */
+        .badge--running {
+            color: var(--status-running);
+            background: rgba(200, 255, 0, 0.06);
+            border: 1px solid rgba(200, 255, 0, 0.15);
+        }
+
+        .badge--running::before {
+            background: var(--status-running);
+            box-shadow: 0 0 8px var(--status-running);
+            animation: pulse 2s infinite;
+        }
+
+        .badge--queued {
+            color: var(--status-queued);
+            background: rgba(82, 82, 82, 0.15);
+            border: 1px solid rgba(82, 82, 82, 0.25);
+        }
+
+        .badge--queued::before {
+            background: var(--status-queued);
+        }
+
+        .badge--booting {
+            color: var(--status-booting);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.16);
+        }
+
+        .badge--booting::before {
+            background: var(--status-booting);
+            animation: pulse 1.5s infinite;
+        }
+
+        .badge--waiting {
+            color: var(--status-waiting);
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.16);
+        }
+
+        .badge--waiting::before {
+            background: var(--status-waiting);
+            animation: pulse 3s infinite;
+        }
+
+        .badge--failed {
+            color: var(--status-failed);
+            background: rgba(255, 61, 0, 0.08);
+            border: 1px solid rgba(255, 61, 0, 0.2);
+        }
+
+        .badge--failed::before {
+            background: var(--status-failed);
+        }
+
+        .badge--completed {
+            color: var(--status-completed);
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.12);
+        }
+
+        .badge--completed::before {
+            background: var(--status-completed);
+        }
+
+        .badge--validating {
+            color: var(--status-validating);
+            background: rgba(192, 132, 252, 0.08);
+            border: 1px solid rgba(192, 132, 252, 0.16);
+        }
+
+        .badge--validating::before {
+            background: var(--status-validating);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--volt);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .card:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-medium);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
+        .card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card__slug {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .card__repo {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .card__metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .card__metric-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .card__metric-value {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .card__action-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            padding: 10px 14px;
+            background: var(--bg-hover);
+            border-radius: var(--radius-sm);
+            border-left: 2px solid var(--volt);
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        .card--failed::after {
+            background: var(--status-failed);
+        }
+
+        .card--failed .card__action-text {
+            border-left-color: var(--status-failed);
+        }
+
+        .card--waiting::after {
+            background: var(--status-waiting);
+        }
+
+        .card--waiting .card__action-text {
+            border-left-color: var(--status-waiting);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+
+        .form-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--volt);
+            box-shadow: 0 0 0 3px var(--volt-dim);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+        }
+
+        .navbar__brand {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+        }
+
+        .navbar__brand span {
+            color: var(--volt);
+        }
+
+        .navbar__links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .navbar__link {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .navbar__link:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .navbar__link--active {
+            color: var(--volt);
+            background: var(--volt-dim);
+        }
+
+        .navbar__status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--status-running);
+        }
+
+        .navbar__status::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: var(--status-running);
+            box-shadow: 0 0 8px var(--status-running);
+            animation: pulse 2s infinite;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            border: 1px dashed var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--bg-surface);
+        }
+
+        .empty-state__icon {
+            font-family: var(--font-mono);
+            font-size: 32px;
+            color: var(--volt);
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state__title {
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+
+        .empty-state__desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 360px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <header class="ds-header">
+            <div class="ds-header__badge">Design System V5</div>
+            <h1 class="ds-header__title">Voltage</h1>
+            <p class="ds-header__sub">Electric engineering dashboard. Charcoal base, high-volt lime accents,
+                circuit-board grid, sharp corners. Feels like an oscilloscope display built for code operations.</p>
+        </header>
+
+        <section class="section">
+            <h2 class="section__label">01 / Color Palette</h2>
+            <div class="swatches">
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#0a0a0a"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Void</div>
+                        <div class="swatch__hex">#0a0a0a</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#131313"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Surface</div>
+                        <div class="swatch__hex">#131313</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#1c1c1c"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Elevated</div>
+                        <div class="swatch__hex">#1c1c1c</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#c8ff00"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Volt</div>
+                        <div class="swatch__hex">#c8ff00</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#ff3d00"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Hot</div>
+                        <div class="swatch__hex">#ff3d00</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#4ade80"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Success</div>
+                        <div class="swatch__hex">#4ade80</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#fbbf24"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Warning</div>
+                        <div class="swatch__hex">#fbbf24</div>
+                    </div>
+                </div>
+                <div class="swatch">
+                    <div class="swatch__color" style="background:#c084fc"></div>
+                    <div class="swatch__info">
+                        <div class="swatch__name">Validate</div>
+                        <div class="swatch__hex">#c084fc</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">02 / Typography</h2>
+            <div class="type-specimen">
+                <h1>High Voltage Ops</h1>
+                <h2>Live Wire Monitoring</h2>
+                <h3>Runtime Telemetry</h3>
+                <p>Engineering-grade UX with zero wasted pixels. Every workspace is a circuit — monitored, measured, and
+                    <code>immediately actionable</code>. The dashboard is the instrument panel.</p>
+                <div class="type-meta">Display: Manrope 800 · Code: Azeret Mono 400</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">03 / Buttons</h2>
+            <div class="btn-row">
+                <button class="btn btn--primary">Open Detail</button>
+                <button class="btn btn--ghost">View Preview</button>
+                <button class="btn btn--danger">Terminate</button>
+                <button class="btn btn--disabled" disabled>Archived</button>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">04 / Status Model</h2>
+            <div class="badges">
+                <span class="badge badge--running">Running</span>
+                <span class="badge badge--booting">Booting</span>
+                <span class="badge badge--queued">Queued</span>
+                <span class="badge badge--waiting">Awaiting Human</span>
+                <span class="badge badge--validating">Validating</span>
+                <span class="badge badge--completed">Completed</span>
+                <span class="badge badge--failed">Failed</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">05 / Navigation</h2>
+            <nav class="navbar">
+                <div class="navbar__brand"><span>T</span>akomiDX</div>
+                <div class="navbar__links">
+                    <a class="navbar__link navbar__link--active" href="#">Workspaces</a>
+                    <a class="navbar__link" href="#">Activity</a>
+                    <a class="navbar__link" href="#">Settings</a>
+                </div>
+                <div class="navbar__status">agentd connected</div>
+            </nav>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">06 / Workspace Cards</h2>
+            <div class="card-grid">
+                <article class="card">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">billing-auth-fix</div>
+                            <div class="card__repo">takomidx · agent/billing-auth-fix</div>
+                        </div>
+                        <span class="badge badge--running">Running</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">14m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$1.82</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-running)">Healthy</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Locking repo contracts for downstream tasks.</div>
+                </article>
+                <article class="card card--waiting">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">checkout-redesign</div>
+                            <div class="card__repo">takomidx · agent/checkout-redesign</div>
+                        </div>
+                        <span class="badge badge--waiting">Awaiting Human</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">6m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$0.64</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-completed)">Healthy</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Approval needed: review screenshot bundle before merge.</div>
+                </article>
+                <article class="card card--failed">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__slug">api-rate-limiter</div>
+                            <div class="card__repo">takomidx · agent/api-rate-limiter</div>
+                        </div>
+                        <span class="badge badge--failed">Failed</span>
+                    </div>
+                    <div class="card__metrics">
+                        <div>
+                            <div class="card__metric-label">Elapsed</div>
+                            <div class="card__metric-value">22m</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Cost</div>
+                            <div class="card__metric-value">$3.47</div>
+                        </div>
+                        <div>
+                            <div class="card__metric-label">Health</div>
+                            <div class="card__metric-value" style="color:var(--status-failed)">Failed</div>
+                        </div>
+                    </div>
+                    <div class="card__action-text">Container crashed: exit code 137 (OOM). Retry or increase limits.
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">07 / Form Elements</h2>
+            <div class="form-group">
+                <label class="form-label">Workspace Slug</label>
+                <input class="form-input" type="text" placeholder="billing-auth-fix">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Repository Path</label>
+                <input class="form-input" type="text" placeholder="/repos/takomidx">
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__label">08 / Empty State</h2>
+            <div class="empty-state">
+                <div class="empty-state__icon">⚡</div>
+                <div class="empty-state__title">No live circuits</div>
+                <div class="empty-state__desc">Power up a workspace to start monitoring agent operations in real time.
+                </div>
+                <button class="btn btn--primary" style="margin-top:20px">+ New Workspace</button>
+            </div>
+        </section>
+
+    </div>
+</body>
+
+</html>
