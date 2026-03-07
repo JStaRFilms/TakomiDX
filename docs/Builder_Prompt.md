@@ -56,3 +56,4 @@ TakomiDX is a pnpm workspace monorepo with a web-first control plane and a local
 - Treat `docs/Coding_Guidelines.md` as binding.
 - Run root verification before handoff using `python scripts/vibe-verify.py`.
 - If a requirement conflicts with older task assumptions, prefer the PRD and issue files, then update downstream docs.
+- **UI Design System Enforcement:** The Mission Control UI uses the V1 "Terminal Noir" design system defined in `apps/mission-control/app/globals.css`. Never use generic Tailwind colors (e.g., `text-blue-500`). Always use CSS variables (`var(--color-primary)`, `var(--color-surface)`) and mono/sans font pairings to maintain the hacker terminal control-plane aesthetic.

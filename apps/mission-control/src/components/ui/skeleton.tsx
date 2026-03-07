@@ -1,0 +1,7 @@
+export function Skeleton({ className = "" }: { className?: string }) {
+    return (
+        <div
+            className={`animate-pulse rounded-md bg-[var(--color-surface-3)] ${className}`}
+        />
+    );
+}

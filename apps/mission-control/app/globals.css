@@ -1,23 +1,41 @@
 @import "tailwindcss";
 
 @theme {
+  /* Typography */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --color-canvas: #f5f0e7;
-  --color-ink: #101010;
-  --color-panel: #fff9ef;
-  --color-panel-strong: #ffe9c3;
-  --color-line: #1e1a16;
-  --color-accent: #db5f36;
-  --color-accent-soft: #f9c286;
-  --color-success: #1d7d57;
-  --color-warning: #b86d1f;
-  --color-danger: #bb2f1f;
+
+  /* Surfaces */
+  --color-canvas: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-2: #1a1a1a;
+  --color-surface-3: #222222;
+
+  /* Borders */
+  --color-border: #2a2a2a;
+  --color-border-bright: #3a3a3a;
+
+  /* Text */
+  --color-ink: #e0e0e0;
+  --color-ink-muted: #777777;
+  --color-ink-faint: #444444;
+
+  /* Primary (phosphor green) */
+  --color-primary: #00e5a0;
+  --color-primary-dim: #00b37d;
+
+  /* Accent (cyan) */
+  --color-accent: #00d4ff;
+  --color-accent-dim: #0099bb;
+
+  /* Semantic */
+  --color-warning: #ffb020;
+  --color-danger: #ff4444;
+  --color-success: #00e5a0;
 }
 
 html {
-  background:
-    radial-gradient(circle at top left, rgba(249, 194, 134, 0.4), transparent 30%),
-    linear-gradient(180deg, #f6efe1 0%, #f1eadc 100%);
+  background: var(--color-canvas);
 }
 
 body {
@@ -29,4 +47,63 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Scanline overlay */
+.scanlines::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 229, 160, 0.012) 2px,
+    rgba(0, 229, 160, 0.012) 4px
+  );
+  z-index: 9999;
+}
+
+/* Dot grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 229, 160, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 160, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glow utilities */
+.glow-primary {
+  text-shadow: 0 0 8px rgba(0, 229, 160, 0.4);
+}
+
+.glow-box {
+  box-shadow:
+    0 0 20px rgba(0, 229, 160, 0.06),
+    inset 0 1px 0 rgba(0, 229, 160, 0.04);
+}
+
+.hover-glow {
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 24px rgba(0, 229, 160, 0.1);
+  border-color: var(--color-primary);
+}
+
+/* Cursor blink */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.cursor-blink {
+  animation: blink 1s step-end infinite;
 }
