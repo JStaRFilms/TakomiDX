@@ -27,33 +27,43 @@ Implement isolated runtime boot plus stable preview routing so each workspace ca
 - Task 01 complete
 - Task 02 complete
 
+## Completion
+
+- Status: Complete
+- Completed At: `2026-03-07T10:58:03.8256631+01:00`
+- Notes:
+  - Added shared runtime and preview routing contracts.
+  - Implemented container-oriented runtime boot, health probing, and persisted runtime state in `agentd`.
+  - Implemented proxy-agnostic route registration with Caddy manifest output and structured failure handling.
+  - Added tests covering parallel startup, stable hostname assignment, runtime boot failure, and route registration failure.
+
 ## Implementation Plan
 
 ### Phase 1: Runtime contract
 
-- [ ] Define runtime executor interface and lifecycle states.
-- [ ] Define runtime config input derived from workspace metadata.
-- [ ] Define the preview registration payload shared with the UI and proxy layer.
+- [x] Define runtime executor interface and lifecycle states.
+- [x] Define runtime config input derived from workspace metadata.
+- [x] Define the preview registration payload shared with the UI and proxy layer.
 
 ### Phase 2: Container execution
 
-- [ ] Implement container-backed workspace boot.
-- [ ] Mount the workspace safely.
-- [ ] Support per-workspace environment injection.
-- [ ] Track runtime PID/container ID and health state.
+- [x] Implement container-backed workspace boot.
+- [x] Mount the workspace safely.
+- [x] Support per-workspace environment injection.
+- [x] Track runtime PID/container ID and health state.
 
 ### Phase 3: Developer edge routing
 
-- [ ] Register dynamic runtime targets with the chosen proxy.
-- [ ] Assign stable hostnames under `.localhost`.
-- [ ] Add health-aware route status updates.
-- [ ] Ensure users never need to discover internal ports manually.
+- [x] Register dynamic runtime targets with the chosen proxy.
+- [x] Assign stable hostnames under `.localhost`.
+- [x] Add health-aware route status updates.
+- [x] Ensure users never need to discover internal ports manually.
 
 ### Phase 4: Failure handling
 
-- [ ] Handle runtime boot failures cleanly.
-- [ ] Handle route registration failures without losing debug context.
-- [ ] Add tests for parallel workspace startup and hostname assignment.
+- [x] Handle runtime boot failures cleanly.
+- [x] Handle route registration failures without losing debug context.
+- [x] Add tests for parallel workspace startup and hostname assignment.
 
 ## Definition of Done
 

@@ -105,7 +105,7 @@ flowchart LR
 
 - [x] Task 01 complete
 - [ ] Task 02 complete
-- [ ] Task 03 complete
+- [x] Task 03 complete
 - [ ] Task 04 complete
 - [ ] Task 05 complete
 - [ ] Task 06 complete
