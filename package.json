@@ -10,6 +10,7 @@
     "bootstrap": "pnpm install",
     "dev": "turbo run dev --parallel --filter=@takomi/mission-control --filter=@takomi/agentd",
     "build": "turbo run build",
+    "start": "turbo run start",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",

@@ -14,7 +14,12 @@ import {
   createRouteRegistry,
   createRouteRegistryBoundary,
 } from "./modules/route-registry";
-import { RuntimeBootError, createRuntimeExecutor, createRuntimeExecutorBoundary } from "./modules/runtime-executor";
+import {
+  RuntimeBootError,
+  createRuntimeExecutor,
+  createRuntimeExecutorBoundary,
+  readContainerLogs,
+} from "./modules/runtime-executor";
 import {
   WorkspaceLifecycleError,
   createWorkspaceManager,
@@ -99,6 +104,10 @@ function deriveWorkspaceStatus(
 
   if (runtimeLifecycle === "booting") {
     return "booting";
+  }
+
+  if (runtimeLifecycle === "running") {
+    return validationStatus === "passed" ? "completed" : "running";
   }
 
   if (validationStatus === "running") {
@@ -208,6 +217,9 @@ export function createAgentdServer(config: AgentdConfig) {
     );
     const runtimeWorkspaceMatch = url.pathname.match(
       /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})$/,
+    );
+    const runtimeWorkspaceLogsMatch = url.pathname.match(
+      /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/logs$/,
     );
     const refreshHealthMatch = url.pathname.match(
       /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/refresh-health$/,
@@ -955,6 +967,31 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = runtime
         ? json(runtime)
+        : json(
+            {
+              error: "not_found",
+              message: `No runtime is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "GET" && runtimeWorkspaceLogsMatch) {
+      const workspaceId = runtimeWorkspaceLogsMatch[1]!;
+      const runtime = runtimeExecutor.get(workspaceId);
+      const tail = Math.max(
+        20,
+        Math.min(200, Number(url.searchParams.get("tail") ?? "80") || 80),
+      );
+
+      result = runtime
+        ? json({
+            workspaceId,
+            containerName: runtime.containerName,
+            lifecycle: runtime.lifecycle,
+            tail,
+            logs: runtime.containerName
+              ? await readContainerLogs(runtime.containerName, tail)
+              : "Runtime container is not attached yet.",
+          })
         : json(
             {
               error: "not_found",

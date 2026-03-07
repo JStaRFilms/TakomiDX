@@ -507,6 +507,35 @@ interface AgentdWorkspaceDetailResponse {
   reviewBundle: ReviewBundle | null;
 }
 
+export function resolveWorkspacePreviewUrl(
+  workspace: WorkspaceSummary,
+  runtime: WorkspaceRuntimeState | null,
+) {
+  return runtime?.preview?.manualFallbackUrl ?? `http://${workspace.previewHost}`;
+}
+
+export function deriveRuntimeWorkspaceStatus(
+  runtime: WorkspaceRuntimeState | null,
+): WorkspaceSummary["status"] {
+  if (!runtime) {
+    return "queued";
+  }
+
+  if (runtime.lifecycle === "failed" || runtime.healthStatus === "failed") {
+    return "failed";
+  }
+
+  if (runtime.lifecycle === "booting") {
+    return "booting";
+  }
+
+  if (runtime.lifecycle === "running") {
+    return "running";
+  }
+
+  return "queued";
+}
+
 function getSampleWorkspace(workspaceId: string): WorkspaceSummary | null {
   return sampleWorkspaces.find((workspace) => workspace.id === workspaceId) ?? null;
 }
@@ -730,10 +759,12 @@ function buildDetailFromAgentdResponse(
               status:
                 payload.runtime?.healthStatus === "failed"
                   ? "failed"
-                  : payload.runtime?.lifecycle === "booting"
+                  : payload.runtime?.lifecycle === "booting" ||
+                      payload.runtime?.lifecycle === "running"
                     ? "running"
                     : "queued",
               detail:
+                payload.runtime?.preview?.lastError ??
                 payload.runtime?.lastError ??
                 "Waiting for validation events to arrive from the active run.",
             },
@@ -793,6 +824,20 @@ export async function getWorkspace(workspaceId: string): Promise<WorkspaceSummar
     return payload.workspace;
   } catch {
     return getSampleWorkspace(workspaceId);
+  }
+}
+
+export async function getWorkspaceRuntime(
+  workspaceId: string,
+): Promise<WorkspaceRuntimeState | null> {
+  try {
+    const payload = await fetchAgentdJson<AgentdWorkspaceDetailResponse>(
+      `/api/v1/mission-control/workspaces/${workspaceId}`,
+    );
+
+    return payload.runtime;
+  } catch {
+    return null;
   }
 }
 

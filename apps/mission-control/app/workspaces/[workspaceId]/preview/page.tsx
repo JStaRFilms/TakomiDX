@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getWorkspace, getWorkspaceDetail } from "@/features/workspaces/data/workspace-detail-data";
+import {
+  getWorkspace,
+  getWorkspaceDetail,
+  getWorkspaceRuntime,
+  resolveWorkspacePreviewUrl,
+} from "@/features/workspaces/data/workspace-detail-data";
 
 export default async function WorkspacePreviewPage({
   params,
@@ -9,14 +14,20 @@ export default async function WorkspacePreviewPage({
   params: Promise<{ workspaceId: string }>;
 }) {
   const { workspaceId } = await params;
-  const workspace = await getWorkspace(workspaceId);
-  const detail = await getWorkspaceDetail(workspaceId);
+  const [workspace, detail, runtime] = await Promise.all([
+    getWorkspace(workspaceId),
+    getWorkspaceDetail(workspaceId),
+    getWorkspaceRuntime(workspaceId),
+  ]);
 
   if (!workspace || !detail) {
     notFound();
   }
 
   const isLive = detail.previewState === "live" || detail.previewState === "warming";
+  const previewHref = resolveWorkspacePreviewUrl(workspace, runtime);
+  const isUsingFallbackPreview =
+    Boolean(runtime?.preview?.manualFallbackUrl) && runtime?.preview?.routeStatus !== "registered";
 
   if (!isLive) {
     return (
@@ -34,14 +45,14 @@ export default async function WorkspacePreviewPage({
     <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-2">
         <div className="min-w-0 rounded-md border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 py-1 font-mono text-xs text-[var(--color-ink-muted)]">
-          http://{workspace.previewHost}
+          {previewHref}
         </div>
         <Link
-          href={`http://${workspace.previewHost}`}
+          href={previewHref}
           target="_blank"
           className="font-mono text-xs text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-primary)]"
         >
-          open
+          {isUsingFallbackPreview ? "open local preview" : "open"}
         </Link>
       </div>
       <div className="flex min-h-[520px] items-center justify-center bg-[var(--color-canvas)] p-8">
@@ -49,6 +60,11 @@ export default async function WorkspacePreviewPage({
           <p className="font-mono text-sm text-[var(--color-ink)]">
             {detail.previewState === "warming" ? "Preview warming up" : "Preview ready for supervised review"}
           </p>
+          {isUsingFallbackPreview && (
+            <p className="text-sm leading-6 text-[var(--color-accent)]">
+              Local fallback preview is active while the host route is still degraded.
+            </p>
+          )}
           <p className="text-sm leading-6 text-[var(--color-ink-muted)]">
             {detail.nextActionDetail}
           </p>

@@ -119,6 +119,7 @@ describe("runtime executor and route registry", () => {
     expect(
       new Set(runtimes.map((runtime) => runtime?.assignedHostPort)).size,
     ).toBe(2);
+    expect(runtimes.every((runtime) => runtime?.lifecycle === "running")).toBe(true);
     expect(runtimes.map((runtime) => runtime?.preview?.host)).toEqual([
       "runtime-a.takomi.localhost",
       "runtime-b.takomi.localhost",
@@ -263,5 +264,69 @@ describe("runtime executor and route registry", () => {
     const refreshed = await secondExecutor.refreshHealth("ws_restore02");
     expect(refreshed).not.toBeNull();
     expect(refreshed?.healthStatus).toBe("healthy");
+  });
+
+  it("keeps runtime booting while preview health is still unavailable", async () => {
+    const root = createTempDir();
+    const runtimeExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_booting01",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () => {
+        throw new Error("fetch failed");
+      },
+    });
+
+    const runtime = await runtimeExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_booting01",
+        workspaceSlug: "booting-runtime",
+      }),
+    );
+
+    expect(runtime.lifecycle).toBe("booting");
+    expect(runtime.healthStatus).toBe("degraded");
+    expect(runtime.lastError).toContain("fetch failed");
+  });
+
+  it("writes shared corepack and pnpm cache settings into the runtime env file", async () => {
+    const root = createTempDir();
+    let capturedEnvFilePath = "";
+
+    const runtimeExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start({ envFilePath }) {
+          capturedEnvFilePath = envFilePath;
+          return {
+            containerId: "ctr-ws_cache01",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    await runtimeExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_cache0a1",
+        workspaceSlug: "cache-runtime",
+      }),
+    );
+
+    const envFile = readFileSync(capturedEnvFilePath, "utf8");
+    expect(envFile).toContain("COREPACK_HOME=/var/cache/takomi/corepack");
+    expect(envFile).toContain("PNPM_STORE_DIR=/var/cache/takomi/pnpm/store");
+    expect(envFile).toContain("npm_config_store_dir=/var/cache/takomi/pnpm/store");
+    expect(envFile).toContain("pnpm_config_store_dir=/var/cache/takomi/pnpm/store");
   });
 });

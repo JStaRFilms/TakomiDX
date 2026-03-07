@@ -13,6 +13,11 @@ import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+const TAKOMI_COREPACK_CACHE_VOLUME = "takomi-corepack-cache";
+const TAKOMI_COREPACK_CACHE_DIR = "/var/cache/takomi/corepack";
+const TAKOMI_PNPM_STORE_VOLUME = "takomi-pnpm-store";
+const TAKOMI_PNPM_STORE_DIR = "/var/cache/takomi/pnpm/store";
+
 export interface ContainerStartRequest {
   config: WorkspaceRuntimeConfig;
   containerName: string;
@@ -58,6 +63,10 @@ function writeRuntimeEnvFile(
   containerName: string,
 ) {
   const entries = {
+    COREPACK_HOME: TAKOMI_COREPACK_CACHE_DIR,
+    PNPM_STORE_DIR: TAKOMI_PNPM_STORE_DIR,
+    npm_config_store_dir: TAKOMI_PNPM_STORE_DIR,
+    pnpm_config_store_dir: TAKOMI_PNPM_STORE_DIR,
     ...config.env,
     PORT: String(config.port.containerPort),
     TAKOMI_RUNTIME_CONTAINER_NAME: containerName,
@@ -113,6 +122,21 @@ async function runCommand(command: string, args: string[]) {
   return stdout.trim();
 }
 
+export async function readContainerLogs(containerName: string, tail: number = 120) {
+  try {
+    const stdout = await runCommand("docker", [
+      "container",
+      "logs",
+      "--tail",
+      String(tail),
+      containerName,
+    ]);
+    return stdout;
+  } catch (error) {
+    return error instanceof Error ? error.message : "Failed to read container logs.";
+  }
+}
+
 function parseDockerPortMapping(output: string): number {
   const match = output.match(/:(\d{1,5})$/m);
 
@@ -140,6 +164,10 @@ export function createDockerContainerDriver(): ContainerRuntimeDriver {
         `127.0.0.1::${config.port.containerPort}/tcp`,
         "--mount",
         `type=bind,source=${config.repoPath},target=${config.container.workdir}`,
+        "--mount",
+        `type=volume,source=${TAKOMI_COREPACK_CACHE_VOLUME},target=${TAKOMI_COREPACK_CACHE_DIR}`,
+        "--mount",
+        `type=volume,source=${TAKOMI_PNPM_STORE_VOLUME},target=${TAKOMI_PNPM_STORE_DIR}`,
         "--env-file",
         envFilePath,
         config.container.image,
@@ -273,6 +301,7 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
 
     const nextState = workspaceRuntimeStateSchema.parse({
       ...state,
+      lifecycle: health.healthStatus === "healthy" ? "running" : "booting",
       healthStatus: health.healthStatus,
       lastError: health.lastError,
     });
@@ -320,17 +349,17 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
           workspaceDir,
         });
 
-        const runningState = workspaceRuntimeStateSchema.parse({
+        const startedState = workspaceRuntimeStateSchema.parse({
           ...bootingState,
-          lifecycle: "running",
+          lifecycle: "booting",
           containerId: result.containerId,
           processId: result.processId ?? null,
           assignedHostPort: result.hostPort,
           startedAt: now().toISOString(),
         });
 
-        persistState(runningState);
-        return await probeRuntimeState(runningState, config);
+        persistState(startedState);
+        return await probeRuntimeState(startedState, config);
       } catch (error) {
         const failedState = workspaceRuntimeStateSchema.parse({
           ...bootingState,

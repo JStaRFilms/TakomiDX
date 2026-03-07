@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceDetailHeader } from "@/features/workspaces/components/workspace-detail-header";
 import { WorkspaceTabs } from "@/features/workspaces/components/workspace-tabs";
-import { getWorkspace } from "@/features/workspaces/data/workspace-detail-data";
+import { getWorkspace, getWorkspaceRuntime } from "@/features/workspaces/data/workspace-detail-data";
 
 interface WorkspaceLayoutProps {
   children: ReactNode;
@@ -17,7 +17,10 @@ export default async function WorkspaceLayout({
   params,
 }: WorkspaceLayoutProps) {
   const { workspaceId } = await params;
-  const workspace = await getWorkspace(workspaceId);
+  const [workspace, runtime] = await Promise.all([
+    getWorkspace(workspaceId),
+    getWorkspaceRuntime(workspaceId),
+  ]);
 
   if (!workspace) {
     notFound();
@@ -32,7 +35,7 @@ export default async function WorkspaceLayout({
       ]}
     >
       <div className="mx-auto w-full max-w-6xl animate-in fade-in duration-300 px-4 pt-4 lg:px-6">
-        <WorkspaceDetailHeader workspace={workspace} />
+        <WorkspaceDetailHeader workspace={workspace} runtime={runtime} />
         <WorkspaceTabs workspaceId={workspace.id} />
         {children}
       </div>
