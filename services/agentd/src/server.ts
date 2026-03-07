@@ -126,6 +126,61 @@ function deriveWorkspaceStatus(
   return workspaceStatus;
 }
 
+function derivePreviewAvailability(runtime: {
+  healthStatus: "healthy" | "degraded" | "failed";
+  preview?: {
+    routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+    proxyStatus: "starting" | "ready" | "unavailable" | "failed";
+  } | null;
+} | null) {
+  if (!runtime) {
+    return "degraded" as const;
+  }
+
+  if (runtime.healthStatus === "failed" || runtime.preview?.routeStatus === "failed") {
+    return "failed" as const;
+  }
+
+  if (
+    runtime.healthStatus === "degraded" ||
+    runtime.preview?.routeStatus === "degraded" ||
+    runtime.preview?.proxyStatus !== undefined && runtime.preview.proxyStatus !== "ready"
+  ) {
+    return "degraded" as const;
+  }
+
+  return "healthy" as const;
+}
+
+function resolvePreviewUrlPreference(runtime: {
+  preview?: {
+    url: string;
+    manualFallbackUrl: string;
+    routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+    proxyStatus: "starting" | "ready" | "unavailable" | "failed";
+  } | null;
+} | null) {
+  if (!runtime?.preview) {
+    return null;
+  }
+
+  if (
+    runtime.preview.routeStatus === "registered" &&
+    runtime.preview.proxyStatus === "ready"
+  ) {
+    return runtime.preview.url;
+  }
+
+  if (
+    runtime.preview.proxyStatus === "failed" ||
+    runtime.preview.proxyStatus === "unavailable"
+  ) {
+    return runtime.preview.manualFallbackUrl;
+  }
+
+  return runtime.preview.url;
+}
+
 export function createAgentdServer(config: AgentdConfig) {
   const validationBundles = createValidationBundleManager({
     workspacesDir: config.workspacesDir,
@@ -158,6 +213,8 @@ export function createAgentdServer(config: AgentdConfig) {
   });
   const routeRegistry = createRouteRegistry({
     routesDir: config.routesDir,
+    edgeHost: config.edgeHost,
+    edgePort: config.edgePort,
   });
   const authBroker = createAuthBroker({
     authBrokerHost: config.authBrokerHost,
@@ -197,7 +254,7 @@ export function createAgentdServer(config: AgentdConfig) {
       previewHost: workspace.previewHost,
       tokenCostUsd: run?.tokenCostUsd ?? 0,
       elapsedMinutes: minutesSince(run?.startedAt ?? workspace.createdAt),
-      health: runtime?.healthStatus ?? "degraded",
+      health: derivePreviewAvailability(runtime),
       activeRunId: run?.id ?? null,
       pauseReason: run?.pauseReason ?? null,
       auth: null,
@@ -242,13 +299,12 @@ export function createAgentdServer(config: AgentdConfig) {
     const runtime = runtimeExecutor.get(workspaceId);
 
     return (
-      runtime?.preview?.manualFallbackUrl ??
-      runtime?.preview?.url ??
+      resolvePreviewUrlPreference(runtime) ??
       createPreviewUrl(workspace.previewHost)
     );
   }
 
-  return createHttpServer(async (request, response) => {
+  const httpServer = createHttpServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
     let result: Response;
     const authCallbackMatch = url.pathname.match(
@@ -318,7 +374,10 @@ export function createAgentdServer(config: AgentdConfig) {
             workspaceManager.listEvents().length,
           ),
           createRuntimeExecutorBoundary(runtimeExecutor.list().length),
-          createRouteRegistryBoundary(routeRegistry.list().length),
+          createRouteRegistryBoundary(
+            routeRegistry.list().length,
+            routeRegistry.getEdgeState(),
+          ),
           createAuthBrokerBoundary(authBroker.list().length),
           createObservabilityPolicyBoundary(
             observability.listRuns().length,
@@ -1176,9 +1235,7 @@ export function createAgentdServer(config: AgentdConfig) {
             runtime.lastError,
           );
           const updatedRuntime =
-            preview && runtime.preview
-              ? runtimeExecutor.attachPreview(workspaceId, preview)
-              : runtime;
+            preview ? runtimeExecutor.attachPreview(workspaceId, preview) : runtime;
 
           result = json(updatedRuntime ?? runtime);
         } catch (error) {
@@ -1213,4 +1270,15 @@ export function createAgentdServer(config: AgentdConfig) {
     response.writeHead(result.status, Object.fromEntries(result.headers));
     response.end(await result.text());
   });
+
+  return {
+    server: httpServer,
+    async initialize() {
+      const restoredPreviews = await routeRegistry.initialize();
+
+      for (const preview of restoredPreviews) {
+        runtimeExecutor.attachPreview(preview.workspaceId, preview);
+      }
+    },
+  };
 }

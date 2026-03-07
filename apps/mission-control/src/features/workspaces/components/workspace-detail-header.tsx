@@ -3,6 +3,8 @@ import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   deriveRuntimeWorkspaceStatus,
+  isWorkspacePreviewLive,
+  isWorkspacePreviewUsingFallback,
   resolveWorkspacePreviewUrl,
 } from "@/features/workspaces/data/workspace-detail-data";
 import { WorkspaceOperatorPanel } from "./workspace-operator-panel";
@@ -21,8 +23,8 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
     workspace.status === "validating" ||
     runtimeStatus === "running" ||
     runtimeStatus === "booting";
-  const isUsingFallbackPreview =
-    Boolean(runtime?.preview?.manualFallbackUrl) && runtime?.preview?.routeStatus !== "registered";
+  const isUsingFallbackPreview = isWorkspacePreviewUsingFallback(runtime);
+  const isLivePreviewHost = isWorkspacePreviewLive(runtime);
 
   return (
     <div className="mb-4 space-y-4">
@@ -66,6 +68,18 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
                 <span className="font-mono text-[var(--color-ink)]">{previewHref}</span>
               </>
             )}
+            {runtime.preview && (
+              <>
+                <span className="mx-2 text-[var(--color-ink-faint)]">/</span>
+                <span className="font-mono text-[var(--color-ink)]">
+                  {isLivePreviewHost
+                    ? "host live"
+                    : isUsingFallbackPreview
+                      ? "fallback path"
+                      : "host warming"}
+                </span>
+              </>
+            )}
           </div>
         )}
 
@@ -74,6 +88,14 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
             Docker is up, but the app inside is still warming. First boot may download `corepack`
             and pnpm packages into shared Docker cache volumes, then install dependencies into this
             workspace before the local preview URL starts responding.
+          </div>
+        )}
+
+        {runtime?.preview && !isLivePreviewHost && (
+          <div className="rounded-lg border border-[var(--color-warning)]/25 bg-[var(--color-warning)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
+            {isUsingFallbackPreview
+              ? "Takomi detected the workspace route, but the local edge proxy is unavailable on this machine. Use the fallback port URL until the proxy can bind the preview host."
+              : "Takomi has the preview host registered, but the host path is not live yet. Keep using the workspace page while the runtime or proxy health settles."}
           </div>
         )}
 
@@ -94,7 +116,11 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
               target="_blank"
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-2 font-mono text-sm font-semibold text-[var(--color-ink)] transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
             >
-              {isUsingFallbackPreview ? "Open Local Preview" : "Open Preview"}
+              {isUsingFallbackPreview
+                ? "Open Fallback Preview"
+                : isLivePreviewHost
+                  ? "Open Preview Host"
+                  : "Open Preview Route"}
             </Link>
           )}
         </div>

@@ -181,9 +181,9 @@ flowchart LR
 ## Current MVP Integration Notes
 
 - `agentd` is the current local source of truth for workspace metadata, runtime state, auth sessions, validation bundles, and editor companion payloads.
-- Human-readable preview hosts remain the canonical workspace identity, but local browser actions now execute against the runtime `manualFallbackUrl` until the dedicated local edge proxy task is complete.
-- Browser validation bundles run against the reachable preview URL and surface real browser and network failures instead of masking local route gaps as generic preview outages.
-- Auth broker handoffs and VS Code preview actions follow the same reachable preview URL rule so local review flows do not depend on `.takomi.localhost` DNS being active yet.
+- `agentd` now owns the local edge listener for `*.takomi.localhost`, restores persisted routes on startup, and keeps route state separate from proxy lifecycle state.
+- Human-readable preview hosts remain the canonical workspace identity and are now the preferred browser path whenever the local edge listener is healthy.
+- Browser validation bundles, auth broker handoffs, and VS Code preview actions use the custom host by default and only drop to the runtime fallback URL when the local edge proxy is unavailable.
 
 ## Main System Components
 

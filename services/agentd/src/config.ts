@@ -11,6 +11,8 @@ export interface AgentdConfig {
   appName: string;
   authBrokerHost: string;
   dataDir: string;
+  edgeHost: string;
+  edgePort: number;
   editorTarget: EditorTarget;
   host: string;
   port: number;
@@ -38,6 +40,8 @@ export function loadAgentdConfig(
   const agentd = agentdEnvSchema.parse({
     TAKOMI_AGENTD_HOST: env.TAKOMI_AGENTD_HOST,
     TAKOMI_AGENTD_PORT: env.TAKOMI_AGENTD_PORT,
+    TAKOMI_EDGE_HOST: env.TAKOMI_EDGE_HOST,
+    TAKOMI_EDGE_PORT: env.TAKOMI_EDGE_PORT,
   });
 
   const dataDir = path.resolve(cwd, shared.TAKOMI_DATA_DIR);
@@ -51,6 +55,8 @@ export function loadAgentdConfig(
     appName: shared.TAKOMI_APP_NAME,
     authBrokerHost: createAuthBrokerHost(shared.TAKOMI_PREVIEW_DOMAIN),
     dataDir,
+    edgeHost: agentd.TAKOMI_EDGE_HOST,
+    edgePort: agentd.TAKOMI_EDGE_PORT,
     editorTarget: shared.TAKOMI_EDITOR_TARGET,
     host: agentd.TAKOMI_AGENTD_HOST,
     port: agentd.TAKOMI_AGENTD_PORT,

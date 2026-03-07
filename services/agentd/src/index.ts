@@ -5,9 +5,10 @@ import { createAgentdServer } from "./server";
 const config = loadAgentdConfig();
 ensureRuntimeLayout(config);
 
-const server = createAgentdServer(config);
+const agentd = createAgentdServer(config);
+await agentd.initialize();
 
-server.listen(config.port, config.host, () => {
+agentd.server.listen(config.port, config.host, () => {
   process.stdout.write(
     `[agentd] listening on http://${config.host}:${config.port} with data dir ${config.dataDir}\n`,
   );

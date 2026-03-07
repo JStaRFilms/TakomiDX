@@ -520,11 +520,37 @@ function isAgentdNotFoundError(error: unknown) {
   return error instanceof Error && error.message.includes("(404).");
 }
 
+export function isWorkspacePreviewLive(runtime: WorkspaceRuntimeState | null) {
+  return (
+    runtime?.preview?.routeStatus === "registered" &&
+    runtime.preview.proxyStatus === "ready"
+  );
+}
+
+export function isWorkspacePreviewUsingFallback(runtime: WorkspaceRuntimeState | null) {
+  return (
+    runtime?.preview?.manualFallbackUrl !== undefined &&
+    runtime?.preview !== null &&
+    (runtime.preview.proxyStatus === "failed" ||
+      runtime.preview.proxyStatus === "unavailable")
+  );
+}
+
 export function resolveWorkspacePreviewUrl(
   workspace: WorkspaceSummary,
   runtime: WorkspaceRuntimeState | null,
 ) {
-  return runtime?.preview?.manualFallbackUrl ?? `http://${workspace.previewHost}`;
+  const preview = runtime?.preview;
+
+  if (preview && isWorkspacePreviewLive(runtime)) {
+    return preview.url;
+  }
+
+  if (preview && isWorkspacePreviewUsingFallback(runtime)) {
+    return preview.manualFallbackUrl;
+  }
+
+  return preview?.url ?? `http://${workspace.previewHost}`;
 }
 
 export function deriveRuntimeWorkspaceStatus(
@@ -593,11 +619,15 @@ function derivePreviewState(runtime: WorkspaceRuntimeState | null): WorkspaceDet
     return "offline";
   }
 
+  if (isWorkspacePreviewLive(runtime)) {
+    return "live";
+  }
+
   if (runtime.lifecycle === "booting" || runtime.healthStatus === "degraded") {
     return "warming";
   }
 
-  return runtime.preview ? "live" : "offline";
+  return runtime.preview ? "warming" : "offline";
 }
 
 function deriveNextAction(

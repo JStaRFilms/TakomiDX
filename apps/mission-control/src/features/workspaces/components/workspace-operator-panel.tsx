@@ -3,7 +3,11 @@
 import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkspaceRuntimeState, WorkspaceSummary } from "@takomi/contracts";
-import { deriveRuntimeWorkspaceStatus } from "@/features/workspaces/data/workspace-detail-data";
+import {
+  deriveRuntimeWorkspaceStatus,
+  isWorkspacePreviewLive,
+  isWorkspacePreviewUsingFallback,
+} from "@/features/workspaces/data/workspace-detail-data";
 
 interface WorkspaceOperatorPanelProps {
   workspace: WorkspaceSummary;
@@ -85,6 +89,8 @@ export function WorkspaceOperatorPanel({
   const activeRuntime = liveRuntime ?? runtime;
   const canStartRun = !workspace.activeRunId;
   const runtimeStatus = deriveRuntimeWorkspaceStatus(activeRuntime);
+  const isLivePreviewHost = isWorkspacePreviewLive(activeRuntime);
+  const isFallbackPreview = isWorkspacePreviewUsingFallback(activeRuntime);
   const canStartRuntime = !isBusy && (!activeRuntime || runtimeStatus === "failed");
   const runtimeActionLabel =
     runtimeStatus === "running"
@@ -409,11 +415,21 @@ export function WorkspaceOperatorPanel({
             </div>
           </div>
 
-          {activeRuntime.preview?.routeStatus !== "registered" && (
+          {activeRuntime.preview && !isLivePreviewHost && (
             <div className="mt-3 rounded-lg border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
-              Custom preview host is not attached yet. Takomi is writing route manifests, but this
-              machine does not have the local edge proxy wired up yet, so use the local fallback
-              preview URL until the route status is registered.
+              {isFallbackPreview
+                ? "Takomi knows the route target, but the local edge proxy is unavailable. Keep using the fallback port URL and free port 80 on this machine if another process is occupying it."
+                : "The local edge proxy is up, but this workspace host is not live yet. Takomi will keep polling runtime and route health until the custom host is ready."}
+            </div>
+          )}
+
+          {isLivePreviewHost && (
+            <div className="mt-3 rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
+              Preview host is live at
+              <span className="ml-1 font-mono text-[var(--color-ink)]">
+                {activeRuntime.preview?.url}
+              </span>
+              . Fallback ports remain available only as a proxy-outage escape hatch.
             </div>
           )}
 

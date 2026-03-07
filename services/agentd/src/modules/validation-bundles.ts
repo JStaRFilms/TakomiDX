@@ -183,6 +183,33 @@ function resolveBrowserSidecarScript() {
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]!;
 }
 
+function resolveValidationPreviewUrl(
+  workspace: WorkspaceMetadata,
+  runtime: WorkspaceRuntimeState | null,
+  previewUrl?: string | null,
+) {
+  if (previewUrl) {
+    return previewUrl;
+  }
+
+  if (
+    runtime?.preview?.routeStatus === "registered" &&
+    runtime.preview.proxyStatus === "ready"
+  ) {
+    return runtime.preview.url;
+  }
+
+  if (
+    runtime?.preview?.manualFallbackUrl &&
+    (runtime.preview.proxyStatus === "failed" ||
+      runtime.preview.proxyStatus === "unavailable")
+  ) {
+    return runtime.preview.manualFallbackUrl;
+  }
+
+  return createPreviewUrl(workspace.previewHost);
+}
+
 export function createPythonPlaywrightSidecarDriver(): BrowserSidecarDriver {
   const scriptPath = resolveBrowserSidecarScript();
 
@@ -425,11 +452,11 @@ export function createValidationBundleManager(
       const requestedChecks = (input.checklist ?? defaultChecklist).map((item) =>
         validationChecklistInputSchema.parse(item),
       );
-      const previewUrl =
-        input.previewUrl ??
-        input.runtime?.preview?.manualFallbackUrl ??
-        input.runtime?.preview?.url ??
-        createPreviewUrl(input.workspace.previewHost);
+      const previewUrl = resolveValidationPreviewUrl(
+        input.workspace,
+        input.runtime,
+        input.previewUrl,
+      );
       const screenshotPath = path.join(
         getBrowserDir(input.workspace.id),
         "validation-screenshot.png",

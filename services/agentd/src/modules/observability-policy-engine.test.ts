@@ -157,8 +157,11 @@ describe("observability policy engine", () => {
       url: `http://${workspace.previewHost}/`,
       routeStatus: "registered",
       healthStatus: "healthy",
+      proxyHost: "127.0.0.1",
+      proxyPort: 80,
+      proxyStatus: "ready",
       target: "127.0.0.1:45231",
-      manualFallbackUrl: "http://127.0.0.1:45231/healthz",
+      manualFallbackUrl: "http://127.0.0.1:45231/",
       lastError: null,
     });
     authBroker.createBrowserSession({

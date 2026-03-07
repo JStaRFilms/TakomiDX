@@ -91,15 +91,19 @@ describe("@takomi/contracts", () => {
         healthPath: "/healthz",
         healthStatus: "healthy",
         status: "registered",
-        proxyAdapter: "caddy",
+        proxyAdapter: "takomi-local-edge",
+        proxyHost: "127.0.0.1",
+        proxyPort: 80,
+        proxyStatus: "ready",
         registeredAt: "2026-03-07T03:07:31.000Z",
         lastError: null,
       }),
     ).toMatchObject({
       workspaceId: "ws_abcd1234",
       url: "http://runtime-routing.takomi.localhost/",
-      manualFallbackUrl: "http://127.0.0.1:45231/healthz",
+      manualFallbackUrl: "http://127.0.0.1:45231/",
       routeStatus: "registered",
+      proxyStatus: "ready",
     });
   });
 

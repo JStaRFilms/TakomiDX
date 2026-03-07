@@ -68,8 +68,11 @@ function defineRuntime(workspace: WorkspaceMetadata): WorkspaceRuntimeState {
       url: createPreviewUrl(workspace.previewHost),
       routeStatus: "registered",
       healthStatus: "healthy",
+      proxyHost: "127.0.0.1",
+      proxyPort: 80,
+      proxyStatus: "ready",
       target: "127.0.0.1:3000",
-      manualFallbackUrl: "http://127.0.0.1:3000/healthz",
+      manualFallbackUrl: "http://127.0.0.1:3000/",
       lastError: null,
     },
     startedAt: "2026-03-07T03:08:00.000Z",
@@ -141,7 +144,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(result.bundle.status).toBe("passed");
-    expect(result.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
+    expect(result.bundle.previewUrl).toBe("http://validation-suite.takomi.localhost/");
     expect(result.summary.status).toBe("passed");
     expect(result.review.validationStatus).toBe("passed");
     expect(
@@ -179,7 +182,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(result.bundle.status).toBe("blocked");
-    expect(result.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
+    expect(result.bundle.previewUrl).toBe("http://validation-suite.takomi.localhost/");
     expect(result.review.validationStatus).toBe("blocked");
     expect(result.bundle.majorFailures[0]).toContain("Preview responded with 503");
     expect(manager.canComplete(workspace.id)).toMatchObject({
@@ -262,7 +265,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(sidecarFailure.bundle.status).toBe("failed");
-    expect(sidecarFailure.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
+    expect(sidecarFailure.bundle.previewUrl).toBe("http://validation-suite.takomi.localhost/");
     expect(sidecarFailure.bundle.majorFailures[0]).toContain("Playwright browser launch failed");
     expect(diagnosticFailure.bundle.status).toBe("failed");
     expect(diagnosticFailure.bundle.stats.consoleErrorCount).toBe(1);

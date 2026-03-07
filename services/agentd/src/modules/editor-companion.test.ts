@@ -47,6 +47,9 @@ const runtime: NonNullable<BuildEditorCompanionWorkspaceInput["runtime"]> = {
     url: "http://billing-fix.takomi.localhost/",
     routeStatus: "registered" as const,
     healthStatus: "healthy" as const,
+    proxyHost: "127.0.0.1",
+    proxyPort: 80,
+    proxyStatus: "ready" as const,
     target: "127.0.0.1:3000",
     manualFallbackUrl: "http://127.0.0.1:3000/",
     lastError: null,
@@ -124,7 +127,7 @@ describe("editor companion workspace models", () => {
 
     expect(item.status).toBe("failed");
     expect(item.approval.status).toBe("pending");
-    expect(item.previewUrl).toBe("http://127.0.0.1:3000/");
+    expect(item.previewUrl).toBe("http://billing-fix.takomi.localhost/");
     expect(item.actions.map((action) => action.id)).toEqual([
       "workspace",
       "preview",

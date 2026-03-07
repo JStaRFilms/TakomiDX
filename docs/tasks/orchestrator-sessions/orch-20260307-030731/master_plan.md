@@ -22,7 +22,7 @@ This is greenfield implementation planning.
 - Task 00 completed the Genesis backfill for requirements, standards, issue files, builder guidance, and verification baseline.
 - Task 08 completed the VS Code companion integration and is ready for downstream integration review.
 - Task 09 completed the integration hardening pass, removed misleading Mission Control sample-data fallback behavior, and aligned validation/auth/editor preview flows around reachable local runtime URLs.
-- The remaining integration gap is the dedicated local edge proxy layer in Task 10; `.takomi.localhost` hosts are still modelled and persisted, but live local opens currently rely on `manualFallbackUrl`.
+- Task 10 completed the dedicated local edge proxy layer; `.takomi.localhost` hosts now open through a live Takomi-owned local listener and fall back to `manualFallbackUrl` only when the proxy layer is unavailable.
 
 ## Scope Guardrails
 
@@ -74,6 +74,7 @@ This is greenfield implementation planning.
 | 07 | Browser sidecar and validation bundles | code/test | `vibe-build` | `takomi`, `webapp-testing`, `avoid-feature-creep` | 03, 05, 06 | Wave 5A |
 | 08 | VS Code extension and editor hooks | code | `vibe-build` | `takomi`, `nextjs-standards`, `avoid-feature-creep` | 05, 06, 07 | Wave 5B |
 | 09 | Integration hardening, review, and doc sync | review | `review_code` | `takomi`, `code-review`, `sync-docs`, `webapp-testing` | 00-08 | Wave 6 |
+| 10 | Local edge proxy for stable preview hosts | code/test | `vibe-build` | `takomi`, `webapp-testing`, `nextjs-standards` | 05, 06, 07, 09 | Wave 6B |
 
 ## Dependency Graph
 
@@ -125,3 +126,4 @@ flowchart LR
 - [x] Task 07 complete
 - [x] Task 08 complete
 - [x] Task 09 complete
+- [x] Task 10 complete

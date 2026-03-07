@@ -5,6 +5,8 @@ export function buildHealthPayload(config: AgentdConfig) {
     appName: config.appName,
     authBrokerHost: config.authBrokerHost,
     dataDir: config.dataDir,
+    edgeHost: config.edgeHost,
+    edgePort: config.edgePort,
     editorTarget: config.editorTarget,
     previewDomain: config.previewDomain,
     runtimeBackend: config.runtimeBackend,

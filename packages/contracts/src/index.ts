@@ -42,6 +42,12 @@ export const previewRouteStatusSchema = z.enum([
   "failed",
   "removed",
 ]);
+export const localEdgeProxyStatusSchema = z.enum([
+  "starting",
+  "ready",
+  "unavailable",
+  "failed",
+]);
 export const routeTargetSchema = z.string().regex(/^[a-z0-9.-]+:\d{1,5}$/i);
 export const authProviderSchema = z
   .string()
@@ -138,6 +144,8 @@ export const missionControlPublicEnvSchema = z.object({
 export const agentdEnvSchema = z.object({
   TAKOMI_AGENTD_HOST: z.string().min(1).default("127.0.0.1"),
   TAKOMI_AGENTD_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+  TAKOMI_EDGE_HOST: z.string().min(1).default("127.0.0.1"),
+  TAKOMI_EDGE_PORT: z.coerce.number().int().min(1).max(65535).default(80),
 });
 
 export const workspaceArtifactLayoutSchema = z.object({
@@ -638,6 +646,16 @@ export const workspaceRuntimeConfigSchema = z.object({
   healthCheckPath: z.string().min(1).default("/"),
 });
 
+export const localEdgeProxyStateSchema = z.object({
+  adapter: z.string().min(1),
+  host: z.string().min(1),
+  port: z.number().int().min(1).max(65535),
+  status: localEdgeProxyStatusSchema,
+  activeRoutes: z.number().int().min(0).default(0),
+  startedAt: z.string().datetime({ offset: true }).nullable().default(null),
+  lastError: z.string().min(1).nullable().default(null),
+});
+
 export const previewRouteRecordSchema = z.object({
   workspaceId: workspaceIdSchema,
   host: previewDomainSchema,
@@ -648,6 +666,9 @@ export const previewRouteRecordSchema = z.object({
   healthStatus: healthStatusSchema.default("degraded"),
   status: previewRouteStatusSchema.default("pending"),
   proxyAdapter: z.string().min(1).default("caddy"),
+  proxyHost: z.string().min(1).default("127.0.0.1"),
+  proxyPort: z.number().int().min(1).max(65535).default(80),
+  proxyStatus: localEdgeProxyStatusSchema.default("starting"),
   registeredAt: z.string().datetime({ offset: true }),
   lastError: z.string().min(1).nullable().default(null),
 });
@@ -658,6 +679,9 @@ export const previewRegistrationPayloadSchema = z.object({
   url: z.string().url(),
   routeStatus: previewRouteStatusSchema,
   healthStatus: healthStatusSchema,
+  proxyHost: z.string().min(1),
+  proxyPort: z.number().int().min(1).max(65535),
+  proxyStatus: localEdgeProxyStatusSchema,
   target: routeTargetSchema,
   manualFallbackUrl: z.string().url(),
   lastError: z.string().min(1).nullable(),
@@ -751,6 +775,7 @@ export type HealthStatus = z.infer<typeof healthStatusSchema>;
 export type RuntimeLifecycleState = z.infer<typeof runtimeLifecycleStateSchema>;
 export type PreviewProtocol = z.infer<typeof previewProtocolSchema>;
 export type PreviewRouteStatus = z.infer<typeof previewRouteStatusSchema>;
+export type LocalEdgeProxyStatus = z.infer<typeof localEdgeProxyStatusSchema>;
 export type AuthFlowType = z.infer<typeof authFlowTypeSchema>;
 export type AuthSessionStatus = z.infer<typeof authSessionStatusSchema>;
 export type AuthDeviceFlowStatus = z.infer<typeof authDeviceFlowStatusSchema>;
@@ -856,6 +881,7 @@ export type EditorCompanionWorkspaceDetailResponse = z.infer<
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;
 export type WorkspaceRuntimeConfig = z.infer<typeof workspaceRuntimeConfigSchema>;
+export type LocalEdgeProxyState = z.infer<typeof localEdgeProxyStateSchema>;
 export type PreviewRouteRecord = z.infer<typeof previewRouteRecordSchema>;
 export type PreviewRegistrationPayload = z.infer<
   typeof previewRegistrationPayloadSchema
@@ -868,6 +894,22 @@ function normalizePreviewPath(pathname: string): string {
   }
 
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
+}
+
+function formatHostWithOptionalPort(
+  host: string,
+  protocol: PreviewProtocol,
+  port?: number | null,
+) {
+  if (!port) {
+    return host;
+  }
+
+  if ((protocol === "http" && port === 80) || (protocol === "https" && port === 443)) {
+    return host;
+  }
+
+  return `${host}:${port}`;
 }
 
 export function createPreviewHost(
@@ -918,8 +960,13 @@ export function createPreviewUrl(
   host: string,
   protocol: PreviewProtocol = "http",
   pathname: string = "/",
+  port?: number | null,
 ): string {
-  return `${protocol}://${host}${normalizePreviewPath(pathname)}`;
+  return `${protocol}://${formatHostWithOptionalPort(
+    host,
+    protocol,
+    port,
+  )}${normalizePreviewPath(pathname)}`;
 }
 
 export function createRuntimeTarget(
@@ -950,15 +997,14 @@ export function createPreviewRegistrationPayload(
   return previewRegistrationPayloadSchema.parse({
     workspaceId: route.workspaceId,
     host: route.host,
-    url: createPreviewUrl(route.host, route.protocol),
+    url: createPreviewUrl(route.host, route.protocol, "/", route.proxyPort),
     routeStatus: route.status,
     healthStatus: route.healthStatus,
+    proxyHost: route.proxyHost,
+    proxyPort: route.proxyPort,
+    proxyStatus: route.proxyStatus,
     target: route.target,
-    manualFallbackUrl: createManualFallbackUrl(
-      route.target,
-      route.protocol,
-      route.healthPath,
-    ),
+    manualFallbackUrl: createManualFallbackUrl(route.target, route.protocol, "/"),
     lastError: route.lastError,
   });
 }

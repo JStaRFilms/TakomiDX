@@ -11,6 +11,7 @@ import {
   RouteRegistrationError,
   createRouteRegistry,
 } from "./route-registry";
+import { createLocalEdgeProxy } from "./local-edge-proxy";
 import {
   RuntimeBootError,
   createRuntimeExecutor,
@@ -86,6 +87,10 @@ describe("runtime executor and route registry", () => {
     });
     const routeRegistry = createRouteRegistry({
       routesDir: path.join(root, "routes"),
+      edgeRuntime: createLocalEdgeProxy({
+        host: "127.0.0.1",
+        port: 0,
+      }),
     });
     const configs = [
       defineRuntimeConfig({
@@ -168,8 +173,41 @@ describe("runtime executor and route registry", () => {
       routesDir: path.join(root, "routes"),
       edgeAdapter: {
         name: "caddy",
+        async ensureStarted() {
+          return {
+            adapter: "caddy",
+            host: "127.0.0.1",
+            port: 80,
+            status: "ready",
+            activeRoutes: 0,
+            startedAt: "2026-03-07T03:07:31.000Z",
+            lastError: null,
+          };
+        },
         async upsert() {
           throw new Error("Caddy admin API refused the route.");
+        },
+        async remove() {
+          return {
+            adapter: "caddy",
+            host: "127.0.0.1",
+            port: 80,
+            status: "ready",
+            activeRoutes: 0,
+            startedAt: "2026-03-07T03:07:31.000Z",
+            lastError: null,
+          };
+        },
+        getState() {
+          return {
+            adapter: "caddy",
+            host: "127.0.0.1",
+            port: 80,
+            status: "ready",
+            activeRoutes: 0,
+            startedAt: "2026-03-07T03:07:31.000Z",
+            lastError: null,
+          };
         },
       },
     });
@@ -189,7 +227,7 @@ describe("runtime executor and route registry", () => {
     const routeRecord = JSON.parse(
       readFileSync(path.join(root, "routes", "ws_routefail1.json"), "utf8"),
     );
-    expect(routeRecord.status).toBe("failed");
+    expect(routeRecord.status).toBe("degraded");
     expect(routeRecord.lastError).toContain("Caddy admin API");
   });
 
@@ -197,6 +235,10 @@ describe("runtime executor and route registry", () => {
     const root = createTempDir();
     const firstRegistry = createRouteRegistry({
       routesDir: path.join(root, "routes"),
+      edgeRuntime: createLocalEdgeProxy({
+        host: "127.0.0.1",
+        port: 0,
+      }),
     });
 
     await firstRegistry.register({
@@ -211,7 +253,13 @@ describe("runtime executor and route registry", () => {
 
     const secondRegistry = createRouteRegistry({
       routesDir: path.join(root, "routes"),
+      edgeRuntime: createLocalEdgeProxy({
+        host: "127.0.0.1",
+        port: 0,
+      }),
     });
+
+    await secondRegistry.initialize();
 
     expect(secondRegistry.get("ws_restore01")).toMatchObject({
       host: "restore-route.takomi.localhost",
