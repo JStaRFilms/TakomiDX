@@ -4,6 +4,7 @@ import {
   createManualFallbackUrl,
   createAuthBrokerCallbackUrl,
   createAuthBrokerHost,
+  reviewBundleSchema,
   modelUsageSchema,
   policyDecisionSchema,
   createWorkspaceBranchName,
@@ -12,6 +13,7 @@ import {
   createPreviewUrl,
   createRuntimeContainerName,
   createWorkspaceDataRoot,
+  validationBundleSchema,
   workspaceMetadataSchema,
   workspaceSlugSchema,
 } from "./index";
@@ -215,6 +217,116 @@ describe("@takomi/contracts", () => {
     ).toMatchObject({
       status: "paused",
       stopReason: "budget_exceeded",
+    });
+  });
+
+  it("validates browser-backed validation bundles", () => {
+    expect(
+      validationBundleSchema.parse({
+        id: "bundle_001",
+        workspaceId: "ws_abcd1234",
+        workspaceSlug: "billing-fix",
+        runId: "run_abcd1234",
+        previewUrl: "http://billing-fix.takomi.localhost/",
+        previewHost: "billing-fix.takomi.localhost",
+        status: "failed",
+        generatedAt: "2026-03-07T03:07:31.000Z",
+        summary: "Validation failed with 1 failed checks, 1 console errors, and 0 network failures.",
+        sidecar: {
+          status: "ready",
+          driver: "playwright-python",
+          capturedAt: "2026-03-07T03:07:31.000Z",
+          screenshotPath: "C:/repos/.takomi/workspaces/ws_abcd1234/browser/validation-screenshot.png",
+          title: "Billing Fix",
+          console: [
+            {
+              level: "error",
+              text: "ReferenceError: auth is not defined",
+              location: "http://billing-fix.takomi.localhost/app.js:10",
+            },
+          ],
+          network: [],
+          selectors: [
+            {
+              id: "document-shell",
+              label: "Document shell renders",
+              selector: "body",
+              status: "passed",
+              detail: "Selector body matched in the live preview.",
+              textSnippet: "Billing settings",
+            },
+          ],
+          detail: null,
+        },
+        requestedChecks: [
+          {
+            id: "document-shell",
+            label: "Document shell renders",
+            selector: "body",
+            requiredText: null,
+            required: true,
+          },
+        ],
+        selectorChecks: [
+          {
+            id: "document-shell",
+            label: "Document shell renders",
+            selector: "body",
+            status: "passed",
+            detail: "Selector body matched in the live preview.",
+            textSnippet: "Billing settings",
+          },
+        ],
+        artifacts: [
+          {
+            kind: "screenshot",
+            label: "Validation screenshot",
+            path: "C:/repos/.takomi/workspaces/ws_abcd1234/browser/validation-screenshot.png",
+            contentType: "image/png",
+          },
+        ],
+        majorFailures: ["Console error: ReferenceError: auth is not defined"],
+        stats: {
+          passedChecks: 1,
+          failedChecks: 0,
+          blockedChecks: 0,
+          consoleErrorCount: 1,
+          networkFailureCount: 0,
+        },
+      }),
+    ).toMatchObject({
+      status: "failed",
+      stats: {
+        consoleErrorCount: 1,
+      },
+    });
+  });
+
+  it("validates human-readable review bundles", () => {
+    expect(
+      reviewBundleSchema.parse({
+        validationBundleId: "bundle_001",
+        workspaceId: "ws_abcd1234",
+        workspaceSlug: "billing-fix",
+        runId: "run_abcd1234",
+        previewUrl: "http://billing-fix.takomi.localhost/",
+        validationStatus: "passed",
+        generatedAt: "2026-03-07T03:07:31.000Z",
+        testSummary: "Validation passed with 2 checks, 0 console errors, and 0 network failures.",
+        diagnostics: ["No blocking diagnostics were captured during validation."],
+        artifactLinks: [
+          {
+            kind: "bundle",
+            label: "Review bundle",
+            path: "C:/repos/.takomi/workspaces/ws_abcd1234/review/review-bundle.json",
+            contentType: "application/json",
+          },
+        ],
+        recommendedAction:
+          "Open the preview, confirm the live behavior matches the diff, and then approve completion.",
+      }),
+    ).toMatchObject({
+      validationStatus: "passed",
     });
   });
 });

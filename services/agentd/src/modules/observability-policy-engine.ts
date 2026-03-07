@@ -113,6 +113,10 @@ export interface CreateObservabilityPolicyEngineOptions {
   spanIdGenerator?: () => string;
   traceIdGenerator?: () => string;
   rules?: PolicyRule[];
+  completionGuard?: (run: AgentRunSummary) => {
+    allowed: boolean;
+    reason: string | null;
+  };
 }
 
 interface RuntimeStateChangeInput {
@@ -268,6 +272,7 @@ export function createObservabilityPolicyEngine(
     options.policyDecisionIdGenerator ?? (() => createIdentifier("pol"));
   const spanIdGenerator = options.spanIdGenerator ?? (() => createHexId(8));
   const traceIdGenerator = options.traceIdGenerator ?? (() => createHexId(16));
+  const completionGuard = options.completionGuard;
   const rules = (options.rules ?? defaultPolicyRules).map((rule) =>
     policyRuleSchema.parse(rule),
   );
@@ -780,6 +785,34 @@ export function createObservabilityPolicyEngine(
 
     completeRun(runId: string, summary: string = "Run completed.") {
       const run = getRunOrThrow(runId);
+      const guard = completionGuard?.(run) ?? {
+        allowed: true,
+        reason: null,
+      };
+
+      if (!guard.allowed) {
+        const blocked = emitEvent({
+          workspaceId: run.workspaceId,
+          runId,
+          category: "validation",
+          type: "validation.completion_blocked",
+          source: "observability-policy-engine",
+          summary: guard.reason ?? "Validation must pass before completion.",
+          detail: summary,
+          outcome: "error",
+          trace: {
+            name: "validation.completion_blocked",
+            kind: "internal",
+            durationMs: 0,
+            statusCode: "error",
+            statusMessage: guard.reason,
+          },
+          attributes: {},
+        });
+
+        return applyEventToRun(run, blocked.event);
+      }
+
       const built = emitEvent({
         workspaceId: run.workspaceId,
         runId,

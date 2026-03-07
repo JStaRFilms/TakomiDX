@@ -40,6 +40,7 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
       ? `http://${workspace.previewHost}`
       : `/workspaces/${workspace.id}/diff`;
   const secondaryLabel = isDanger ? "Logs" : hasLivePreview ? "Preview" : "Diff";
+  const validationLabel = workspace.validation?.status ?? "queued";
 
   return (
     <article
@@ -94,6 +95,12 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
         <div className="flex items-center justify-between py-1">
           <dt className="text-[var(--color-ink-muted)]">Elapsed</dt>
           <dd className="font-mono text-[var(--color-ink)]">{workspace.elapsedMinutes}m</dd>
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <dt className="text-[var(--color-ink-muted)]">Validation</dt>
+          <dd className="font-mono text-[11px] uppercase text-[var(--color-ink-faint)]">
+            {validationLabel}
+          </dd>
         </div>
       </dl>
 

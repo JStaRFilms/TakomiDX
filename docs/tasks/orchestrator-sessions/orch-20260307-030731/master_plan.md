@@ -118,8 +118,8 @@ flowchart LR
 - [x] Task 02 complete
 - [x] Task 03 complete
 - [x] Task 04 complete
-- [ ] Task 05 complete
-- [ ] Task 06 complete
-- [ ] Task 07 complete
+- [x] Task 05 complete
+- [x] Task 06 complete
+- [x] Task 07 complete
 - [ ] Task 08 complete
 - [ ] Task 09 complete

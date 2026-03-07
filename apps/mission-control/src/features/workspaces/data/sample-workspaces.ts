@@ -26,6 +26,12 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     activeRunId: "run_auth0001",
     pauseReason: null,
     auth: null,
+    validation: {
+      status: "running",
+      summary: "Browser validation is currently collecting evidence from the live auth preview.",
+      lastValidatedAt: "2026-03-07T13:02:00.000Z",
+      bundleId: "bundle_auth0001",
+    },
   }),
   defineWorkspace({
     id: "ws_web00002",
@@ -43,6 +49,12 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     pauseReason:
       "Approval required before applying migration and cross-cutting UI edits.",
     auth: null,
+    validation: {
+      status: "blocked",
+      summary: "Validation is blocked until the operator reviews the migration-bearing preview.",
+      lastValidatedAt: "2026-03-07T12:49:00.000Z",
+      bundleId: "bundle_web0002",
+    },
   }),
   defineWorkspace({
     id: "ws_api00003",
@@ -59,6 +71,12 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     activeRunId: "run_api00003",
     pauseReason: null,
     auth: null,
+    validation: {
+      status: "failed",
+      summary: "Validation failed because the middleware compile break prevents a reviewable preview.",
+      lastValidatedAt: "2026-03-07T12:31:00.000Z",
+      bundleId: "bundle_api0003",
+    },
   }),
   defineWorkspace({
     id: "ws_docs0004",
@@ -75,6 +93,12 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     activeRunId: "run_docs0004",
     pauseReason: null,
     auth: null,
+    validation: {
+      status: "passed",
+      summary: "Validation evidence is attached and ready for review.",
+      lastValidatedAt: "2026-03-07T11:58:00.000Z",
+      bundleId: "bundle_docs0004",
+    },
   }),
   defineWorkspace({
     id: "ws_db000005",
@@ -91,5 +115,11 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     activeRunId: "run_db000005",
     pauseReason: null,
     auth: null,
+    validation: {
+      status: "running",
+      summary: "Validation bundle generation is still streaming benchmark evidence.",
+      lastValidatedAt: "2026-03-07T12:16:00.000Z",
+      bundleId: "bundle_db0005",
+    },
   }),
 ];

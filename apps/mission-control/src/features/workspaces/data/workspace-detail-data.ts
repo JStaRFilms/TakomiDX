@@ -2,6 +2,8 @@ import type {
   AgentEvent,
   AgentRunSummary,
   AgentTraceSpan,
+  ReviewBundle,
+  ValidationBundle,
   WorkspaceRuntimeState,
   WorkspaceSummary,
 } from "@takomi/contracts";
@@ -41,6 +43,22 @@ export interface WorkspaceValidationItem {
   detail: string;
 }
 
+export interface WorkspaceReviewArtifactItem {
+  label: string;
+  path: string;
+  kind: string;
+}
+
+export interface WorkspaceReviewBundleModel {
+  previewUrl: string;
+  validationStatus: "queued" | "running" | "passed" | "failed" | "blocked";
+  generatedAt: string | null;
+  testSummary: string;
+  recommendedAction: string;
+  diagnostics: string[];
+  artifacts: WorkspaceReviewArtifactItem[];
+}
+
 export interface WorkspaceDetailModel {
   mission: string;
   currentAction: string;
@@ -55,6 +73,7 @@ export interface WorkspaceDetailModel {
   logs: WorkspaceLogItem[];
   diff: WorkspaceDiffItem[];
   validation: WorkspaceValidationItem[];
+  reviewBundle: WorkspaceReviewBundleModel | null;
 }
 
 const workspaceDetails: Record<string, WorkspaceDetailModel> = {
@@ -147,6 +166,7 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
         detail: "Open the preview host and confirm the billing sign-in loop resolves cleanly.",
       },
     ],
+    reviewBundle: null,
   },
   ws_web00002: {
     mission: "Ship the onboarding flow changes without surprising the operator with an unsafe migration.",
@@ -238,6 +258,7 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
         detail: "Preview is live and ready for a supervised onboarding smoke test.",
       },
     ],
+    reviewBundle: null,
   },
   ws_api00003: {
     mission: "Recover the rate-limiter branch after a TypeScript break in middleware.",
@@ -329,6 +350,7 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
         detail: "Runtime validation is blocked until the middleware types are corrected.",
       },
     ],
+    reviewBundle: null,
   },
   ws_docs0004: {
     mission: "Synchronize API docs with the latest contracts and merge the review-safe update.",
@@ -391,6 +413,7 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
         detail: "Sync scripts completed and produced stable output.",
       },
     ],
+    reviewBundle: null,
   },
   ws_db000005: {
     mission: "Validate the new pgvector HNSW index under realistic query load.",
@@ -470,6 +493,7 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
         detail: "Explain analyze confirms the new index is selected.",
       },
     ],
+    reviewBundle: null,
   },
 };
 
@@ -479,6 +503,8 @@ interface AgentdWorkspaceDetailResponse {
   runtime: WorkspaceRuntimeState | null;
   events: AgentEvent[];
   spans: AgentTraceSpan[];
+  validationBundle: ValidationBundle | null;
+  reviewBundle: ReviewBundle | null;
 }
 
 function getSampleWorkspace(workspaceId: string): WorkspaceSummary | null {
@@ -532,7 +558,46 @@ function derivePreviewState(runtime: WorkspaceRuntimeState | null): WorkspaceDet
   return runtime.preview ? "live" : "offline";
 }
 
-function deriveNextAction(run: AgentRunSummary | null) {
+function deriveNextAction(
+  run: AgentRunSummary | null,
+  validationBundle: ValidationBundle | null,
+) {
+  if (validationBundle?.status === "blocked") {
+    return {
+      nextAction: "Restore the live preview and re-run browser validation before completion.",
+      nextActionDetail:
+        "Validation is blocked because the preview host or route is not currently reviewable.",
+      operatorNote:
+        "This workspace should not appear complete until a browser-backed bundle is captured successfully.",
+      approvalPrompt: null,
+      failurePrompt: validationBundle.summary,
+    };
+  }
+
+  if (validationBundle?.status === "failed") {
+    return {
+      nextAction: "Inspect the validation bundle diagnostics and repair the preview before trying again.",
+      nextActionDetail:
+        "Mission Control has a real browser evidence bundle, so start with the failing selector, console, and network diagnostics instead of generic logs.",
+      operatorNote:
+        "Treat validation bundle failures as the source of truth for whether the workspace is actually reviewable.",
+      approvalPrompt: null,
+      failurePrompt: validationBundle.summary,
+    };
+  }
+
+  if (validationBundle?.status === "passed") {
+    return {
+      nextAction: "Open the validated preview, compare it against the diff, and approve completion if it looks correct.",
+      nextActionDetail:
+        "The latest browser-backed bundle is clean, so the remaining work is a human review of the live preview and patch scope.",
+      operatorNote:
+        "Use the review bundle artifacts to verify trust quickly without reconstructing the run manually.",
+      approvalPrompt: null,
+      failurePrompt: null,
+    };
+  }
+
   if (!run) {
     return {
       nextAction: "Start an agent run so observability and policy data can stream into Mission Control.",
@@ -595,10 +660,26 @@ function deriveNextAction(run: AgentRunSummary | null) {
 function buildDetailFromAgentdResponse(
   payload: AgentdWorkspaceDetailResponse,
 ): WorkspaceDetailModel {
-  const flow = deriveNextAction(payload.run);
-  const validationEvents = payload.events.filter(
-    (event) => event.category === "validation",
-  );
+  const flow = deriveNextAction(payload.run, payload.validationBundle);
+  const validationItems =
+    payload.validationBundle?.selectorChecks.map((check) => ({
+      label: check.label,
+      status: check.status,
+      detail: check.detail,
+    })) ??
+    payload.events
+      .filter((event) => event.category === "validation")
+      .slice(0, 6)
+      .map((event) => ({
+        label: event.summary,
+        status:
+          event.outcome === "error"
+            ? "failed"
+            : event.outcome === "running"
+              ? "running"
+              : "passed",
+        detail: event.detail ?? event.type,
+      }));
 
   return {
     mission: `Supervise ${payload.workspace.slug} with structured trace, spend visibility, and explicit policy state.`,
@@ -641,17 +722,8 @@ function buildDetailFromAgentdResponse(
     })),
     diff: [],
     validation:
-      validationEvents.length > 0
-        ? validationEvents.slice(0, 6).map((event) => ({
-            label: event.summary,
-            status:
-              event.outcome === "error"
-                ? "failed"
-                : event.outcome === "running"
-                  ? "running"
-                  : "passed",
-            detail: event.detail ?? event.type,
-          }))
+      validationItems.length > 0
+        ? validationItems
         : [
             {
               label: "Runtime health",
@@ -666,6 +738,21 @@ function buildDetailFromAgentdResponse(
                 "Waiting for validation events to arrive from the active run.",
             },
           ],
+    reviewBundle: payload.reviewBundle
+      ? {
+          previewUrl: payload.reviewBundle.previewUrl,
+          validationStatus: payload.reviewBundle.validationStatus,
+          generatedAt: payload.reviewBundle.generatedAt,
+          testSummary: payload.reviewBundle.testSummary,
+          recommendedAction: payload.reviewBundle.recommendedAction,
+          diagnostics: payload.reviewBundle.diagnostics,
+          artifacts: payload.reviewBundle.artifactLinks.map((artifact) => ({
+            label: artifact.label,
+            path: artifact.path,
+            kind: artifact.kind,
+          })),
+        }
+      : null,
   };
 }
 

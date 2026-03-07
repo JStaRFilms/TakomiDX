@@ -33,26 +33,26 @@ Give each workspace a browser-aware validation loop and generate review bundles 
 
 ### Phase 1: Sidecar interface
 
-- [ ] Define the sidecar contract and lifecycle.
-- [ ] Attach it to the workspace preview hostname.
-- [ ] Capture screenshot, console, network, and selector-level checks.
+- [x] Define the sidecar contract and lifecycle.
+- [x] Attach it to the workspace preview hostname.
+- [x] Capture screenshot, console, network, and selector-level checks.
 
 ### Phase 2: Validation pipeline
 
-- [ ] Define validation checklist inputs and outputs.
-- [ ] Run browser validation against a workspace preview.
-- [ ] Record validation state and major failures.
+- [x] Define validation checklist inputs and outputs.
+- [x] Run browser validation against a workspace preview.
+- [x] Record validation state and major failures.
 
 ### Phase 3: Review bundle generation
 
-- [ ] Build a review bundle format with preview URL, test summary, diagnostics, and artifact links.
-- [ ] Attach validation bundles to workspace detail views.
-- [ ] Make validation results actionable, not purely informational.
+- [x] Build a review bundle format with preview URL, test summary, diagnostics, and artifact links.
+- [x] Attach validation bundles to workspace detail views.
+- [x] Make validation results actionable, not purely informational.
 
 ### Phase 4: Tests and failure modes
 
-- [ ] Test sidecar failure, preview unavailability, and console-error reporting.
-- [ ] Test that validation failures block false "completed" status.
+- [x] Test sidecar failure, preview unavailability, and console-error reporting.
+- [x] Test that validation failures block false "completed" status.
 
 ## Definition of Done
 

@@ -26,6 +26,7 @@ import {
   createObservabilityPolicyBoundary,
   createObservabilityPolicyEngine,
 } from "./modules/observability-policy-engine";
+import { createValidationBundleManager } from "./modules/validation-bundles";
 
 function json(body: unknown, init?: { status?: number }) {
   return new Response(JSON.stringify(body, null, 2), {
@@ -74,9 +75,14 @@ function deriveWorkspaceStatus(
   workspaceStatus: string,
   runStatus: string | null,
   runtimeLifecycle: string | null,
+  validationStatus: string | null,
 ) {
   if (workspaceStatus === "archived") {
     return "archived";
+  }
+
+  if (validationStatus === "failed" || validationStatus === "blocked") {
+    return "failed";
   }
 
   if (runStatus === "awaiting_human" || runStatus === "paused") {
@@ -88,11 +94,15 @@ function deriveWorkspaceStatus(
   }
 
   if (runStatus === "completed") {
-    return "completed";
+    return validationStatus === "passed" ? "completed" : "validating";
   }
 
   if (runtimeLifecycle === "booting") {
     return "booting";
+  }
+
+  if (validationStatus === "running") {
+    return "validating";
   }
 
   if (runStatus === "running") {
@@ -103,9 +113,19 @@ function deriveWorkspaceStatus(
 }
 
 export function createAgentdServer(config: AgentdConfig) {
+  const validationBundles = createValidationBundleManager({
+    workspacesDir: config.workspacesDir,
+  });
   const observability = createObservabilityPolicyEngine({
     runsDir: config.runsDir,
     stateDir: config.stateDir,
+    completionGuard: (run) => {
+      const completion = validationBundles.canComplete(run.workspaceId);
+      return {
+        allowed: completion.allowed,
+        reason: completion.reason,
+      };
+    },
   });
   const workspaceManager = createWorkspaceManager({
     previewDomain: config.previewDomain,
@@ -145,6 +165,7 @@ export function createAgentdServer(config: AgentdConfig) {
       observability.getActiveRun(workspaceId) ??
       observability.listRuns(workspaceId)[0] ??
       null;
+    const validation = validationBundles.getSummary(workspaceId);
 
     return {
       id: workspace.id,
@@ -156,6 +177,7 @@ export function createAgentdServer(config: AgentdConfig) {
         workspace.status,
         run?.status ?? null,
         runtime?.lifecycle ?? null,
+        validation.status,
       ),
       lastAction: run?.lastAction ?? `Workspace ${workspace.slug} is ${workspace.status}.`,
       previewHost: workspace.previewHost,
@@ -165,6 +187,7 @@ export function createAgentdServer(config: AgentdConfig) {
       activeRunId: run?.id ?? null,
       pauseReason: run?.pauseReason ?? null,
       auth: null,
+      validation,
     };
   }
 
@@ -216,6 +239,12 @@ export function createAgentdServer(config: AgentdConfig) {
     const observabilityRunSpansMatch = url.pathname.match(
       /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/spans$/,
     );
+    const validationWorkspaceMatch = url.pathname.match(
+      /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})$/,
+    );
+    const validationWorkspaceRunMatch = url.pathname.match(
+      /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})\/run$/,
+    );
 
     if (request.method === "GET" && url.pathname === "/healthz") {
       result = json({
@@ -260,6 +289,8 @@ export function createAgentdServer(config: AgentdConfig) {
             spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
             authSessions: authBroker.list(workspaceId),
             policies: observability.listPolicyRules(),
+            validationBundle: validationBundles.getBundle(workspaceId),
+            reviewBundle: validationBundles.getReviewBundle(workspaceId),
           })
         : json(
             {
@@ -373,6 +404,103 @@ export function createAgentdServer(config: AgentdConfig) {
       result = json({
         items: observability.listSpans(runId),
       });
+    } else if (request.method === "GET" && validationWorkspaceMatch) {
+      const workspaceId = validationWorkspaceMatch[1]!;
+      const workspace = workspaceManager.get(workspaceId);
+
+      result = workspace
+        ? json({
+            workspaceId,
+            summary: validationBundles.getSummary(workspaceId),
+            bundle: validationBundles.getBundle(workspaceId),
+            reviewBundle: validationBundles.getReviewBundle(workspaceId),
+          })
+        : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "POST" && validationWorkspaceRunMatch) {
+      const workspaceId = validationWorkspaceRunMatch[1]!;
+      const workspace = workspaceManager.get(workspaceId);
+      const runtime = runtimeExecutor.get(workspaceId);
+      const run =
+        observability.getActiveRun(workspaceId) ??
+        observability.listRuns(workspaceId)[0] ??
+        null;
+
+      if (!workspace) {
+        result = json(
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
+      } else {
+        try {
+          const body = (await readJsonBody(request)) as
+            | { checklist?: unknown }
+            | null;
+          const validation = await validationBundles.runValidation({
+            workspace,
+            runtime,
+            runId: run?.id ?? null,
+            ...(Array.isArray(body?.checklist)
+              ? { checklist: body.checklist }
+              : {}),
+          });
+
+          observability.recordRunEvent(run?.id ?? observability.startRun({
+            workspaceId,
+            agentType: "Validation sidecar",
+            budgetUsd: 0.1,
+            warningBudgetUsd: 0.08,
+          }).id, {
+            category: "validation",
+            type:
+              validation.bundle.status === "passed"
+                ? "validation.completed"
+                : validation.bundle.status === "blocked"
+                  ? "validation.blocked"
+                  : "validation.failed",
+            source: "browser-sidecar",
+            summary: validation.bundle.summary,
+            detail:
+              validation.review.diagnostics.join(" | ").slice(0, 400) || null,
+            outcome:
+              validation.bundle.status === "passed" ? "success" : "error",
+            trace: {
+              name: "validation.bundle",
+              kind: "internal",
+              durationMs: 0,
+              statusCode:
+                validation.bundle.status === "passed" ? "ok" : "error",
+              statusMessage: validation.bundle.summary,
+            },
+            attributes: {
+              validationBundleId: validation.bundle.id,
+              validationStatus: validation.bundle.status,
+              previewUrl: validation.bundle.previewUrl,
+            },
+          });
+
+          result = json(validation, { status: 201 });
+        } catch (error) {
+          result = json(
+            {
+              error: "validation_failed",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Validation failed unexpectedly.",
+            },
+            { status: 400 },
+          );
+        }
+      }
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/auth/events"

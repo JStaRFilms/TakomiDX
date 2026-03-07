@@ -366,4 +366,39 @@ describe("observability policy engine", () => {
       approvalRequired: true,
     });
   });
+
+  it("blocks completion when validation has not passed", () => {
+    const root = createTempDir();
+    const now = createClock();
+    const engine = createObservabilityPolicyEngine({
+      runsDir: path.join(root, "runs"),
+      stateDir: path.join(root, "state"),
+      now,
+      runIdGenerator: () => "run_00000004",
+      traceIdGenerator: () => "cccccccccccccccccccccccccccccccc",
+      spanIdGenerator: () => "dddddddddddddddd",
+      completionGuard: () => ({
+        allowed: false,
+        reason: "Validation has not run yet.",
+      }),
+    });
+
+    const run = engine.startRun({
+      workspaceId: "ws_00000004",
+      agentType: "Codex",
+      budgetUsd: 10,
+    });
+    const completed = engine.completeRun(run.id, "Run completed.");
+
+    expect(completed).toMatchObject({
+      status: "failed",
+      stopReason: "validation_failed",
+      pauseReason: "Validation has not run yet.",
+    });
+    expect(
+      engine
+        .listEvents({ runId: run.id })
+        .some((event) => event.type === "validation.completion_blocked"),
+    ).toBe(true);
+  });
 });

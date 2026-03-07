@@ -96,6 +96,33 @@ export default async function WorkspaceDetailPage({
             ))}
           </div>
         </section>
+
+        {detail.reviewBundle && (
+          <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-primary)]">
+                Review Bundle
+              </h2>
+              <span className="font-mono text-[11px] uppercase text-[var(--color-ink-faint)]">
+                {detail.reviewBundle.validationStatus}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[var(--color-ink)]">
+              {detail.reviewBundle.testSummary}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+              {detail.reviewBundle.recommendedAction}
+            </p>
+            <div className="mt-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-3">
+              <div className="font-mono text-[11px] uppercase text-[var(--color-ink-faint)]">
+                Preview URL
+              </div>
+              <p className="mt-2 break-all font-mono text-xs text-[var(--color-accent)]">
+                {detail.reviewBundle.previewUrl}
+              </p>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

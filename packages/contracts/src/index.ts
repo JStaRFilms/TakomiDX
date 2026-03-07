@@ -459,6 +459,144 @@ export const recordAgentEventInputSchema = z.object({
   attributes: z.record(eventAttributeValueSchema).default({}),
 });
 
+export const validationStatusSchema = z.enum([
+  "queued",
+  "running",
+  "passed",
+  "failed",
+  "blocked",
+]);
+export const browserSidecarStatusSchema = z.enum([
+  "idle",
+  "capturing",
+  "ready",
+  "failed",
+]);
+export const validationArtifactKindSchema = z.enum([
+  "screenshot",
+  "report",
+  "console",
+  "network",
+  "bundle",
+]);
+export const browserConsoleLevelSchema = z.enum([
+  "log",
+  "info",
+  "warn",
+  "error",
+]);
+export const browserNetworkResourceTypeSchema = z.enum([
+  "document",
+  "stylesheet",
+  "script",
+  "image",
+  "font",
+  "fetch",
+  "xhr",
+  "other",
+]);
+export const browserNetworkOutcomeSchema = z.enum(["ok", "failed"]);
+
+export const validationChecklistInputSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  selector: z.string().min(1),
+  requiredText: z.string().min(1).nullable().default(null),
+  required: z.boolean().default(true),
+});
+
+export const browserSelectorCheckSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  selector: z.string().min(1),
+  status: validationStatusSchema,
+  detail: z.string().min(1),
+  textSnippet: z.string().min(1).nullable().default(null),
+});
+
+export const browserConsoleEntrySchema = z.object({
+  level: browserConsoleLevelSchema,
+  text: z.string().min(1),
+  location: z.string().min(1).nullable().default(null),
+});
+
+export const browserNetworkEntrySchema = z.object({
+  url: z.string().min(1),
+  method: z.string().min(1),
+  status: z.number().int().min(0).nullable().default(null),
+  outcome: browserNetworkOutcomeSchema,
+  resourceType: browserNetworkResourceTypeSchema.default("other"),
+  detail: z.string().min(1).nullable().default(null),
+});
+
+export const validationArtifactSchema = z.object({
+  kind: validationArtifactKindSchema,
+  label: z.string().min(1),
+  path: z.string().min(1),
+  contentType: z.string().min(1),
+});
+
+export const browserSidecarCaptureSchema = z.object({
+  status: browserSidecarStatusSchema,
+  driver: z.string().min(1),
+  capturedAt: z.string().datetime({ offset: true }),
+  screenshotPath: z.string().min(1).nullable().default(null),
+  title: z.string().min(1).nullable().default(null),
+  console: z.array(browserConsoleEntrySchema).default([]),
+  network: z.array(browserNetworkEntrySchema).default([]),
+  selectors: z.array(browserSelectorCheckSchema).default([]),
+  detail: z.string().min(1).nullable().default(null),
+});
+
+export const validationBundleStatsSchema = z.object({
+  passedChecks: z.number().int().min(0),
+  failedChecks: z.number().int().min(0),
+  blockedChecks: z.number().int().min(0),
+  consoleErrorCount: z.number().int().min(0),
+  networkFailureCount: z.number().int().min(0),
+});
+
+export const workspaceValidationSummarySchema = z.object({
+  status: validationStatusSchema,
+  summary: z.string().min(1),
+  lastValidatedAt: z.string().datetime({ offset: true }).nullable().default(null),
+  bundleId: z.string().min(1).nullable().default(null),
+});
+
+export const validationBundleSchema = z.object({
+  bundleVersion: z.literal(1).default(1),
+  id: z.string().min(1),
+  workspaceId: workspaceIdSchema,
+  workspaceSlug: workspaceSlugSchema,
+  runId: runIdSchema.nullable().default(null),
+  previewUrl: z.string().url(),
+  previewHost: previewDomainSchema,
+  status: validationStatusSchema,
+  generatedAt: z.string().datetime({ offset: true }),
+  summary: z.string().min(1),
+  sidecar: browserSidecarCaptureSchema,
+  requestedChecks: z.array(validationChecklistInputSchema).default([]),
+  selectorChecks: z.array(browserSelectorCheckSchema).default([]),
+  artifacts: z.array(validationArtifactSchema).default([]),
+  majorFailures: z.array(z.string().min(1)).default([]),
+  stats: validationBundleStatsSchema,
+});
+
+export const reviewBundleSchema = z.object({
+  bundleVersion: z.literal(1).default(1),
+  validationBundleId: z.string().min(1),
+  workspaceId: workspaceIdSchema,
+  workspaceSlug: workspaceSlugSchema,
+  runId: runIdSchema.nullable().default(null),
+  previewUrl: z.string().url(),
+  validationStatus: validationStatusSchema,
+  generatedAt: z.string().datetime({ offset: true }),
+  testSummary: z.string().min(1),
+  diagnostics: z.array(z.string().min(1)).default([]),
+  artifactLinks: z.array(validationArtifactSchema).default([]),
+  recommendedAction: z.string().min(1),
+});
+
 export const workspaceSummarySchema = z.object({
   id: workspaceIdSchema,
   slug: workspaceSlugSchema,
@@ -474,6 +612,7 @@ export const workspaceSummarySchema = z.object({
   activeRunId: runIdSchema.nullable().default(null),
   pauseReason: z.string().min(1).nullable().default(null),
   auth: workspaceAuthSummarySchema.nullable().default(null),
+  validation: workspaceValidationSummarySchema.nullable().default(null),
 });
 
 export const containerRuntimeSpecSchema = z.object({
@@ -603,6 +742,30 @@ export type AgentRunBudget = z.infer<typeof agentRunBudgetSchema>;
 export type AgentRunSummary = z.infer<typeof agentRunSummarySchema>;
 export type CreateAgentRunInput = z.input<typeof createAgentRunInputSchema>;
 export type RecordAgentEventInput = z.input<typeof recordAgentEventInputSchema>;
+export type ValidationStatus = z.infer<typeof validationStatusSchema>;
+export type BrowserSidecarStatus = z.infer<typeof browserSidecarStatusSchema>;
+export type ValidationArtifactKind = z.infer<typeof validationArtifactKindSchema>;
+export type BrowserConsoleLevel = z.infer<typeof browserConsoleLevelSchema>;
+export type BrowserNetworkResourceType = z.infer<
+  typeof browserNetworkResourceTypeSchema
+>;
+export type BrowserNetworkOutcome = z.infer<
+  typeof browserNetworkOutcomeSchema
+>;
+export type ValidationChecklistInput = z.infer<
+  typeof validationChecklistInputSchema
+>;
+export type BrowserSelectorCheck = z.infer<typeof browserSelectorCheckSchema>;
+export type BrowserConsoleEntry = z.infer<typeof browserConsoleEntrySchema>;
+export type BrowserNetworkEntry = z.infer<typeof browserNetworkEntrySchema>;
+export type ValidationArtifact = z.infer<typeof validationArtifactSchema>;
+export type BrowserSidecarCapture = z.infer<typeof browserSidecarCaptureSchema>;
+export type ValidationBundleStats = z.infer<typeof validationBundleStatsSchema>;
+export type WorkspaceValidationSummary = z.infer<
+  typeof workspaceValidationSummarySchema
+>;
+export type ValidationBundle = z.infer<typeof validationBundleSchema>;
+export type ReviewBundle = z.infer<typeof reviewBundleSchema>;
 export type WorkspaceSummary = z.infer<typeof workspaceSummarySchema>;
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;
