@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TakomiDX — V3: Obsidian Forge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Source+Code+Pro:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Source Code Pro"', 'monospace'],
+                    },
+                    colors: {
+                        canvas: '#0c0a09',
+                        surface: '#1c1917',
+                        'surface-2': '#292524',
+                        'surface-3': '#3a3532',
+                        border: '#44403c',
+                        'border-bright': '#57534e',
+                        ink: '#fafaf9',
+                        'ink-muted': '#a8a29e',
+                        'ink-faint': '#78716c',
+                        primary: '#f59e0b',
+                        'primary-dim': '#d97706',
+                        'primary-glow': 'rgba(245,158,11,0.12)',
+                        accent: '#f97316',
+                        'accent-glow': 'rgba(249,115,22,0.12)',
+                        warning: '#eab308',
+                        danger: '#ef4444',
+                        success: '#22c55e',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #0c0a09;
+            color: #fafaf9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Ember gradient */
+        .ember-bg {
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(249, 115, 22, 0.04) 0%, transparent 50%),
+                #0c0a09;
+        }
+
+        /* Forge texture */
+        .forge-texture {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Hot metal edge */
+        .hot-edge {
+            border-image: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #f59e0b 100%) 1;
+        }
+
+        .hot-glow {
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.1), 0 0 48px rgba(249, 115, 22, 0.05);
+        }
+
+        .hover-forge {
+            transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+        }
+
+        .hover-forge:hover {
+            box-shadow: 0 4px 24px rgba(245, 158, 11, 0.15);
+            border-color: #f59e0b;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body class="ember-bg forge-texture min-h-screen">
+
+    <div
+        class="fixed top-4 right-4 z-50 font-mono text-xs bg-surface-2 border border-border px-3 py-1.5 rounded text-ink-muted">
+        V3 · Obsidian Forge
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-12 space-y-20">
+
+        <!-- HEADER -->
+        <header class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-2.5 h-2.5 bg-primary rounded-sm"></div>
+                <span class="font-mono text-xs text-primary uppercase tracking-[0.3em] font-medium">Design System
+                    V3</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-display font-extrabold tracking-tight"
+                style="background: linear-gradient(135deg, #f59e0b, #f97316, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Obsidian<br />Forge
+            </h1>
+            <p class="text-lg text-ink-muted max-w-2xl leading-relaxed">
+                Dark stone meets molten metal. An industrial control surface with warm amber tones,
+                sharp edges, and forged precision. Power tools demand a premium feel.
+            </p>
+            <div class="flex gap-2 font-mono text-xs text-ink-faint">
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#industrial</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#amber</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#premium</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#forged</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#dark</span>
+            </div>
+        </header>
+
+        <!-- COLORS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Color Palette</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-canvas border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Canvas · #0c0a09</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-surface border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface · #1c1917</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-surface-2 border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface 2 · #292524</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-surface-3 border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface 3 · #3a3532</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-primary"></div>
+                    <p class="font-mono text-xs text-ink-muted">Primary · #f59e0b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-accent"></div>
+                    <p class="font-mono text-xs text-ink-muted">Accent · #f97316</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-success"></div>
+                    <p class="font-mono text-xs text-ink-muted">Success · #22c55e</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-warning"></div>
+                    <p class="font-mono text-xs text-ink-muted">Warning · #eab308</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-danger"></div>
+                    <p class="font-mono text-xs text-ink-muted">Danger · #ef4444</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-ink border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Ink · #fafaf9</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg bg-ink-muted"></div>
+                    <p class="font-mono text-xs text-ink-muted">Muted · #a8a29e</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-lg border-2 border-primary bg-primary-glow"></div>
+                    <p class="font-mono text-xs text-ink-muted">Glow · amber/12%</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TYPOGRAPHY -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Typography</h2>
+            <div class="bg-surface rounded-xl border border-border p-8 space-y-8">
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Display — Plus Jakarta Sans 800</p>
+                    <h1 class="font-display text-5xl font-extrabold tracking-tight">Mission Control</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H1 — Plus Jakarta Sans 700</p>
+                    <h1 class="font-display text-4xl font-bold">Workspace Grid</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H2 — Plus Jakarta Sans 600</p>
+                    <h2 class="font-display text-2xl font-semibold">Workspace Detail</h2>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H3 — Plus Jakarta Sans 600</p>
+                    <h3 class="font-display text-xl font-semibold">Agent Activity</h3>
+                </div>
+                <hr class="border-border" />
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Body — Plus Jakarta Sans 400</p>
+                    <p class="text-base leading-7 text-ink-muted">TakomiDX gives every agent a durable workspace
+                        capsule. The user sees what each workspace is doing, whether it is healthy, what changed, and
+                        what requires approval.</p>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Label — Source Code Pro 500</p>
+                    <p class="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary">Active Workspace
+                    </p>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Code — Source Code Pro 400</p><code
+                        class="font-mono text-sm text-accent bg-accent-glow px-2 py-1 rounded border border-accent/20">billing-auth.myapp.localhost</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUTTONS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Buttons</h2>
+            <div class="bg-surface rounded-xl border border-border p-8 space-y-6">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <button
+                        class="cursor-pointer bg-primary text-canvas font-display text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-primary-dim transition-colors duration-200"
+                        style="box-shadow: 0 2px 12px rgba(245,158,11,0.2);">Launch Workspace</button>
+                    <button
+                        class="cursor-pointer bg-surface-2 text-ink font-display text-sm font-semibold px-5 py-2.5 rounded-lg border border-border hover:border-primary hover:text-primary transition-all duration-200">View
+                        Details</button>
+                    <button
+                        class="cursor-pointer bg-transparent text-ink-muted font-display text-sm px-5 py-2.5 rounded-lg hover:text-primary hover:bg-primary-glow transition-all duration-200">Ghost
+                        Action</button>
+                    <button
+                        class="cursor-pointer bg-danger/10 text-danger font-display text-sm font-semibold px-5 py-2.5 rounded-lg border border-danger/20 hover:bg-danger/20 transition-colors duration-200">Terminate</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FORM ELEMENTS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Form Elements</h2>
+            <div class="bg-surface rounded-xl border border-border p-8 grid gap-6 md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="font-mono text-xs text-ink-muted uppercase tracking-wider font-medium">Workspace
+                        Name</label>
+                    <input type="text" value="billing-auth-fix"
+                        class="w-full bg-surface-2 border border-border text-ink font-mono text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/25 transition-all" />
+                </div>
+                <div class="space-y-2">
+                    <label class="font-mono text-xs text-ink-muted uppercase tracking-wider font-medium">Agent
+                        Type</label>
+                    <select
+                        class="w-full bg-surface-2 border border-border text-ink text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:border-primary cursor-pointer">
+                        <option>Claude Code</option>
+                        <option>Gemini CLI</option>
+                        <option>Codex</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- WORKSPACE CARDS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Workspace Cards</h2>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Running -->
+                <article class="bg-surface rounded-xl border border-border p-5 hover-forge cursor-pointer space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/core</p>
+                            <h3 class="font-display text-lg font-bold mt-1">billing-auth-fix</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full border border-success/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>running
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink font-medium">fix/billing-auth</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink font-medium">Claude Code</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-primary text-xs">billing-auth.myapp.localhost</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink font-medium">$0.42</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-surface-2 rounded-lg px-3 py-2 font-mono text-xs text-ink-muted border border-border">
+                        <span class="text-primary">◆</span> Modified src/auth/callback.ts
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-primary text-canvas font-display text-xs font-bold py-2 rounded-lg hover:bg-primary-dim transition-colors"
+                            style="box-shadow:0 2px 8px rgba(245,158,11,0.15);">Open</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-muted text-xs px-3 py-2 rounded-lg border border-border hover:border-primary hover:text-primary transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Awaiting -->
+                <article class="bg-surface rounded-xl border border-warning/30 p-5 space-y-4"
+                    style="box-shadow: 0 0 20px rgba(234,179,8,0.06);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/web</p>
+                            <h3 class="font-display text-lg font-bold mt-1">onboarding-flow</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-warning bg-warning/10 px-2.5 py-1 rounded-full border border-warning/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>awaiting
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink font-medium">feat/onboarding</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink font-medium">Gemini CLI</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-primary text-xs">onboarding.myapp.localhost</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink font-medium">$1.83</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-warning/5 rounded-lg px-3 py-2 font-mono text-xs text-warning border border-warning/15">
+                        ⚠ Approval needed: 14 files changed
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-warning text-canvas font-display text-xs font-bold py-2 rounded-lg hover:opacity-90 transition-opacity">Review</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-muted text-xs px-3 py-2 rounded-lg border border-border hover:border-warning hover:text-warning transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Failed -->
+                <article class="bg-surface rounded-xl border border-danger/30 p-5 space-y-4"
+                    style="box-shadow: 0 0 20px rgba(239,68,68,0.06);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/api</p>
+                            <h3 class="font-display text-lg font-bold mt-1">rate-limiter</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-danger bg-danger/10 px-2.5 py-1 rounded-full border border-danger/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>failed
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink font-medium">feat/rate-limit</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink font-medium">Codex</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-ink-faint">—</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink font-medium">$0.91</dd>
+                        </div>
+                    </dl>
+                    <div class="bg-danger/5 rounded-lg px-3 py-2 font-mono text-xs text-danger border border-danger/15">
+                        ✕ TypeScript compilation failed — 3 errors
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-surface-2 text-ink font-display text-xs font-semibold py-2 rounded-lg border border-border hover:border-danger hover:text-danger transition-all">Inspect</button>
+                        <button
+                            class="cursor-pointer bg-danger/10 text-danger text-xs px-3 py-2 rounded-lg border border-danger/20 hover:bg-danger/20 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- NAVIGATION -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Navigation</h2>
+            <nav class="bg-surface rounded-xl border border-border p-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-display text-sm font-extrabold text-canvas"
+                            style="background:linear-gradient(135deg,#f59e0b,#f97316);">T</div>
+                        <span class="font-display text-sm font-bold">TakomiDX</span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-1 ml-2">
+                        <a href="#"
+                            class="text-sm font-display font-semibold text-primary bg-primary-glow px-3 py-1.5 rounded-lg cursor-pointer">Workspaces</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-lg hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Activity</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-lg hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Traces</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-lg hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="font-mono text-xs text-ink-faint bg-surface-2 border border-border px-3 py-1.5 rounded-lg">
+                        <span class="text-success font-medium">3</span> active · <span
+                            class="text-warning font-medium">1</span> pending
+                    </div>
+                    <button
+                        class="cursor-pointer bg-primary text-canvas font-display text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary-dim transition-colors"
+                        style="box-shadow:0 2px 8px rgba(245,158,11,0.2);">+ New</button>
+                </div>
+            </nav>
+        </section>
+
+        <!-- DASHBOARD PREVIEW -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-xs text-primary uppercase tracking-[0.2em] font-medium">◆ Dashboard Preview</h2>
+            <div class="bg-surface rounded-xl border border-border overflow-hidden hot-glow">
+                <div class="bg-surface-2 border-b border-border px-5 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded flex items-center justify-center font-display text-xs font-extrabold text-canvas"
+                            style="background:linear-gradient(135deg,#f59e0b,#f97316);">T</div>
+                        <span class="font-display text-sm font-semibold">Mission Control</span>
+                        <span class="text-xs text-ink-faint">v0.1.0</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-xs"><span class="text-primary">◆</span><span
+                            class="text-ink-muted">3 workspaces</span></div>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-display text-lg font-bold">Active Workspaces</h3>
+                        <button
+                            class="cursor-pointer bg-primary text-canvas font-display text-xs font-bold px-3 py-1.5 rounded-lg"
+                            style="box-shadow:0 2px 8px rgba(245,158,11,0.15);">+ Create</button>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-3">
+                        <div class="bg-surface-2 rounded-lg border border-border p-3 hover-forge cursor-pointer">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">billing-auth</span><span
+                                    class="w-2 h-2 rounded-full bg-success animate-pulse"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Claude Code · 12m · $0.42</p>
+                        </div>
+                        <div class="bg-surface-2 rounded-lg border border-warning/20 p-3 cursor-pointer">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">onboarding</span><span
+                                    class="w-2 h-2 rounded-full bg-warning animate-pulse"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Gemini CLI · 34m · $1.83</p>
+                        </div>
+                        <div class="bg-surface-2 rounded-lg border border-danger/20 p-3 cursor-pointer">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">rate-limiter</span><span
+                                    class="w-2 h-2 rounded-full bg-danger"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Codex · 8m · $0.91</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center font-mono text-xs text-ink-faint py-8 border-t border-border">
+            TakomiDX · Design System V3 · Obsidian Forge · 2026
+        </footer>
+    </div>
+</body>
+
+</html>

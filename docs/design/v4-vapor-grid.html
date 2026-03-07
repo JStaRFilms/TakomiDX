@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TakomiDX — V4: Vapor Grid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Outfit"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace'],
+                    },
+                    colors: {
+                        canvas: '#09090b',
+                        surface: '#18181b',
+                        'surface-2': '#27272a',
+                        'surface-3': '#3f3f46',
+                        border: '#3f3f46',
+                        'border-bright': '#52525b',
+                        ink: '#fafafa',
+                        'ink-muted': '#a1a1aa',
+                        'ink-faint': '#71717a',
+                        primary: '#a855f7',
+                        'primary-dim': '#9333ea',
+                        'primary-glow': 'rgba(168,85,247,0.15)',
+                        accent: '#ec4899',
+                        'accent-dim': '#db2777',
+                        'accent-glow': 'rgba(236,72,153,0.15)',
+                        cyber: '#06b6d4',
+                        'cyber-glow': 'rgba(6,182,212,0.15)',
+                        warning: '#f59e0b',
+                        danger: '#f43f5e',
+                        success: '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #09090b;
+            color: #fafafa;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Neon grid background */
+        .neon-grid {
+            background-image:
+                linear-gradient(rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Gradient mesh */
+        .mesh-bg {
+            background:
+                radial-gradient(ellipse at 10% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
+                radial-gradient(ellipse at 90% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 60%),
+                #09090b;
+        }
+
+        /* Neon glow effects */
+        .neon-purple {
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.6), 0 0 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .neon-pink {
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.6), 0 0 40px rgba(236, 72, 153, 0.2);
+        }
+
+        .neon-box {
+            box-shadow: 0 0 24px rgba(168, 85, 247, 0.12), 0 0 48px rgba(168, 85, 247, 0.04), inset 0 1px 0 rgba(168, 85, 247, 0.08);
+        }
+
+        .neon-box-pink {
+            box-shadow: 0 0 24px rgba(236, 72, 153, 0.12), inset 0 1px 0 rgba(236, 72, 153, 0.08);
+        }
+
+        /* Gradient border */
+        .gradient-border {
+            position: relative;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, #a855f7, #ec4899, #06b6d4);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .hover-neon {
+            transition: box-shadow 0.25s ease, transform 0.2s ease;
+        }
+
+        .hover-neon:hover {
+            box-shadow: 0 0 32px rgba(168, 85, 247, 0.2), 0 0 64px rgba(236, 72, 153, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Pulse keyframe */
+        @keyframes neon-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+
+<body class="mesh-bg neon-grid min-h-screen">
+
+    <div
+        class="fixed top-4 right-4 z-50 font-mono text-xs bg-surface-2 border border-primary/30 px-3 py-1.5 rounded-full text-primary neon-box">
+        V4 · Vapor Grid
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-12 space-y-20">
+
+        <!-- HEADER -->
+        <header class="space-y-6">
+            <div
+                class="inline-flex items-center gap-2 bg-primary-glow text-primary font-mono text-xs font-medium px-3 py-1.5 rounded-full border border-primary/20">
+                <span class="w-2 h-2 rounded-full bg-primary" style="animation: neon-pulse 2s ease infinite;"></span>
+                Design System V4
+            </div>
+            <h1 class="text-6xl md:text-8xl font-display font-black tracking-tight">
+                <span class="neon-purple"
+                    style="background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Vapor</span><br />
+                <span class="neon-pink"
+                    style="background: linear-gradient(135deg, #ec4899, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Grid</span>
+            </h1>
+            <p class="text-lg text-ink-muted max-w-2xl leading-relaxed">
+                Cyberpunk energy meets control-plane precision. Neon purple and hot pink on deep black,
+                with luminous grid lines and cinematic glow. For those who like their dashboards electric.
+            </p>
+            <div class="flex gap-2 font-mono text-xs text-ink-faint">
+                <span
+                    class="bg-primary-glow text-primary px-2 py-1 rounded-full border border-primary/20">#cyberpunk</span>
+                <span class="bg-accent-glow text-accent px-2 py-1 rounded-full border border-accent/20">#neon</span>
+                <span class="bg-cyber-glow text-cyber px-2 py-1 rounded-full border border-cyber/20">#electric</span>
+                <span class="bg-surface-2 px-2 py-1 rounded-full border border-border">#grid</span>
+                <span class="bg-surface-2 px-2 py-1 rounded-full border border-border">#dark</span>
+            </div>
+        </header>
+
+        <!-- COLORS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Color Palette</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-canvas border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Canvas · #09090b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-surface border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface · #18181b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-surface-2 border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface 2 · #27272a</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-surface-3 border border-border"></div>
+                    <p class="font-mono text-xs text-ink-muted">Surface 3 · #3f3f46</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-primary neon-box"></div>
+                    <p class="font-mono text-xs text-ink-muted">Primary · #a855f7</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-accent neon-box-pink"></div>
+                    <p class="font-mono text-xs text-ink-muted">Accent · #ec4899</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-cyber"></div>
+                    <p class="font-mono text-xs text-ink-muted">Cyber · #06b6d4</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-warning"></div>
+                    <p class="font-mono text-xs text-ink-muted">Warning · #f59e0b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-danger"></div>
+                    <p class="font-mono text-xs text-ink-muted">Danger · #f43f5e</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-success"></div>
+                    <p class="font-mono text-xs text-ink-muted">Success · #10b981</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl bg-ink"></div>
+                    <p class="font-mono text-xs text-ink-muted">Ink · #fafafa</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded-xl gradient-border bg-surface"></div>
+                    <p class="font-mono text-xs text-ink-muted">Gradient Border</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TYPOGRAPHY -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Typography</h2>
+            <div class="bg-surface rounded-2xl border border-border p-8 space-y-8 neon-box">
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Display — Outfit 900</p>
+                    <h1 class="font-display text-5xl font-black tracking-tight">Mission Control</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H1 — Outfit 700</p>
+                    <h1 class="font-display text-4xl font-bold">Workspace Grid</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H2 — Outfit 600</p>
+                    <h2 class="font-display text-2xl font-semibold">Workspace Detail</h2>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">H3 — Outfit 600</p>
+                    <h3 class="font-display text-xl font-semibold">Agent Activity</h3>
+                </div>
+                <hr class="border-border" />
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Body — Outfit 400</p>
+                    <p class="text-base leading-7 text-ink-muted">TakomiDX gives every agent a durable workspace
+                        capsule. The user sees what each workspace is doing, whether it is healthy, what changed, and
+                        what requires approval.</p>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Label — Fira Code 500</p>
+                    <p class="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary">Active Workspace
+                    </p>
+                </div>
+                <div>
+                    <p class="font-mono text-xs text-ink-faint mb-2">Code — Fira Code 400</p><code
+                        class="font-mono text-sm text-cyber bg-cyber-glow px-2 py-1 rounded-lg border border-cyber/20">billing-auth.myapp.localhost</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUTTONS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Buttons</h2>
+            <div class="bg-surface rounded-2xl border border-border p-8 space-y-6">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <button
+                        class="cursor-pointer font-display text-sm font-semibold px-5 py-2.5 rounded-xl text-white transition-all duration-200 hover:shadow-lg"
+                        style="background: linear-gradient(135deg, #a855f7, #ec4899); box-shadow: 0 4px 16px rgba(168,85,247,0.25);">
+                        Launch Workspace
+                    </button>
+                    <button
+                        class="cursor-pointer bg-surface-2 text-ink font-display text-sm font-medium px-5 py-2.5 rounded-xl border border-border hover:border-primary hover:text-primary transition-all duration-200">
+                        View Details
+                    </button>
+                    <button
+                        class="cursor-pointer bg-transparent text-ink-muted font-display text-sm px-5 py-2.5 rounded-xl hover:text-primary hover:bg-primary-glow transition-all duration-200">
+                        Ghost Action
+                    </button>
+                    <button
+                        class="cursor-pointer text-danger font-display text-sm font-medium px-5 py-2.5 rounded-xl border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors duration-200">
+                        Terminate
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FORM ELEMENTS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Form Elements</h2>
+            <div class="bg-surface rounded-2xl border border-border p-8 grid gap-6 md:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="font-mono text-xs text-ink-muted uppercase tracking-wider font-medium">Workspace
+                        Name</label>
+                    <input type="text" value="billing-auth-fix"
+                        class="w-full bg-surface-2 border border-border text-ink font-mono text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+                </div>
+                <div class="space-y-2">
+                    <label class="font-mono text-xs text-ink-muted uppercase tracking-wider font-medium">Agent
+                        Type</label>
+                    <select
+                        class="w-full bg-surface-2 border border-border text-ink text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-primary cursor-pointer">
+                        <option>Claude Code</option>
+                        <option>Gemini CLI</option>
+                        <option>Codex</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- WORKSPACE CARDS -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Workspace Cards</h2>
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Running -->
+                <article
+                    class="bg-surface rounded-2xl border border-border p-5 hover-neon cursor-pointer space-y-4 gradient-border">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/core</p>
+                            <h3 class="font-display text-lg font-bold mt-1">billing-auth-fix</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full border border-success/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>running
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink">fix/billing-auth</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink">Claude Code</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-cyber text-xs">billing-auth.myapp.localhost</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink">$0.42</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-surface-2 rounded-xl px-3 py-2 font-mono text-xs text-ink-muted border border-border">
+                        <span class="text-primary">⬡</span> Modified src/auth/callback.ts
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 font-display text-xs font-semibold py-2 rounded-xl text-white transition-all"
+                            style="background:linear-gradient(135deg,#a855f7,#ec4899);box-shadow:0 2px 12px rgba(168,85,247,0.2);">Open</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-muted text-xs px-3 py-2 rounded-xl border border-border hover:border-primary hover:text-primary transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Awaiting -->
+                <article class="bg-surface rounded-2xl border border-warning/30 p-5 space-y-4"
+                    style="box-shadow:0 0 24px rgba(245,158,11,0.08);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/web</p>
+                            <h3 class="font-display text-lg font-bold mt-1">onboarding-flow</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-warning bg-warning/10 px-2.5 py-1 rounded-full border border-warning/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>awaiting
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink">feat/onboarding</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink">Gemini CLI</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-cyber text-xs">onboarding.myapp.localhost</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink">$1.83</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-warning/5 rounded-xl px-3 py-2 font-mono text-xs text-warning border border-warning/15">
+                        ⚠ Approval needed: 14 files changed</div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-warning text-canvas font-display text-xs font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity">Review</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-muted text-xs px-3 py-2 rounded-xl border border-border hover:border-warning hover:text-warning transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Failed -->
+                <article class="bg-surface rounded-2xl border border-danger/30 p-5 space-y-4"
+                    style="box-shadow:0 0 24px rgba(244,63,94,0.08);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-xs text-ink-faint uppercase tracking-wider">takomi/api</p>
+                            <h3 class="font-display text-lg font-bold mt-1">rate-limiter</h3>
+                        </div>
+                        <span
+                            class="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-danger bg-danger/10 px-2.5 py-1 rounded-full border border-danger/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>failed
+                        </span>
+                    </div>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Branch</dt>
+                            <dd class="font-mono text-ink">feat/rate-limit</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Agent</dt>
+                            <dd class="font-mono text-ink">Codex</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Preview</dt>
+                            <dd class="font-mono text-ink-faint">—</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-muted">Cost</dt>
+                            <dd class="font-mono text-ink">$0.91</dd>
+                        </div>
+                    </dl>
+                    <div class="bg-danger/5 rounded-xl px-3 py-2 font-mono text-xs text-danger border border-danger/15">
+                        ✕ TypeScript compilation failed — 3 errors</div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-surface-2 text-ink font-display text-xs font-medium py-2 rounded-xl border border-border hover:border-danger hover:text-danger transition-all">Inspect</button>
+                        <button
+                            class="cursor-pointer bg-danger/10 text-danger text-xs px-3 py-2 rounded-xl border border-danger/20 hover:bg-danger/20 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- NAVIGATION -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Navigation</h2>
+            <nav class="bg-surface rounded-2xl border border-border p-4 flex items-center justify-between neon-box">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl flex items-center justify-center font-display text-sm font-black text-white"
+                            style="background:linear-gradient(135deg,#a855f7,#ec4899);">T</div>
+                        <span class="font-display text-sm font-bold">TakomiDX</span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-1 ml-2">
+                        <a href="#"
+                            class="text-sm font-display font-medium text-primary bg-primary-glow px-3 py-1.5 rounded-xl cursor-pointer">Workspaces</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-xl hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Activity</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-xl hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Traces</a>
+                        <a href="#"
+                            class="text-sm font-display text-ink-muted px-3 py-1.5 rounded-xl hover:text-primary hover:bg-primary-glow transition-all cursor-pointer">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="font-mono text-xs text-ink-faint bg-surface-2 border border-border px-3 py-1.5 rounded-xl">
+                        <span class="text-success font-medium">3</span> active · <span
+                            class="text-warning font-medium">1</span> pending
+                    </div>
+                    <button
+                        class="cursor-pointer font-display text-xs font-semibold px-4 py-2 rounded-xl text-white transition-all"
+                        style="background:linear-gradient(135deg,#a855f7,#ec4899);box-shadow:0 2px 12px rgba(168,85,247,0.2);">+
+                        New</button>
+                </div>
+            </nav>
+        </section>
+
+        <!-- DASHBOARD PREVIEW -->
+        <section class="space-y-6">
+            <h2 class="font-mono text-sm text-primary font-medium uppercase tracking-[0.2em]">⬡ Dashboard Preview</h2>
+            <div class="bg-surface rounded-2xl border border-border overflow-hidden neon-box">
+                <div class="bg-surface-2 border-b border-border px-5 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center font-display text-xs font-black text-white"
+                            style="background:linear-gradient(135deg,#a855f7,#ec4899);">T</div>
+                        <span class="font-display text-sm font-semibold">Mission Control</span>
+                        <span class="text-xs text-ink-faint">v0.1.0</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-xs"><span class="text-primary">⬡</span><span
+                            class="text-ink-muted">3 workspaces</span></div>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-display text-lg font-bold">Active Workspaces</h3>
+                        <button
+                            class="cursor-pointer font-display text-xs font-semibold px-3 py-1.5 rounded-xl text-white"
+                            style="background:linear-gradient(135deg,#a855f7,#ec4899);">+ Create</button>
+                    </div>
+                    <div class="grid gap-3 md:grid-cols-3">
+                        <div
+                            class="bg-surface-2 rounded-xl border border-border p-3 hover-neon cursor-pointer gradient-border">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">billing-auth</span><span
+                                    class="w-2 h-2 rounded-full bg-success animate-pulse"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Claude Code · 12m · $0.42</p>
+                        </div>
+                        <div class="bg-surface-2 rounded-xl border border-warning/20 p-3 cursor-pointer">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">onboarding</span><span
+                                    class="w-2 h-2 rounded-full bg-warning animate-pulse"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Gemini CLI · 34m · $1.83</p>
+                        </div>
+                        <div class="bg-surface-2 rounded-xl border border-danger/20 p-3 cursor-pointer">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-sm font-semibold">rate-limiter</span><span
+                                    class="w-2 h-2 rounded-full bg-danger"></span></div>
+                            <p class="font-mono text-xs text-ink-faint mt-1">Codex · 8m · $0.91</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center font-mono text-xs text-ink-faint py-8 border-t border-border">
+            TakomiDX · Design System V4 · Vapor Grid · 2026
+        </footer>
+    </div>
+</body>
+
+</html>

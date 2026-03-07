@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TakomiDX — V5: Carbon Fiber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Geist', 'sans-serif'],
+                        mono: ['"Geist Mono"', 'monospace'],
+                    },
+                    colors: {
+                        canvas: '#09090b',
+                        surface: '#0f0f12',
+                        'surface-2': '#18181b',
+                        'surface-3': '#1f1f23',
+                        border: '#27272a',
+                        'border-bright': '#3f3f46',
+                        ink: '#e4e4e7',
+                        'ink-muted': '#71717a',
+                        'ink-faint': '#52525b',
+                        primary: '#ef4444',
+                        'primary-dim': '#dc2626',
+                        'primary-soft': 'rgba(239,68,68,0.10)',
+                        accent: '#f97316',
+                        'accent-soft': 'rgba(249,115,22,0.10)',
+                        warning: '#eab308',
+                        'warning-soft': 'rgba(234,179,8,0.10)',
+                        danger: '#ef4444',
+                        success: '#22c55e',
+                        'success-soft': 'rgba(34,197,94,0.10)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: #09090b;
+            color: #e4e4e7;
+            font-family: 'Geist', sans-serif;
+        }
+
+        /* Carbon weave texture */
+        .carbon-texture {
+            background-image:
+                repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.01) 2px,
+                    rgba(255, 255, 255, 0.01) 4px);
+        }
+
+        /* Subtle top gradient */
+        .top-fade {
+            background:
+                linear-gradient(180deg, rgba(239, 68, 68, 0.03) 0%, transparent 30%),
+                #09090b;
+        }
+
+        /* Premium shadows */
+        .shadow-carbon {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+
+        .shadow-carbon-lg {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+        }
+
+        /* Hover */
+        .hover-carbon {
+            transition: all 0.15s ease;
+        }
+
+        .hover-carbon:hover {
+            background-color: #18181b;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(239, 68, 68, 0.15);
+        }
+
+        /* Red line accent */
+        .red-accent-top {
+            border-top: 2px solid #ef4444;
+        }
+
+        .red-accent-left {
+            border-left: 2px solid #ef4444;
+        }
+    </style>
+</head>
+
+<body class="top-fade carbon-texture min-h-screen">
+
+    <div
+        class="fixed top-4 right-4 z-50 font-mono text-xs bg-surface-2 border border-border px-3 py-1.5 rounded text-ink-muted shadow-carbon">
+        V5 · Carbon Fiber
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-12 space-y-20">
+
+        <!-- HEADER -->
+        <header class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-0.5 bg-primary"></div>
+                <span class="font-mono text-xs text-ink-muted uppercase tracking-[0.3em]">Design System V5</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-ink">
+                Carbon<br />Fiber
+            </h1>
+            <p class="text-lg text-ink-muted max-w-2xl leading-relaxed">
+                Stealth-dark with surgical red accents. Ultra-minimal, premium automotive-inspired surfaces.
+                No decoration, no glow — just dense information on matte black. Serious tooling for serious engineers.
+            </p>
+            <div class="flex gap-2 font-mono text-xs text-ink-faint">
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#stealth</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#minimal</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#premium</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#red-accent</span>
+                <span class="bg-surface-2 px-2 py-1 rounded border border-border">#matte</span>
+            </div>
+        </header>
+
+        <!-- COLORS -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Color Palette</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-canvas border border-border shadow-carbon"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Canvas · #09090b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-surface border border-border shadow-carbon"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Surface · #0f0f12</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-surface-2 border border-border shadow-carbon"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Surface 2 · #18181b</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-surface-3 border border-border shadow-carbon"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Surface 3 · #1f1f23</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-primary"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Primary · #ef4444</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-accent"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Accent · #f97316</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-success"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Success · #22c55e</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-warning"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Warning · #eab308</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-danger"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Danger · #ef4444</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-ink border border-border"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Ink · #e4e4e7</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-ink-muted"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Muted · #71717a</p>
+                </div>
+                <div class="space-y-2">
+                    <div class="h-20 rounded bg-border border border-border-bright"></div>
+                    <p class="font-mono text-[11px] text-ink-faint">Border · #27272a</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TYPOGRAPHY -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Typography</h2>
+            </div>
+            <div class="bg-surface rounded-lg border border-border p-8 space-y-8 shadow-carbon">
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">Display — Geist 800</p>
+                    <h1 class="font-display text-5xl font-extrabold tracking-tight">Mission Control</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">H1 — Geist 700</p>
+                    <h1 class="font-display text-4xl font-bold tracking-tight">Workspace Grid</h1>
+                </div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">H2 — Geist 600</p>
+                    <h2 class="font-display text-2xl font-semibold">Workspace Detail</h2>
+                </div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">H3 — Geist 600</p>
+                    <h3 class="font-display text-xl font-semibold">Agent Activity</h3>
+                </div>
+                <div class="h-px bg-border"></div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">Body — Geist 400</p>
+                    <p class="text-sm leading-6 text-ink-muted">TakomiDX gives every agent a durable workspace capsule.
+                        The user sees what each workspace is doing, whether it is healthy, what changed, and what
+                        requires approval.</p>
+                </div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">Label — Geist Mono 500</p>
+                    <p class="font-mono text-xs font-medium uppercase tracking-[0.15em] text-primary">Active Workspace
+                    </p>
+                </div>
+                <div>
+                    <p class="font-mono text-[11px] text-ink-faint mb-2">Code — Geist Mono 400</p><code
+                        class="font-mono text-sm text-accent bg-accent-soft px-2 py-1 rounded border border-accent/10">billing-auth.myapp.localhost</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUTTONS -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Buttons</h2>
+            </div>
+            <div class="bg-surface rounded-lg border border-border p-8 space-y-6 shadow-carbon">
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button
+                        class="cursor-pointer bg-primary text-white font-display text-sm font-semibold px-5 py-2 rounded hover:bg-primary-dim transition-colors duration-150">Launch
+                        Workspace</button>
+                    <button
+                        class="cursor-pointer bg-surface-3 text-ink font-display text-sm font-medium px-5 py-2 rounded border border-border hover:border-primary/50 hover:text-primary transition-all duration-150">View
+                        Details</button>
+                    <button
+                        class="cursor-pointer bg-transparent text-ink-muted font-display text-sm px-5 py-2 rounded hover:text-ink hover:bg-surface-2 transition-all duration-150">Ghost
+                        Action</button>
+                    <button
+                        class="cursor-pointer bg-primary-soft text-primary font-display text-sm font-medium px-5 py-2 rounded border border-primary/10 hover:border-primary/30 transition-all duration-150">Terminate</button>
+                </div>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button
+                        class="cursor-pointer bg-primary text-white font-display text-xs font-semibold px-4 py-1.5 rounded hover:bg-primary-dim transition-colors">Small</button>
+                    <button
+                        class="cursor-pointer bg-primary text-white font-display text-sm font-semibold px-5 py-2 rounded hover:bg-primary-dim transition-colors">Medium</button>
+                    <button
+                        class="cursor-pointer bg-primary text-white font-display text-base font-semibold px-6 py-2.5 rounded hover:bg-primary-dim transition-colors">Large</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- FORM ELEMENTS -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Form Elements</h2>
+            </div>
+            <div class="bg-surface rounded-lg border border-border p-8 grid gap-6 md:grid-cols-2 shadow-carbon">
+                <div class="space-y-1.5">
+                    <label class="font-mono text-[11px] text-ink-faint uppercase tracking-wider">Workspace Name</label>
+                    <input type="text" value="billing-auth-fix"
+                        class="w-full bg-surface-2 border border-border text-ink font-mono text-sm px-3 py-2 rounded focus:outline-none focus:border-primary transition-colors" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="font-mono text-[11px] text-ink-faint uppercase tracking-wider">Agent Type</label>
+                    <select
+                        class="w-full bg-surface-2 border border-border text-ink text-sm px-3 py-2 rounded focus:outline-none focus:border-primary cursor-pointer">
+                        <option>Claude Code</option>
+                        <option>Gemini CLI</option>
+                        <option>Codex</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- WORKSPACE CARDS -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Workspace Cards</h2>
+            </div>
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Running -->
+                <article
+                    class="bg-surface rounded-lg border border-border p-4 hover-carbon cursor-pointer space-y-3 shadow-carbon red-accent-left">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-[11px] text-ink-faint uppercase tracking-wider">takomi/core</p>
+                            <h3 class="font-display text-base font-semibold mt-0.5">billing-auth-fix</h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-success">
+                            <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>running
+                        </span>
+                    </div>
+                    <div class="h-px bg-border"></div>
+                    <dl class="space-y-1.5 text-[13px]">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Branch</dt>
+                            <dd class="font-mono text-ink">fix/billing-auth</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Agent</dt>
+                            <dd class="font-mono text-ink">Claude Code</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Preview</dt>
+                            <dd class="font-mono text-accent text-xs">billing-auth.local</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Cost</dt>
+                            <dd class="font-mono text-ink">$0.42</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Elapsed</dt>
+                            <dd class="font-mono text-ink">12m</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-surface-2 rounded px-2.5 py-1.5 font-mono text-[11px] text-ink-muted border border-border">
+                        <span class="text-primary">|</span> Modified src/auth/callback.ts
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-primary text-white font-display text-xs font-semibold py-1.5 rounded hover:bg-primary-dim transition-colors">Open</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-faint text-xs px-2.5 py-1.5 rounded border border-border hover:border-primary/50 hover:text-primary transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Awaiting -->
+                <article class="bg-surface rounded-lg border border-border p-4 space-y-3 shadow-carbon"
+                    style="border-left: 2px solid #eab308;">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-[11px] text-ink-faint uppercase tracking-wider">takomi/web</p>
+                            <h3 class="font-display text-base font-semibold mt-0.5">onboarding-flow</h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-warning">
+                            <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>awaiting
+                        </span>
+                    </div>
+                    <div class="h-px bg-border"></div>
+                    <dl class="space-y-1.5 text-[13px]">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Branch</dt>
+                            <dd class="font-mono text-ink">feat/onboarding</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Agent</dt>
+                            <dd class="font-mono text-ink">Gemini CLI</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Preview</dt>
+                            <dd class="font-mono text-accent text-xs">onboarding.local</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Cost</dt>
+                            <dd class="font-mono text-ink">$1.83</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Elapsed</dt>
+                            <dd class="font-mono text-ink">34m</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-warning-soft rounded px-2.5 py-1.5 font-mono text-[11px] text-warning border border-warning/10">
+                        ⚠ Approval needed: 14 files changed
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-warning text-black font-display text-xs font-semibold py-1.5 rounded hover:opacity-90 transition-opacity">Review</button>
+                        <button
+                            class="cursor-pointer bg-surface-2 text-ink-faint text-xs px-2.5 py-1.5 rounded border border-border hover:border-warning/50 hover:text-warning transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+                <!-- Failed -->
+                <article class="bg-surface rounded-lg border border-border p-4 space-y-3 shadow-carbon"
+                    style="border-left: 2px solid #ef4444;">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="font-mono text-[11px] text-ink-faint uppercase tracking-wider">takomi/api</p>
+                            <h3 class="font-display text-base font-semibold mt-0.5">rate-limiter</h3>
+                        </div>
+                        <span class="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-danger">
+                            <span class="w-1.5 h-1.5 rounded-full bg-danger"></span>failed
+                        </span>
+                    </div>
+                    <div class="h-px bg-border"></div>
+                    <dl class="space-y-1.5 text-[13px]">
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Branch</dt>
+                            <dd class="font-mono text-ink">feat/rate-limit</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Agent</dt>
+                            <dd class="font-mono text-ink">Codex</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Preview</dt>
+                            <dd class="font-mono text-ink-faint">—</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Cost</dt>
+                            <dd class="font-mono text-ink">$0.91</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-ink-faint">Elapsed</dt>
+                            <dd class="font-mono text-ink">8m</dd>
+                        </div>
+                    </dl>
+                    <div
+                        class="bg-primary-soft rounded px-2.5 py-1.5 font-mono text-[11px] text-danger border border-primary/10">
+                        ✕ TypeScript compilation failed — 3 errors
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="cursor-pointer flex-1 bg-surface-3 text-ink font-display text-xs font-medium py-1.5 rounded border border-border hover:border-primary/50 hover:text-primary transition-all">Inspect</button>
+                        <button
+                            class="cursor-pointer bg-primary-soft text-danger text-xs px-2.5 py-1.5 rounded border border-primary/10 hover:border-primary/30 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- NAVIGATION -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Navigation</h2>
+            </div>
+            <nav class="bg-surface rounded-lg border border-border p-3 flex items-center justify-between shadow-carbon">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="w-7 h-7 rounded bg-primary flex items-center justify-center font-display text-xs font-bold text-white">
+                            T</div>
+                        <span class="font-display text-sm font-semibold text-ink">TakomiDX</span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-0.5 ml-2">
+                        <a href="#"
+                            class="text-[13px] font-display font-medium text-primary bg-primary-soft px-3 py-1 rounded cursor-pointer">Workspaces</a>
+                        <a href="#"
+                            class="text-[13px] font-display text-ink-muted px-3 py-1 rounded hover:text-ink hover:bg-surface-2 transition-all cursor-pointer">Activity</a>
+                        <a href="#"
+                            class="text-[13px] font-display text-ink-muted px-3 py-1 rounded hover:text-ink hover:bg-surface-2 transition-all cursor-pointer">Traces</a>
+                        <a href="#"
+                            class="text-[13px] font-display text-ink-muted px-3 py-1 rounded hover:text-ink hover:bg-surface-2 transition-all cursor-pointer">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div
+                        class="font-mono text-[11px] text-ink-faint bg-surface-2 border border-border px-2.5 py-1 rounded">
+                        <span class="text-success">3</span> · <span class="text-warning">1</span>
+                    </div>
+                    <button
+                        class="cursor-pointer bg-primary text-white font-display text-xs font-semibold px-3 py-1.5 rounded hover:bg-primary-dim transition-colors">+
+                        New</button>
+                </div>
+            </nav>
+        </section>
+
+        <!-- DASHBOARD PREVIEW -->
+        <section class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-0.5 bg-primary"></div>
+                <h2 class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em]">Dashboard Preview</h2>
+            </div>
+            <div class="bg-surface rounded-lg border border-border overflow-hidden shadow-carbon-lg">
+                <div class="bg-surface-2 border-b border-border px-4 py-2.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="w-5 h-5 rounded bg-primary flex items-center justify-center font-display text-[10px] font-bold text-white">
+                            T</div>
+                        <span class="font-display text-[13px] font-medium">Mission Control</span>
+                        <span class="font-mono text-[10px] text-ink-faint">v0.1.0</span>
+                    </div>
+                    <div class="font-mono text-[10px] text-ink-faint"><span class="text-primary">|</span> 3 workspaces
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-display text-base font-semibold">Active</h3>
+                        <button
+                            class="cursor-pointer bg-primary text-white font-display text-[11px] font-semibold px-2.5 py-1 rounded hover:bg-primary-dim transition-colors">+
+                            Create</button>
+                    </div>
+                    <div class="grid gap-2 md:grid-cols-3">
+                        <div
+                            class="bg-surface-2 rounded border border-border p-2.5 hover-carbon cursor-pointer red-accent-left">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-[13px] font-medium">billing-auth</span><span
+                                    class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span></div>
+                            <p class="font-mono text-[10px] text-ink-faint mt-0.5">Claude · 12m · $0.42</p>
+                        </div>
+                        <div class="bg-surface-2 rounded border border-border p-2.5 cursor-pointer"
+                            style="border-left:2px solid #eab308;">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-[13px] font-medium">onboarding</span><span
+                                    class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span></div>
+                            <p class="font-mono text-[10px] text-ink-faint mt-0.5">Gemini · 34m · $1.83</p>
+                        </div>
+                        <div class="bg-surface-2 rounded border border-border p-2.5 cursor-pointer"
+                            style="border-left:2px solid #ef4444;">
+                            <div class="flex justify-between items-center"><span
+                                    class="font-display text-[13px] font-medium">rate-limiter</span><span
+                                    class="w-1.5 h-1.5 rounded-full bg-danger"></span></div>
+                            <p class="font-mono text-[10px] text-ink-faint mt-0.5">Codex · 8m · $0.91</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center font-mono text-[11px] text-ink-faint py-8 border-t border-border">
+            TakomiDX · Design System V5 · Carbon Fiber · 2026
+        </footer>
+    </div>
+</body>
+
+</html>
