@@ -48,15 +48,14 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
       )} ${getCardShadow(workspace.status)}`}
     >
       <div
-        className={`absolute left-0 top-0 h-1 w-full rounded-t-xl bg-gradient-to-r ${
-          isDanger
+        className={`absolute left-0 top-0 h-1 w-full rounded-t-xl bg-gradient-to-r ${isDanger
             ? "from-transparent via-[var(--color-danger)]/40 to-transparent"
             : isWarning
               ? "from-transparent via-[var(--color-warning)]/40 to-transparent"
               : isValidating
                 ? "from-transparent via-[var(--color-accent)]/40 to-transparent"
                 : "from-transparent via-[var(--color-primary)]/20 to-transparent"
-        } opacity-60 transition-opacity group-hover:opacity-100`}
+          } opacity-60 transition-opacity group-hover:opacity-100`}
       />
 
       <div className="mt-1 flex items-start justify-between gap-4">
@@ -99,38 +98,56 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
       </dl>
 
       <div
-        className={`mt-4 flex-1 rounded-lg border px-3 py-2 font-mono text-xs ${
-          isDanger
+        className={`mt-4 flex-1 rounded-lg border px-3 py-2 font-mono text-xs ${isDanger
             ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/5 text-[var(--color-danger)]"
             : isWarning
               ? "border-[var(--color-warning)]/20 bg-[var(--color-warning)]/5 text-[var(--color-warning)]"
               : isValidating
                 ? "border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)]"
                 : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]"
-        }`}
+          }`}
       >
-        <span className="mr-2 opacity-80">{isDanger ? "x" : isWarning ? "!" : isValidating ? "~" : ">"}</span>
+        <span className={isDanger ? "mr-1" : isWarning ? "mr-1" : "mr-1 text-[var(--color-primary)]"}>
+          {isDanger ? "✕" : isWarning ? "⚠" : isValidating ? "~" : "→"}
+        </span>{" "}
         <span className="whitespace-pre-wrap leading-relaxed">{workspace.lastAction}</span>
       </div>
 
       <div className="mt-4 flex gap-2">
         <Link
           href={`/workspaces/${workspace.id}`}
-          className={`flex-1 rounded-lg py-2 text-center font-mono text-xs font-semibold transition-colors ${
-            isWarning
-              ? "bg-[var(--color-warning)] text-[var(--color-canvas)] hover:opacity-90"
-              : "bg-[var(--color-primary)] text-[var(--color-canvas)] hover:bg-[var(--color-primary-dim)]"
-          }`}
+          className={`flex-1 rounded-lg py-2 text-center font-mono text-xs font-semibold transition-all ${isDanger
+              ? "border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+              : isWarning
+                ? "bg-[var(--color-warning)] text-[var(--color-canvas)] hover:opacity-90"
+                : "bg-[var(--color-primary)] text-[var(--color-canvas)] hover:bg-[var(--color-primary-dim)]"
+            }`}
         >
-          {isDanger ? "Inspect" : isWarning ? "Review" : "Open Workspace"}
+          {isDanger ? "Inspect" : isWarning ? "Review" : "Open"}
         </Link>
         <Link
           href={secondaryHref}
           target={hasLivePreview ? "_blank" : undefined}
-          className="flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[var(--color-ink-muted)] transition-all hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+          className={`flex items-center justify-center rounded-lg border px-3 py-2 transition-colors ${isDanger
+              ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/20"
+              : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            }`}
           title={hasLivePreview ? "Open preview in new tab" : `Open ${secondaryLabel.toLowerCase()} surface`}
         >
-          <span className="font-mono text-xs">{secondaryLabel}</span>
+          {isDanger ? (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          ) : isWarning ? (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          )}
         </Link>
       </div>
     </article>

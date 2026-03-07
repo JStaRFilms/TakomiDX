@@ -31,7 +31,7 @@ export default async function WorkspaceLayout({
         { label: workspace.slug },
       ]}
     >
-      <div className="animate-in fade-in duration-300">
+      <div className="mx-auto w-full max-w-6xl animate-in fade-in duration-300 px-4 pt-4 lg:px-6">
         <WorkspaceDetailHeader workspace={workspace} />
         <WorkspaceTabs workspaceId={workspace.id} />
         {children}

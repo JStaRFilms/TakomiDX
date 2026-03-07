@@ -12,7 +12,9 @@ export function AppShell({ children, breadcrumbs }: AppShellProps) {
       <nav className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-surface)]/88 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 lg:px-6">
           <Link href="/" className="flex items-center gap-3">
-            <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] font-mono text-sm font-bold text-[var(--color-canvas)]">
+              T
+            </div>
             <span className="font-mono text-sm font-semibold text-[var(--color-ink)]">
               TakomiDX
             </span>
@@ -55,9 +57,7 @@ export function AppShell({ children, breadcrumbs }: AppShellProps) {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-4 lg:px-6">
-        {children}
-      </main>
+      <main className="w-full flex-1 pb-10">{children}</main>
     </div>
   );
 }

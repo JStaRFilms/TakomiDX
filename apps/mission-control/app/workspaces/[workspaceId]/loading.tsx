@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function WorkspaceLoading() {
   return (
     <AppShell breadcrumbs={[{ label: "Mission Control", href: "/" }, { label: "Workspaces" }, { label: "Loading" }]}>
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-6xl space-y-4 px-4 pt-4 lg:px-6">
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
           <div className="space-y-3">
             <Skeleton className="h-4 w-52" />

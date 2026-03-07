@@ -34,27 +34,27 @@ Build the Mission Control user experience that makes workspaces understandable, 
 
 ### Phase 1: Information architecture
 
-- [ ] Define the main routes and screen hierarchy.
-- [ ] Lock card anatomy, status model, and primary actions.
-- [ ] Translate the platform spec into concrete UI states and empty states.
+- [x] Define the main routes and screen hierarchy.
+- [x] Lock card anatomy, status model, and primary actions.
+- [x] Translate the platform spec into concrete UI states and empty states.
 
 ### Phase 2: Workspace Grid
 
-- [ ] Implement grid layout with meaningful grouping and filtering.
-- [ ] Render workspace identity, status, preview, elapsed time, and cost summary.
-- [ ] Add primary quick actions per card.
+- [x] Implement grid layout with meaningful grouping and filtering.
+- [x] Render workspace identity, status, preview, elapsed time, and cost summary.
+- [x] Add primary quick actions per card.
 
 ### Phase 3: Workspace Detail
 
-- [ ] Implement summary, activity, logs, trace placeholder, preview, diff placeholder, and validation tabs.
-- [ ] Add approval surfaces and current-action callouts.
-- [ ] Make failures and next actions obvious above the fold.
+- [x] Implement summary, activity, logs, trace placeholder, preview, diff placeholder, and validation tabs.
+- [x] Add approval surfaces and current-action callouts.
+- [x] Make failures and next actions obvious above the fold.
 
 ### Phase 4: DX refinement
 
-- [ ] Ensure notifications and banners always include workspace identity.
-- [ ] Add skeleton states, empty states, and failure states.
-- [ ] Validate that the UI feels like a control plane, not a generic admin dashboard.
+- [x] Ensure notifications and banners always include workspace identity.
+- [x] Add skeleton states, empty states, and failure states.
+- [x] Validate that the UI feels like a control plane, not a generic admin dashboard.
 
 ## Definition of Done
 
