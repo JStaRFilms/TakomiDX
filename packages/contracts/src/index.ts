@@ -14,6 +14,7 @@ export const previewDomainSchema = z
 
 export const runtimeTypeSchema = z.enum(["container"]);
 export const editorTargetSchema = z.enum(["vscode"]);
+export const workspaceBranchTypeSchema = z.enum(["agent", "review"]);
 export const workspaceStatusSchema = z.enum([
   "queued",
   "booting",
@@ -63,6 +64,65 @@ export const missionControlPublicEnvSchema = z.object({
 export const agentdEnvSchema = z.object({
   TAKOMI_AGENTD_HOST: z.string().min(1).default("127.0.0.1"),
   TAKOMI_AGENTD_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+});
+
+export const workspaceArtifactLayoutSchema = z.object({
+  root: z.string().min(1),
+  logsDir: z.string().min(1),
+  tracesDir: z.string().min(1),
+  reviewDir: z.string().min(1),
+  browserDir: z.string().min(1),
+});
+
+export const createWorkspaceInputSchema = z.object({
+  slug: workspaceSlugSchema,
+  repoPath: z.string().min(1),
+  baseBranch: z.string().min(1).default("main"),
+  branchType: workspaceBranchTypeSchema.default("agent"),
+  runtimeType: runtimeTypeSchema.default("container"),
+});
+
+export const deleteWorkspaceInputSchema = z.object({
+  confirm: z.boolean().default(false),
+  deleteBranch: z.boolean().default(false),
+});
+
+export const workspaceMetadataSchema = z.object({
+  metadataVersion: z.literal(1).default(1),
+  id: workspaceIdSchema,
+  slug: workspaceSlugSchema,
+  repoPath: z.string().min(1),
+  worktreePath: z.string().min(1).nullable(),
+  branch: z.string().min(1),
+  baseBranch: z.string().min(1),
+  branchType: workspaceBranchTypeSchema,
+  runtimeType: runtimeTypeSchema,
+  previewHost: previewDomainSchema,
+  status: workspaceStatusSchema,
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+  archivedAt: z.string().datetime({ offset: true }).nullable(),
+  lastError: z.string().min(1).nullable().default(null),
+  artifacts: workspaceArtifactLayoutSchema,
+});
+
+export const workspaceLifecycleEventTypeSchema = z.enum([
+  "workspace.created",
+  "workspace.restored",
+  "workspace.restore_failed",
+  "workspace.archived",
+  "workspace.deleted",
+]);
+
+export const workspaceLifecycleEventSchema = z.object({
+  id: z.string().min(1),
+  workspaceId: workspaceIdSchema,
+  workspaceSlug: workspaceSlugSchema,
+  type: workspaceLifecycleEventTypeSchema,
+  status: workspaceStatusSchema,
+  timestamp: z.string().datetime({ offset: true }),
+  summary: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
 });
 
 export const workspaceSummarySchema = z.object({
@@ -145,6 +205,7 @@ export const workspaceRuntimeStateSchema = z.object({
 
 export type RuntimeType = z.infer<typeof runtimeTypeSchema>;
 export type EditorTarget = z.infer<typeof editorTargetSchema>;
+export type WorkspaceBranchType = z.infer<typeof workspaceBranchTypeSchema>;
 export type WorkspaceStatus = z.infer<typeof workspaceStatusSchema>;
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
 export type RuntimeLifecycleState = z.infer<typeof runtimeLifecycleStateSchema>;
@@ -155,6 +216,18 @@ export type MissionControlPublicEnv = z.infer<
   typeof missionControlPublicEnvSchema
 >;
 export type AgentdEnv = z.infer<typeof agentdEnvSchema>;
+export type WorkspaceArtifactLayout = z.infer<
+  typeof workspaceArtifactLayoutSchema
+>;
+export type CreateWorkspaceInput = z.input<typeof createWorkspaceInputSchema>;
+export type DeleteWorkspaceInput = z.input<typeof deleteWorkspaceInputSchema>;
+export type WorkspaceMetadata = z.infer<typeof workspaceMetadataSchema>;
+export type WorkspaceLifecycleEventType = z.infer<
+  typeof workspaceLifecycleEventTypeSchema
+>;
+export type WorkspaceLifecycleEvent = z.infer<
+  typeof workspaceLifecycleEventSchema
+>;
 export type WorkspaceSummary = z.infer<typeof workspaceSummarySchema>;
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;
@@ -178,6 +251,13 @@ export function createPreviewHost(
   previewDomain: string,
 ): string {
   return `${workspaceSlug}.${previewDomain}`;
+}
+
+export function createWorkspaceBranchName(
+  branchType: WorkspaceBranchType,
+  workspaceSlug: string,
+): string {
+  return `${branchType}/${workspaceSlug}`;
 }
 
 export function createAuthBrokerHost(previewDomain: string): string {

@@ -11,5 +11,6 @@ describe("loadAgentdConfig", () => {
     expect(config.authBrokerHost).toBe("auth.takomi.localhost");
     expect(config.dataDir).toBe("C:\\takomidx\\.takomi");
     expect(config.stateDbPath).toBe("C:\\takomidx\\.takomi\\state\\agentd.db");
+    expect(config.worktreeRootDir).toBe("C:\\takomidx\\.takomi\\worktrees");
   });
 });

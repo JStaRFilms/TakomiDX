@@ -104,7 +104,7 @@ flowchart LR
 ## Progress Checklist
 
 - [x] Task 01 complete
-- [ ] Task 02 complete
+- [x] Task 02 complete
 - [x] Task 03 complete
 - [ ] Task 04 complete
 - [ ] Task 05 complete

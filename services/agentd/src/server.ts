@@ -14,7 +14,11 @@ import {
   createRuntimeExecutor,
   createRuntimeExecutorBoundary,
 } from "./modules/runtime-executor";
-import { createWorkspaceManagerBoundary } from "./modules/workspace-manager";
+import {
+  WorkspaceLifecycleError,
+  createWorkspaceManager,
+  createWorkspaceManagerBoundary,
+} from "./modules/workspace-manager";
 import { createServer as createHttpServer, type IncomingMessage } from "node:http";
 
 function json(body: unknown, init?: { status?: number }) {
@@ -41,6 +45,12 @@ async function readJsonBody(request: IncomingMessage) {
 }
 
 export function createAgentdServer(config: AgentdConfig) {
+  const workspaceManager = createWorkspaceManager({
+    previewDomain: config.previewDomain,
+    stateDir: config.stateDir,
+    workspacesDir: config.workspacesDir,
+    worktreeRootDir: config.worktreeRootDir,
+  });
   const runtimeExecutor = createRuntimeExecutor({
     workspacesDir: config.workspacesDir,
   });
@@ -57,21 +67,183 @@ export function createAgentdServer(config: AgentdConfig) {
     const refreshHealthMatch = url.pathname.match(
       /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/refresh-health$/,
     );
+    const workspaceMatch = url.pathname.match(
+      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})$/,
+    );
+    const workspaceArchiveMatch = url.pathname.match(
+      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/archive$/,
+    );
+    const workspaceDeleteMatch = url.pathname.match(
+      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/delete$/,
+    );
+    const workspaceEventsMatch = url.pathname.match(
+      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/events$/,
+    );
 
     if (request.method === "GET" && url.pathname === "/healthz") {
       result = json({
         ...buildHealthPayload(config),
         boundaries: [
-          createWorkspaceManagerBoundary(),
+          createWorkspaceManagerBoundary(
+            workspaceManager.list().length,
+            workspaceManager.listEvents().length,
+          ),
           createRuntimeExecutorBoundary(runtimeExecutor.list().length),
           createRouteRegistryBoundary(routeRegistry.list().length),
         ],
       });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/workspaces/events"
+    ) {
+      result = json({
+        items: workspaceManager.listEvents(),
+      });
     } else if (request.method === "GET" && url.pathname === "/api/v1/workspaces") {
       result = json({
-        items: [],
-        note: "Workspace lifecycle APIs land in downstream tasks.",
+        items: workspaceManager.list(),
       });
+    } else if (request.method === "POST" && url.pathname === "/api/v1/workspaces") {
+      try {
+        const body = await readJsonBody(request);
+        const workspace = await workspaceManager.create(body ?? {});
+        result = json(workspace, { status: 201 });
+      } catch (error) {
+        if (error instanceof WorkspaceLifecycleError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof SyntaxError) {
+          result = json(
+            {
+              error: "invalid_json",
+              message: "The request body must be valid JSON.",
+            },
+            { status: 400 },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "invalid_workspace_request",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "workspace_create_failed",
+              message: "The workspace could not be created.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } else if (request.method === "GET" && workspaceEventsMatch) {
+      const workspaceId = workspaceEventsMatch[1]!;
+      const workspace = workspaceManager.get(workspaceId);
+
+      result = workspace
+        ? json({
+            items: workspaceManager.listEvents(workspaceId),
+          })
+        : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "GET" && workspaceMatch) {
+      const workspaceId = workspaceMatch[1]!;
+      const workspace = workspaceManager.get(workspaceId);
+
+      result = workspace
+        ? json(workspace)
+        : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "POST" && workspaceArchiveMatch) {
+      try {
+        const workspaceId = workspaceArchiveMatch[1]!;
+        const workspace = await workspaceManager.archive(workspaceId);
+        result = json(workspace);
+      } catch (error) {
+        if (error instanceof WorkspaceLifecycleError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "workspace_archive_failed",
+              message: error.message,
+            },
+            { status: 500 },
+          );
+        } else {
+          result = json(
+            {
+              error: "workspace_archive_failed",
+              message: "The workspace could not be archived.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } else if (request.method === "POST" && workspaceDeleteMatch) {
+      try {
+        const workspaceId = workspaceDeleteMatch[1]!;
+        const body = await readJsonBody(request);
+        const deletion = await workspaceManager.delete(workspaceId, body ?? {});
+        result = json(deletion);
+      } catch (error) {
+        if (error instanceof WorkspaceLifecycleError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof SyntaxError) {
+          result = json(
+            {
+              error: "invalid_json",
+              message: "The request body must be valid JSON.",
+            },
+            { status: 400 },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "workspace_delete_failed",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "workspace_delete_failed",
+              message: "The workspace could not be deleted.",
+            },
+            { status: 500 },
+          );
+        }
+      }
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/runtime/workspaces"

@@ -26,31 +26,40 @@ Implement the workspace lifecycle so TakomiDX can create, persist, restore, arch
 
 - Task 01 complete
 
+## Completion
+
+- Status: Complete
+- Completed At: `2026-03-07T11:12:30+01:00`
+- Notes:
+  - Added shared workspace lifecycle contracts, metadata schemas, branch naming helpers, and structured workspace events.
+  - Implemented a persisted workspace manager with git worktree provisioning, restore-on-start behavior, safe archival, explicit delete confirmation, and event logging.
+  - Exposed workspace lifecycle endpoints through `agentd` and added tests covering create, restore, archive, and delete flows.
+
 ## Implementation Plan
 
 ### Phase 1: Domain model
 
-- [ ] Define workspace schema and status enum.
-- [ ] Define run-independent workspace metadata format.
-- [ ] Define artifact directory layout for logs, traces, review bundles, and browser outputs.
+- [x] Define workspace schema and status enum.
+- [x] Define run-independent workspace metadata format.
+- [x] Define artifact directory layout for logs, traces, review bundles, and browser outputs.
 
 ### Phase 2: Persistence layer
 
-- [ ] Implement local metadata store using the chosen foundation stack.
-- [ ] Add CRUD operations for workspaces.
-- [ ] Add restore-on-start behavior for persisted workspaces.
+- [x] Implement local metadata store using the chosen foundation stack.
+- [x] Add CRUD operations for workspaces.
+- [x] Add restore-on-start behavior for persisted workspaces.
 
 ### Phase 3: Git worktree integration
 
-- [ ] Implement worktree creation from a chosen base branch.
-- [ ] Apply branch naming conventions from the spec.
-- [ ] Implement cleanup and archival semantics that do not corrupt the main repo.
+- [x] Implement worktree creation from a chosen base branch.
+- [x] Apply branch naming conventions from the spec.
+- [x] Implement cleanup and archival semantics that do not corrupt the main repo.
 
 ### Phase 4: Service surface
 
-- [ ] Expose workspace lifecycle endpoints or commands through `agentd`.
-- [ ] Emit structured workspace events for UI consumption.
-- [ ] Add tests for create, restore, archive, and delete flows.
+- [x] Expose workspace lifecycle endpoints or commands through `agentd`.
+- [x] Emit structured workspace events for UI consumption.
+- [x] Add tests for create, restore, archive, and delete flows.
 
 ## Definition of Done
 

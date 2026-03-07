@@ -6,6 +6,7 @@ export function ensureRuntimeLayout(config: AgentdConfig) {
     config.dataDir,
     config.stateDir,
     config.workspacesDir,
+    config.worktreeRootDir,
     config.runsDir,
     config.routesDir,
   ]) {

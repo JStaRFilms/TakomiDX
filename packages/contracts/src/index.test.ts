@@ -1,11 +1,13 @@
 import {
   createManualFallbackUrl,
   createAuthBrokerHost,
+  createWorkspaceBranchName,
   createPreviewHost,
   createPreviewRegistrationPayload,
   createPreviewUrl,
   createRuntimeContainerName,
   createWorkspaceDataRoot,
+  workspaceMetadataSchema,
   workspaceSlugSchema,
 } from "./index";
 import { describe, expect, it } from "vitest";
@@ -26,6 +28,12 @@ describe("@takomi/contracts", () => {
   it("builds predictable workspace data roots", () => {
     expect(createWorkspaceDataRoot(".takomi", "ws_abcd1234")).toBe(
       ".takomi/workspaces/ws_abcd1234",
+    );
+  });
+
+  it("builds predictable workspace branch names", () => {
+    expect(createWorkspaceBranchName("agent", "billing-fix")).toBe(
+      "agent/billing-fix",
     );
   });
 
@@ -73,6 +81,38 @@ describe("@takomi/contracts", () => {
       url: "http://runtime-routing.takomi.localhost/",
       manualFallbackUrl: "http://127.0.0.1:45231/healthz",
       routeStatus: "registered",
+    });
+  });
+
+  it("validates durable workspace metadata records", () => {
+    expect(
+      workspaceMetadataSchema.parse({
+        id: "ws_abcd1234",
+        slug: "billing-fix",
+        repoPath: "C:/repos/takomi",
+        worktreePath: "C:/repos/.takomi/worktrees/ws_abcd1234",
+        branch: "agent/billing-fix",
+        baseBranch: "main",
+        branchType: "agent",
+        runtimeType: "container",
+        previewHost: "billing-fix.takomi.localhost",
+        status: "queued",
+        createdAt: "2026-03-07T03:07:31.000Z",
+        updatedAt: "2026-03-07T03:07:31.000Z",
+        archivedAt: null,
+        lastError: null,
+        artifacts: {
+          root: "C:/repos/.takomi/workspaces/ws_abcd1234",
+          logsDir: "C:/repos/.takomi/workspaces/ws_abcd1234/logs",
+          tracesDir: "C:/repos/.takomi/workspaces/ws_abcd1234/traces",
+          reviewDir: "C:/repos/.takomi/workspaces/ws_abcd1234/review",
+          browserDir: "C:/repos/.takomi/workspaces/ws_abcd1234/browser",
+        },
+      }),
+    ).toMatchObject({
+      metadataVersion: 1,
+      branch: "agent/billing-fix",
+      status: "queued",
     });
   });
 });

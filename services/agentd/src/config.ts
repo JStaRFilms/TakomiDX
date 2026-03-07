@@ -20,6 +20,7 @@ export interface AgentdConfig {
   stateDir: string;
   routesDir: string;
   runsDir: string;
+  worktreeRootDir: string;
   workspacesDir: string;
 }
 
@@ -42,6 +43,7 @@ export function loadAgentdConfig(
   const dataDir = path.resolve(cwd, shared.TAKOMI_DATA_DIR);
   const stateDir = path.join(dataDir, "state");
   const workspacesDir = path.join(dataDir, "workspaces");
+  const worktreeRootDir = path.join(dataDir, "worktrees");
   const runsDir = path.join(dataDir, "runs");
   const routesDir = path.join(dataDir, "routes");
 
@@ -58,6 +60,7 @@ export function loadAgentdConfig(
     runtimeBackend: shared.TAKOMI_RUNTIME_BACKEND,
     stateDbPath: path.join(stateDir, "agentd.db"),
     stateDir,
+    worktreeRootDir,
     workspacesDir,
   };
 }
