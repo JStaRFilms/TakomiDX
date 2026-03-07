@@ -198,4 +198,27 @@ describe("auth broker", () => {
     expect(completed.status).toBe("completed");
     expect(completed.device?.status).toBe("authorized");
   });
+
+  it("uses an explicit preview URL when the local runtime fallback should receive the handoff", () => {
+    const root = createTempDir();
+    const { broker } = createDeterministicBroker(root);
+    const start = broker.createBrowserSession({
+      workspaceId: "ws_authlocal1",
+      previewHost: "auth-local.takomi.localhost",
+      previewUrl: "http://127.0.0.1:43210/",
+      provider: "github",
+    });
+
+    const resolution = broker.handleCallback({
+      provider: "github",
+      workspaceId: "ws_authlocal1",
+      state: start.state,
+      code: "oauth-code-local",
+    });
+
+    expect(start.session.previewUrl).toBe("http://127.0.0.1:43210/");
+    expect(resolution.redirectUrl).toContain(
+      "http://127.0.0.1:43210/.takomi/auth/callback",
+    );
+  });
 });

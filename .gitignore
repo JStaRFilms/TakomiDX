@@ -15,9 +15,12 @@ __pycache__/
 venv/
 .venv/
 .env
+.env.local
 *.pkl
 *.pth
 *.safetensors
+*.pem
+*.key
 
 # --- Node / Web ---
 node_modules/
@@ -28,6 +31,7 @@ coverage/
 .npm
 .turbo/
 .takomi/
+.jstar/
 *.log
 
 # --- IDEs ---

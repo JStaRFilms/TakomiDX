@@ -34,6 +34,7 @@ const DEFAULT_SESSION_TTL_SECONDS = 300;
 export interface WorkspaceAuthTarget {
   workspaceId: string;
   previewHost: string;
+  previewUrl?: string;
 }
 
 export interface CreateAuthBrokerOptions {
@@ -458,7 +459,9 @@ export function createAuthBroker(options: CreateAuthBrokerOptions) {
           input.workspaceId,
           previewProtocol,
         ),
-        previewUrl: createPreviewUrl(input.previewHost, previewProtocol),
+        previewUrl:
+          input.previewUrl ??
+          createPreviewUrl(input.previewHost, previewProtocol),
         forwardPath: input.forwardPath ?? DEFAULT_FORWARD_PATH,
         requestedAt: timestamp.toISOString(),
         updatedAt: timestamp.toISOString(),
@@ -505,7 +508,9 @@ export function createAuthBroker(options: CreateAuthBrokerOptions) {
         status: "awaiting_user",
         stateNonce: nonceGenerator(),
         callbackUrl: null,
-        previewUrl: createPreviewUrl(input.previewHost, previewProtocol),
+        previewUrl:
+          input.previewUrl ??
+          createPreviewUrl(input.previewHost, previewProtocol),
         forwardPath: input.forwardPath ?? DEFAULT_FORWARD_PATH,
         requestedAt: timestamp.toISOString(),
         updatedAt: timestamp.toISOString(),

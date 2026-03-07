@@ -40,6 +40,7 @@ These contracts carry:
 - action rows trigger focused commands instead of duplicating Mission Control UI
 - runtime logs open as editor text documents
 - preview and Mission Control routes open in VS Code's simple browser when available
+- preview actions prefer the runtime `manualFallbackUrl` when the local `.takomi.localhost` route is not yet attached by the edge proxy layer
 
 ## Verification
 
@@ -48,5 +49,6 @@ Current implementation was verified with:
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm build`
+- live `agentd` editor payloads returning fallback preview URLs, Mission Control paths, and filesystem deep links for active workspaces
 
 `python scripts/vibe-verify.py` still skips checks because its command wiring is not configured yet.

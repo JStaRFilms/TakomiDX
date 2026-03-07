@@ -1,5 +1,6 @@
 import type { AgentdConfig } from "./config";
 import {
+  createPreviewUrl,
   createRuntimeTarget,
   workspaceRuntimeConfigSchema,
 } from "@takomi/contracts";
@@ -229,6 +230,22 @@ export function createAgentdServer(config: AgentdConfig) {
       validationBundle: validationBundles.getBundle(workspaceId),
       reviewBundle: validationBundles.getReviewBundle(workspaceId),
     };
+  }
+
+  function resolveWorkspacePreviewUrl(workspaceId: string) {
+    const workspace = workspaceManager.get(workspaceId);
+
+    if (!workspace) {
+      return null;
+    }
+
+    const runtime = runtimeExecutor.get(workspaceId);
+
+    return (
+      runtime?.preview?.manualFallbackUrl ??
+      runtime?.preview?.url ??
+      createPreviewUrl(workspace.previewHost)
+    );
   }
 
   return createHttpServer(async (request, response) => {
@@ -604,6 +621,7 @@ export function createAgentdServer(config: AgentdConfig) {
         }
 
         const workspace = workspaceManager.get(workspaceId);
+        const previewUrl = resolveWorkspacePreviewUrl(workspaceId);
 
         if (!workspace) {
           result = json(
@@ -629,6 +647,7 @@ export function createAgentdServer(config: AgentdConfig) {
             authBroker.createDeviceSession({
               workspaceId,
               previewHost: workspace.previewHost,
+              ...(previewUrl ? { previewUrl } : {}),
               provider,
               device: device as never,
               ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
@@ -646,6 +665,7 @@ export function createAgentdServer(config: AgentdConfig) {
             authBroker.createBrowserSession({
               workspaceId,
               previewHost: workspace.previewHost,
+              ...(previewUrl ? { previewUrl } : {}),
               provider,
               ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
               ...(forwardPath ? { forwardPath } : {}),

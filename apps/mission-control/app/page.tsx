@@ -1,12 +1,12 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { CreateWorkspacePanel } from "@/features/workspaces/components/create-workspace-panel";
 import { WorkspaceGrid } from "@/features/workspaces/components/workspace-grid";
-import { listWorkspaces } from "@/features/workspaces/data/workspace-detail-data";
+import { loadWorkspaceList } from "@/features/workspaces/data/workspace-detail-data";
 import { resolveMissionControlEnv } from "@/lib/env";
 
 export default async function HomePage() {
   const env = resolveMissionControlEnv();
-  const workspaces = await listWorkspaces();
+  const { workspaces, errorMessage } = await loadWorkspaceList();
 
   return (
     <AppShell>
@@ -36,6 +36,15 @@ export default async function HomePage() {
         <div className="mx-auto w-full max-w-6xl px-4 lg:px-6">
           <CreateWorkspacePanel />
         </div>
+
+        {errorMessage && (
+          <div className="mx-auto w-full max-w-6xl px-4 lg:px-6">
+            <div className="rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/8 px-4 py-3 text-sm text-[var(--color-ink)]">
+              Mission Control could not load live workspace data from agentd.
+              <span className="ml-1 text-[var(--color-ink-muted)]">{errorMessage}</span>
+            </div>
+          </div>
+        )}
 
         <section>
           <WorkspaceGrid initialWorkspaces={workspaces} />

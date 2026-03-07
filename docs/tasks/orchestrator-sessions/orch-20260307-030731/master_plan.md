@@ -21,6 +21,8 @@ This is greenfield implementation planning.
 
 - Task 00 completed the Genesis backfill for requirements, standards, issue files, builder guidance, and verification baseline.
 - Task 08 completed the VS Code companion integration and is ready for downstream integration review.
+- Task 09 completed the integration hardening pass, removed misleading Mission Control sample-data fallback behavior, and aligned validation/auth/editor preview flows around reachable local runtime URLs.
+- The remaining integration gap is the dedicated local edge proxy layer in Task 10; `.takomi.localhost` hosts are still modelled and persisted, but live local opens currently rely on `manualFallbackUrl`.
 
 ## Scope Guardrails
 
@@ -122,4 +124,4 @@ flowchart LR
 - [x] Task 06 complete
 - [x] Task 07 complete
 - [x] Task 08 complete
-- [ ] Task 09 complete
+- [x] Task 09 complete

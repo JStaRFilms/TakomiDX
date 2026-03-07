@@ -103,12 +103,12 @@ function resolvePreviewUrl(
   workspace: WorkspaceMetadata,
   runtime: WorkspaceRuntimeState | null,
 ) {
-  if (runtime?.preview?.routeStatus === "registered") {
-    return runtime.preview.url;
-  }
-
   if (runtime?.preview?.manualFallbackUrl) {
     return runtime.preview.manualFallbackUrl;
+  }
+
+  if (runtime?.preview?.routeStatus === "registered") {
+    return runtime.preview.url;
   }
 
   return createPreviewUrl(workspace.previewHost);

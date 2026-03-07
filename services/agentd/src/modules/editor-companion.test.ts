@@ -124,7 +124,7 @@ describe("editor companion workspace models", () => {
 
     expect(item.status).toBe("failed");
     expect(item.approval.status).toBe("pending");
-    expect(item.previewUrl).toBe("http://billing-fix.takomi.localhost/");
+    expect(item.previewUrl).toBe("http://127.0.0.1:3000/");
     expect(item.actions.map((action) => action.id)).toEqual([
       "workspace",
       "preview",

@@ -507,6 +507,19 @@ interface AgentdWorkspaceDetailResponse {
   reviewBundle: ReviewBundle | null;
 }
 
+export interface WorkspaceListLoadResult {
+  workspaces: WorkspaceSummary[];
+  errorMessage: string | null;
+}
+
+function allowSampleFallbacks() {
+  return process.env.TAKOMI_ENABLE_SAMPLE_DATA === "true";
+}
+
+function isAgentdNotFoundError(error: unknown) {
+  return error instanceof Error && error.message.includes("(404).");
+}
+
 export function resolveWorkspacePreviewUrl(
   workspace: WorkspaceSummary,
   runtime: WorkspaceRuntimeState | null,
@@ -803,16 +816,37 @@ async function fetchAgentdJson<T>(pathname: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function listWorkspaces(): Promise<WorkspaceSummary[]> {
+export async function loadWorkspaceList(): Promise<WorkspaceListLoadResult> {
   try {
     const payload = await fetchAgentdJson<{ items: WorkspaceSummary[] }>(
       "/api/v1/mission-control/workspaces",
     );
 
-    return payload.items;
-  } catch {
-    return sampleWorkspaces;
+    return {
+      workspaces: payload.items,
+      errorMessage: null,
+    };
+  } catch (error) {
+    if (allowSampleFallbacks()) {
+      return {
+        workspaces: sampleWorkspaces,
+        errorMessage:
+          "Mission Control could not reach agentd. Showing sample workspace data because TAKOMI_ENABLE_SAMPLE_DATA=true.",
+      };
+    }
+
+    return {
+      workspaces: [],
+      errorMessage:
+        error instanceof Error
+          ? error.message
+          : "Mission Control could not reach agentd.",
+    };
   }
+}
+
+export async function listWorkspaces(): Promise<WorkspaceSummary[]> {
+  return (await loadWorkspaceList()).workspaces;
 }
 
 export async function getWorkspace(workspaceId: string): Promise<WorkspaceSummary | null> {
@@ -822,8 +856,16 @@ export async function getWorkspace(workspaceId: string): Promise<WorkspaceSummar
     );
 
     return payload.workspace;
-  } catch {
-    return getSampleWorkspace(workspaceId);
+  } catch (error) {
+    if (allowSampleFallbacks()) {
+      return getSampleWorkspace(workspaceId);
+    }
+
+    if (isAgentdNotFoundError(error)) {
+      return null;
+    }
+
+    throw error;
   }
 }
 
@@ -850,7 +892,15 @@ export async function getWorkspaceDetail(
     );
 
     return buildDetailFromAgentdResponse(payload);
-  } catch {
-    return getSampleWorkspaceDetail(workspaceId);
+  } catch (error) {
+    if (allowSampleFallbacks()) {
+      return getSampleWorkspaceDetail(workspaceId);
+    }
+
+    if (isAgentdNotFoundError(error)) {
+      return null;
+    }
+
+    throw error;
   }
 }

@@ -40,6 +40,21 @@ def main() -> int:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
 
+        def describe_request_failure(failure) -> str:
+            if isinstance(failure, dict):
+                return str(failure.get("errorText") or "request failed")
+            if isinstance(failure, str):
+                return failure
+            return "request failed"
+
+        def normalize_console_level(level: str) -> str:
+            normalized = (level or "").lower()
+            if normalized == "warning":
+                return "warn"
+            if normalized in {"error", "warn", "info", "log"}:
+                return normalized
+            return "log"
+
         def on_console(message) -> None:
             location = None
             if message.location:
@@ -53,7 +68,7 @@ def main() -> int:
                     )
             console_entries.append(
                 {
-                    "level": message.type,
+                    "level": normalize_console_level(message.type),
                     "text": message.text,
                     "location": location,
                 }
@@ -77,7 +92,7 @@ def main() -> int:
                     "status": None,
                     "outcome": "failed",
                     "resourceType": request.resource_type or "other",
-                    "detail": failure.get("errorText") if failure else "request failed",
+                    "detail": describe_request_failure(failure),
                 }
             )
 

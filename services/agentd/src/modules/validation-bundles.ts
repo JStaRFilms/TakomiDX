@@ -427,6 +427,7 @@ export function createValidationBundleManager(
       );
       const previewUrl =
         input.previewUrl ??
+        input.runtime?.preview?.manualFallbackUrl ??
         input.runtime?.preview?.url ??
         createPreviewUrl(input.workspace.previewHost);
       const screenshotPath = path.join(

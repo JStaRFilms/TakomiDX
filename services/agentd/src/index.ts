@@ -8,7 +8,7 @@ ensureRuntimeLayout(config);
 const server = createAgentdServer(config);
 
 server.listen(config.port, config.host, () => {
-  console.log(
-    `[agentd] listening on http://${config.host}:${config.port} with data dir ${config.dataDir}`,
+  process.stdout.write(
+    `[agentd] listening on http://${config.host}:${config.port} with data dir ${config.dataDir}\n`,
   );
 });

@@ -141,6 +141,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(result.bundle.status).toBe("passed");
+    expect(result.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
     expect(result.summary.status).toBe("passed");
     expect(result.review.validationStatus).toBe("passed");
     expect(
@@ -178,6 +179,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(result.bundle.status).toBe("blocked");
+    expect(result.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
     expect(result.review.validationStatus).toBe("blocked");
     expect(result.bundle.majorFailures[0]).toContain("Preview responded with 503");
     expect(manager.canComplete(workspace.id)).toMatchObject({
@@ -260,6 +262,7 @@ describe("validation bundle manager", () => {
     });
 
     expect(sidecarFailure.bundle.status).toBe("failed");
+    expect(sidecarFailure.bundle.previewUrl).toBe("http://127.0.0.1:3000/healthz");
     expect(sidecarFailure.bundle.majorFailures[0]).toContain("Playwright browser launch failed");
     expect(diagnosticFailure.bundle.status).toBe("failed");
     expect(diagnosticFailure.bundle.stats.consoleErrorCount).toBe(1);
