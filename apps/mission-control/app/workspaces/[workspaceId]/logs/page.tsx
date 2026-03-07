@@ -7,7 +7,7 @@ export default async function WorkspaceLogsPage({
   params: Promise<{ workspaceId: string }>;
 }) {
   const { workspaceId } = await params;
-  const detail = getWorkspaceDetail(workspaceId);
+  const detail = await getWorkspaceDetail(workspaceId);
 
   if (!detail) {
     notFound();

@@ -60,6 +60,7 @@ export interface CreateWorkspaceManagerOptions {
   now?: () => Date;
   idGenerator?: () => string;
   eventIdGenerator?: () => string;
+  onEvent?: (event: WorkspaceLifecycleEvent) => void;
 }
 
 export class WorkspaceLifecycleError extends Error {
@@ -210,6 +211,7 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
 
     appendJsonLine(getWorkspaceEventsPath(), event);
     events.push(event);
+    options.onEvent?.(event);
     return event;
   }
 

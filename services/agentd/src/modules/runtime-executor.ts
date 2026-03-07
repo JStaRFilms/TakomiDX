@@ -35,6 +35,11 @@ export interface CreateRuntimeExecutorOptions {
   driver?: ContainerRuntimeDriver;
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  onStateChange?: (input: {
+    current: WorkspaceRuntimeState;
+    previous: WorkspaceRuntimeState | null;
+    config: WorkspaceRuntimeConfig | null;
+  }) => void;
 }
 
 export class RuntimeBootError extends Error {
@@ -203,8 +208,14 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
   }
 
   function persistState(state: WorkspaceRuntimeState) {
+    const previous = runtimes.get(state.workspaceId) ?? null;
     writeJsonFile(getStatePath(state.workspaceId), state);
     runtimes.set(state.workspaceId, state);
+    options.onStateChange?.({
+      current: state,
+      previous,
+      config: configs.get(state.workspaceId) ?? null,
+    });
   }
 
   function listPersistedWorkspaceIds() {

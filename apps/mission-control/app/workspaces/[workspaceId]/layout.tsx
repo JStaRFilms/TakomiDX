@@ -17,7 +17,7 @@ export default async function WorkspaceLayout({
   params,
 }: WorkspaceLayoutProps) {
   const { workspaceId } = await params;
-  const workspace = getWorkspace(workspaceId);
+  const workspace = await getWorkspace(workspaceId);
 
   if (!workspace) {
     notFound();

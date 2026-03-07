@@ -21,6 +21,11 @@ import {
   createWorkspaceManagerBoundary,
 } from "./modules/workspace-manager";
 import { createServer as createHttpServer, type IncomingMessage } from "node:http";
+import path from "node:path";
+import {
+  createObservabilityPolicyBoundary,
+  createObservabilityPolicyEngine,
+} from "./modules/observability-policy-engine";
 
 function json(body: unknown, init?: { status?: number }) {
   return new Response(JSON.stringify(body, null, 2), {
@@ -54,15 +59,68 @@ async function readJsonBody(request: IncomingMessage) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
+function minutesSince(timestamp: string | null) {
+  if (!timestamp) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    Math.floor((Date.now() - new Date(timestamp).getTime()) / 60_000),
+  );
+}
+
+function deriveWorkspaceStatus(
+  workspaceStatus: string,
+  runStatus: string | null,
+  runtimeLifecycle: string | null,
+) {
+  if (workspaceStatus === "archived") {
+    return "archived";
+  }
+
+  if (runStatus === "awaiting_human" || runStatus === "paused") {
+    return "awaiting_human";
+  }
+
+  if (runStatus === "failed") {
+    return "failed";
+  }
+
+  if (runStatus === "completed") {
+    return "completed";
+  }
+
+  if (runtimeLifecycle === "booting") {
+    return "booting";
+  }
+
+  if (runStatus === "running") {
+    return "running";
+  }
+
+  return workspaceStatus;
+}
+
 export function createAgentdServer(config: AgentdConfig) {
+  const observability = createObservabilityPolicyEngine({
+    runsDir: config.runsDir,
+    stateDir: config.stateDir,
+  });
   const workspaceManager = createWorkspaceManager({
     previewDomain: config.previewDomain,
     stateDir: config.stateDir,
     workspacesDir: config.workspacesDir,
     worktreeRootDir: config.worktreeRootDir,
+    onEvent: (event) => {
+      observability.ingestWorkspaceEvent(event);
+    },
   });
   const runtimeExecutor = createRuntimeExecutor({
     workspacesDir: config.workspacesDir,
+    onStateChange: (input) => {
+      observability.captureRuntimeState(input);
+    },
   });
   const routeRegistry = createRouteRegistry({
     routesDir: config.routesDir,
@@ -70,7 +128,45 @@ export function createAgentdServer(config: AgentdConfig) {
   const authBroker = createAuthBroker({
     authBrokerHost: config.authBrokerHost,
     stateDir: config.stateDir,
+    onEvent: (event) => {
+      observability.ingestAuthEvent(event);
+    },
   });
+
+  function buildMissionControlWorkspace(workspaceId: string) {
+    const workspace = workspaceManager.get(workspaceId);
+
+    if (!workspace) {
+      return null;
+    }
+
+    const runtime = runtimeExecutor.get(workspaceId);
+    const run =
+      observability.getActiveRun(workspaceId) ??
+      observability.listRuns(workspaceId)[0] ??
+      null;
+
+    return {
+      id: workspace.id,
+      slug: workspace.slug,
+      repoName: path.basename(workspace.repoPath),
+      branch: workspace.branch,
+      agentType: run?.agentType ?? "Pending agent",
+      status: deriveWorkspaceStatus(
+        workspace.status,
+        run?.status ?? null,
+        runtime?.lifecycle ?? null,
+      ),
+      lastAction: run?.lastAction ?? `Workspace ${workspace.slug} is ${workspace.status}.`,
+      previewHost: workspace.previewHost,
+      tokenCostUsd: run?.tokenCostUsd ?? 0,
+      elapsedMinutes: minutesSince(run?.startedAt ?? workspace.createdAt),
+      health: runtime?.healthStatus ?? "degraded",
+      activeRunId: run?.id ?? null,
+      pauseReason: run?.pauseReason ?? null,
+      auth: null,
+    };
+  }
 
   return createHttpServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
@@ -105,6 +201,21 @@ export function createAgentdServer(config: AgentdConfig) {
     const workspaceEventsMatch = url.pathname.match(
       /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/events$/,
     );
+    const missionControlWorkspaceMatch = url.pathname.match(
+      /^\/api\/v1\/mission-control\/workspaces\/(ws_[a-z0-9]{8,})$/,
+    );
+    const observabilityRunMatch = url.pathname.match(
+      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})$/,
+    );
+    const observabilityRunEventsMatch = url.pathname.match(
+      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/events$/,
+    );
+    const observabilityRunCompleteMatch = url.pathname.match(
+      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/complete$/,
+    );
+    const observabilityRunSpansMatch = url.pathname.match(
+      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/spans$/,
+    );
 
     if (request.method === "GET" && url.pathname === "/healthz") {
       result = json({
@@ -117,7 +228,150 @@ export function createAgentdServer(config: AgentdConfig) {
           createRuntimeExecutorBoundary(runtimeExecutor.list().length),
           createRouteRegistryBoundary(routeRegistry.list().length),
           createAuthBrokerBoundary(authBroker.list().length),
+          createObservabilityPolicyBoundary(
+            observability.listRuns().length,
+            observability.listEvents().length,
+          ),
         ],
+      });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/mission-control/workspaces"
+    ) {
+      result = json({
+        items: workspaceManager
+          .list()
+          .map((workspace) => buildMissionControlWorkspace(workspace.id)),
+      });
+    } else if (request.method === "GET" && missionControlWorkspaceMatch) {
+      const workspaceId = missionControlWorkspaceMatch[1]!;
+      const workspace = buildMissionControlWorkspace(workspaceId);
+      const run =
+        observability.getActiveRun(workspaceId) ??
+        observability.listRuns(workspaceId)[0] ??
+        null;
+
+      result = workspace
+        ? json({
+            workspace,
+            run,
+            runtime: runtimeExecutor.get(workspaceId),
+            events: observability.listEvents({ workspaceId }).slice(0, 50),
+            spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
+            authSessions: authBroker.list(workspaceId),
+            policies: observability.listPolicyRules(),
+          })
+        : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/observability/policies"
+    ) {
+      result = json({
+        items: observability.listPolicyRules(),
+      });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/observability/events"
+    ) {
+      const workspaceId = url.searchParams.get("workspaceId");
+      const runId = url.searchParams.get("runId");
+      result = json({
+        items: observability.listEvents({
+          ...(workspaceId ? { workspaceId } : {}),
+          ...(runId ? { runId } : {}),
+        }),
+      });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/observability/runs"
+    ) {
+      result = json({
+        items: observability.listRuns(url.searchParams.get("workspaceId") ?? undefined),
+      });
+    } else if (
+      request.method === "POST" &&
+      url.pathname === "/api/v1/observability/runs"
+    ) {
+      try {
+        const body = await readJsonBody(request);
+        result = json(observability.startRun(body ?? {}), { status: 201 });
+      } catch (error) {
+        result = json(
+          {
+            error: "invalid_observability_run_request",
+            message: error instanceof Error ? error.message : "Run request is invalid.",
+          },
+          { status: 400 },
+        );
+      }
+    } else if (request.method === "GET" && observabilityRunMatch) {
+      const runId = observabilityRunMatch[1]!;
+      const run = observability.getRun(runId);
+
+      result = run
+        ? json(run)
+        : json(
+            {
+              error: "run_not_found",
+              message: `No run is registered for ${runId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "POST" && observabilityRunCompleteMatch) {
+      const runId = observabilityRunCompleteMatch[1]!;
+
+      try {
+        const body = await readJsonBody(request);
+        result = json(
+          observability.completeRun(runId, body?.summary ?? "Run completed."),
+        );
+      } catch (error) {
+        result = json(
+          {
+            error: "run_complete_failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "The run could not be completed.",
+          },
+          { status: 400 },
+        );
+      }
+    } else if (request.method === "GET" && observabilityRunEventsMatch) {
+      const runId = observabilityRunEventsMatch[1]!;
+      result = json({
+        items: observability.listEvents({ runId }),
+      });
+    } else if (request.method === "POST" && observabilityRunEventsMatch) {
+      const runId = observabilityRunEventsMatch[1]!;
+
+      try {
+        const body = await readJsonBody(request);
+        result = json(observability.recordRunEvent(runId, body ?? {}), {
+          status: 201,
+        });
+      } catch (error) {
+        result = json(
+          {
+            error: "run_event_failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "The run event could not be recorded.",
+          },
+          { status: 400 },
+        );
+      }
+    } else if (request.method === "GET" && observabilityRunSpansMatch) {
+      const runId = observabilityRunSpansMatch[1]!;
+      result = json({
+        items: observability.listSpans(runId),
       });
     } else if (
       request.method === "GET" &&

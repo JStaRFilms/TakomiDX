@@ -12,7 +12,6 @@ import {
   type AuthCallbackPayload,
   type AuthDeviceFlow,
   type AuthError,
-  type AuthFlowType,
   type AuthLifecycleEvent,
   type AuthSession,
   type AuthSessionStartResponse,
@@ -46,6 +45,7 @@ export interface CreateAuthBrokerOptions {
   idGenerator?: () => string;
   nonceGenerator?: () => string;
   eventIdGenerator?: () => string;
+  onEvent?: (event: AuthLifecycleEvent) => void;
 }
 
 export interface CreateBrowserAuthSessionInput extends WorkspaceAuthTarget {
@@ -315,6 +315,7 @@ export function createAuthBroker(options: CreateAuthBrokerOptions) {
 
     appendJsonLine(getEventsPath(), event);
     events.push(event);
+    options.onEvent?.(event);
     return event;
   }
 

@@ -258,6 +258,207 @@ export const authLifecycleEventSchema = z.object({
   error: authErrorSchema.nullable().default(null),
 });
 
+export const traceIdSchema = z.string().regex(/^[a-f0-9]{32}$/);
+export const spanIdSchema = z.string().regex(/^[a-f0-9]{16}$/);
+export const agentEventCategorySchema = z.enum([
+  "workspace",
+  "run",
+  "tool",
+  "auth",
+  "preview",
+  "validation",
+  "policy",
+]);
+export const agentEventOutcomeSchema = z.enum([
+  "info",
+  "running",
+  "success",
+  "warn",
+  "error",
+  "paused",
+]);
+export const traceSpanKindSchema = z.enum([
+  "internal",
+  "server",
+  "client",
+  "producer",
+  "consumer",
+]);
+export const traceStatusCodeSchema = z.enum(["unset", "ok", "error"]);
+export const runStopReasonSchema = z.enum([
+  "budget_exceeded",
+  "loop_detected",
+  "approval_required",
+  "runtime_failed",
+  "validation_failed",
+  "completed",
+  "cancelled",
+  "unknown",
+]);
+export const agentRunStatusSchema = z.enum([
+  "queued",
+  "running",
+  "awaiting_human",
+  "paused",
+  "failed",
+  "completed",
+  "cancelled",
+]);
+export const policyActionSchema = z.enum(["allow", "warn", "pause"]);
+export const policyCategorySchema = z.enum([
+  "budget",
+  "loop_detection",
+  "approval",
+]);
+export const eventAttributeValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+export const modelUsageSchema = z.object({
+  model: z.string().min(1),
+  inputTokens: z.number().int().min(0),
+  outputTokens: z.number().int().min(0),
+  totalTokens: z.number().int().min(0),
+  inputRateUsdPer1k: z.number().min(0).nullable().default(null),
+  outputRateUsdPer1k: z.number().min(0).nullable().default(null),
+  inputCostUsd: z.number().min(0).nullable().default(null),
+  outputCostUsd: z.number().min(0).nullable().default(null),
+  totalCostUsd: z.number().min(0),
+});
+
+export const policyRuleSchema = z.object({
+  id: z.string().min(1),
+  category: policyCategorySchema,
+  title: z.string().min(1),
+  description: z.string().min(1),
+  action: policyActionSchema,
+  thresholds: z.record(eventAttributeValueSchema).default({}),
+});
+
+export const policyDecisionSchema = z.object({
+  id: z.string().min(1),
+  workspaceId: workspaceIdSchema,
+  runId: runIdSchema,
+  ruleId: z.string().min(1),
+  category: policyCategorySchema,
+  action: policyActionSchema,
+  reason: z.string().min(1),
+  summary: z.string().min(1),
+  createdAt: z.string().datetime({ offset: true }),
+  eventId: z.string().min(1).nullable().default(null),
+});
+
+export const agentTraceSpanSchema = z.object({
+  traceId: traceIdSchema,
+  spanId: spanIdSchema,
+  parentSpanId: spanIdSchema.nullable().default(null),
+  runId: runIdSchema,
+  workspaceId: workspaceIdSchema,
+  name: z.string().min(1),
+  kind: traceSpanKindSchema.default("internal"),
+  category: agentEventCategorySchema,
+  source: z.string().min(1),
+  startedAt: z.string().datetime({ offset: true }),
+  endedAt: z.string().datetime({ offset: true }),
+  durationMs: z.number().int().min(0),
+  statusCode: traceStatusCodeSchema.default("unset"),
+  statusMessage: z.string().min(1).nullable().default(null),
+  outcome: agentEventOutcomeSchema.default("info"),
+  attributes: z.record(eventAttributeValueSchema).default({}),
+  summary: z.string().min(1),
+});
+
+export const agentEventSchema = z.object({
+  id: z.string().min(1),
+  workspaceId: workspaceIdSchema,
+  runId: runIdSchema.nullable().default(null),
+  category: agentEventCategorySchema,
+  type: z.string().min(1),
+  source: z.string().min(1),
+  timestamp: z.string().datetime({ offset: true }),
+  summary: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
+  outcome: agentEventOutcomeSchema.default("info"),
+  traceId: traceIdSchema.nullable().default(null),
+  spanId: spanIdSchema.nullable().default(null),
+  parentSpanId: spanIdSchema.nullable().default(null),
+  usage: modelUsageSchema.nullable().default(null),
+  decision: policyDecisionSchema.nullable().default(null),
+  attributes: z.record(eventAttributeValueSchema).default({}),
+});
+
+export const agentRunBudgetSchema = z.object({
+  capUsd: z.number().min(0),
+  warningUsd: z.number().min(0),
+});
+
+export const agentRunSummarySchema = z.object({
+  id: runIdSchema,
+  workspaceId: workspaceIdSchema,
+  agentType: z.string().min(1),
+  status: agentRunStatusSchema,
+  traceId: traceIdSchema,
+  rootSpanId: spanIdSchema,
+  startedAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+  completedAt: z.string().datetime({ offset: true }).nullable().default(null),
+  lastAction: z.string().min(1),
+  lastTool: z.string().min(1).nullable().default(null),
+  totalTokens: z.number().int().min(0).default(0),
+  tokenCostUsd: z.number().min(0).default(0),
+  stopReason: runStopReasonSchema.nullable().default(null),
+  pauseReason: z.string().min(1).nullable().default(null),
+  approvalRequired: z.boolean().default(false),
+  budget: agentRunBudgetSchema,
+  lastEventId: z.string().min(1).nullable().default(null),
+  warningCount: z.number().int().min(0).default(0),
+  policyState: policyDecisionSchema.nullable().default(null),
+});
+
+export const createAgentRunInputSchema = z.object({
+  workspaceId: workspaceIdSchema,
+  agentType: z.string().min(1),
+  budgetUsd: z.number().min(0).default(10),
+  warningBudgetUsd: z.number().min(0).nullable().default(null),
+});
+
+export const recordAgentEventInputSchema = z.object({
+  category: agentEventCategorySchema,
+  type: z.string().min(1),
+  source: z.string().min(1).default("agentd"),
+  summary: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
+  outcome: agentEventOutcomeSchema.default("info"),
+  timestamp: z.string().datetime({ offset: true }).nullable().default(null),
+  parentSpanId: spanIdSchema.nullable().default(null),
+  usage: z
+    .object({
+      model: z.string().min(1),
+      inputTokens: z.number().int().min(0).default(0),
+      outputTokens: z.number().int().min(0).default(0),
+      inputRateUsdPer1k: z.number().min(0).nullable().default(null),
+      outputRateUsdPer1k: z.number().min(0).nullable().default(null),
+      inputCostUsd: z.number().min(0).nullable().default(null),
+      outputCostUsd: z.number().min(0).nullable().default(null),
+    })
+    .nullable()
+    .default(null),
+  trace: z
+    .object({
+      name: z.string().min(1),
+      kind: traceSpanKindSchema.default("internal"),
+      durationMs: z.number().int().min(0).default(0),
+      statusCode: traceStatusCodeSchema.default("unset"),
+      statusMessage: z.string().min(1).nullable().default(null),
+    })
+    .nullable()
+    .default(null),
+  attributes: z.record(eventAttributeValueSchema).default({}),
+});
+
 export const workspaceSummarySchema = z.object({
   id: workspaceIdSchema,
   slug: workspaceSlugSchema,
@@ -270,6 +471,8 @@ export const workspaceSummarySchema = z.object({
   tokenCostUsd: z.number().min(0),
   elapsedMinutes: z.number().int().min(0),
   health: healthStatusSchema,
+  activeRunId: runIdSchema.nullable().default(null),
+  pauseReason: z.string().min(1).nullable().default(null),
   auth: workspaceAuthSummarySchema.nullable().default(null),
 });
 
@@ -380,6 +583,26 @@ export type AuthLifecycleEventType = z.infer<
   typeof authLifecycleEventTypeSchema
 >;
 export type AuthLifecycleEvent = z.infer<typeof authLifecycleEventSchema>;
+export type TraceId = z.infer<typeof traceIdSchema>;
+export type SpanId = z.infer<typeof spanIdSchema>;
+export type AgentEventCategory = z.infer<typeof agentEventCategorySchema>;
+export type AgentEventOutcome = z.infer<typeof agentEventOutcomeSchema>;
+export type TraceSpanKind = z.infer<typeof traceSpanKindSchema>;
+export type TraceStatusCode = z.infer<typeof traceStatusCodeSchema>;
+export type RunStopReason = z.infer<typeof runStopReasonSchema>;
+export type AgentRunStatus = z.infer<typeof agentRunStatusSchema>;
+export type PolicyAction = z.infer<typeof policyActionSchema>;
+export type PolicyCategory = z.infer<typeof policyCategorySchema>;
+export type EventAttributeValue = z.infer<typeof eventAttributeValueSchema>;
+export type ModelUsage = z.infer<typeof modelUsageSchema>;
+export type PolicyRule = z.infer<typeof policyRuleSchema>;
+export type PolicyDecision = z.infer<typeof policyDecisionSchema>;
+export type AgentTraceSpan = z.infer<typeof agentTraceSpanSchema>;
+export type AgentEvent = z.infer<typeof agentEventSchema>;
+export type AgentRunBudget = z.infer<typeof agentRunBudgetSchema>;
+export type AgentRunSummary = z.infer<typeof agentRunSummarySchema>;
+export type CreateAgentRunInput = z.input<typeof createAgentRunInputSchema>;
+export type RecordAgentEventInput = z.input<typeof recordAgentEventInputSchema>;
 export type WorkspaceSummary = z.infer<typeof workspaceSummarySchema>;
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;

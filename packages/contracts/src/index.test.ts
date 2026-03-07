@@ -1,7 +1,11 @@
 import {
+  agentEventSchema,
+  agentRunSummarySchema,
   createManualFallbackUrl,
   createAuthBrokerCallbackUrl,
   createAuthBrokerHost,
+  modelUsageSchema,
+  policyDecisionSchema,
   createWorkspaceBranchName,
   createPreviewHost,
   createPreviewRegistrationPayload,
@@ -124,6 +128,93 @@ describe("@takomi/contracts", () => {
       metadataVersion: 1,
       branch: "agent/billing-fix",
       status: "queued",
+    });
+  });
+
+  it("derives structured observability payloads", () => {
+    const usage = modelUsageSchema.parse({
+      model: "gpt-test",
+      inputTokens: 1200,
+      outputTokens: 300,
+      totalTokens: 1500,
+      inputRateUsdPer1k: 0.002,
+      outputRateUsdPer1k: 0.004,
+      inputCostUsd: 0.0024,
+      outputCostUsd: 0.0012,
+      totalCostUsd: 0.0036,
+    });
+
+    const decision = policyDecisionSchema.parse({
+      id: "pol_001",
+      workspaceId: "ws_abcd1234",
+      runId: "run_abcd1234",
+      ruleId: "budget-warning",
+      category: "budget",
+      action: "warn",
+      reason: "Spend reached 80% of the run budget.",
+      summary: "Budget warning issued.",
+      createdAt: "2026-03-07T03:07:31.000Z",
+      eventId: "evt_001",
+    });
+
+    expect(
+      agentEventSchema.parse({
+        id: "evt_001",
+        workspaceId: "ws_abcd1234",
+        runId: "run_abcd1234",
+        category: "tool",
+        type: "tool.completed",
+        source: "agentd",
+        timestamp: "2026-03-07T03:07:31.000Z",
+        summary: "Ran pnpm test",
+        detail: "1 failing suite",
+        outcome: "warn",
+        traceId: "0123456789abcdef0123456789abcdef",
+        spanId: "0123456789abcdef",
+        parentSpanId: "fedcba9876543210",
+        usage,
+        decision,
+        attributes: {
+          command: "pnpm test",
+          exitCode: 1,
+        },
+      }),
+    ).toMatchObject({
+      category: "tool",
+      outcome: "warn",
+    });
+  });
+
+  it("captures run pause state explicitly", () => {
+    expect(
+      agentRunSummarySchema.parse({
+        id: "run_abcd1234",
+        workspaceId: "ws_abcd1234",
+        agentType: "Codex",
+        status: "paused",
+        traceId: "0123456789abcdef0123456789abcdef",
+        rootSpanId: "0123456789abcdef",
+        startedAt: "2026-03-07T03:07:31.000Z",
+        updatedAt: "2026-03-07T03:17:31.000Z",
+        completedAt: null,
+        lastAction: "Budget cap exceeded; run paused.",
+        lastTool: "pnpm test",
+        totalTokens: 1500,
+        tokenCostUsd: 2.4,
+        stopReason: "budget_exceeded",
+        pauseReason: "Run exceeded the configured $2 budget.",
+        approvalRequired: false,
+        budget: {
+          capUsd: 2,
+          warningUsd: 1.6,
+        },
+        lastEventId: "evt_001",
+        warningCount: 1,
+        policyState: null,
+      }),
+    ).toMatchObject({
+      status: "paused",
+      stopReason: "budget_exceeded",
     });
   });
 });

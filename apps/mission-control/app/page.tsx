@@ -1,10 +1,11 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { WorkspaceGrid } from "@/features/workspaces/components/workspace-grid";
-import { sampleWorkspaces } from "@/features/workspaces/data/sample-workspaces";
+import { listWorkspaces } from "@/features/workspaces/data/workspace-detail-data";
 import { resolveMissionControlEnv } from "@/lib/env";
 
-export default function HomePage() {
+export default async function HomePage() {
   const env = resolveMissionControlEnv();
+  const workspaces = await listWorkspaces();
 
   return (
     <AppShell>
@@ -32,7 +33,7 @@ export default function HomePage() {
         </div>
 
         <section>
-          <WorkspaceGrid initialWorkspaces={sampleWorkspaces} />
+          <WorkspaceGrid initialWorkspaces={workspaces} />
         </section>
       </div>
     </AppShell>

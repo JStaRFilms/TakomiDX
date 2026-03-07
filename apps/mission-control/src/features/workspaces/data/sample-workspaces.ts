@@ -23,6 +23,8 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 0.42,
     elapsedMinutes: 12,
     health: "healthy",
+    activeRunId: "run_auth0001",
+    pauseReason: null,
     auth: null,
   }),
   defineWorkspace({
@@ -37,6 +39,9 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 1.83,
     elapsedMinutes: 34,
     health: "healthy",
+    activeRunId: "run_web00002",
+    pauseReason:
+      "Approval required before applying migration and cross-cutting UI edits.",
     auth: null,
   }),
   defineWorkspace({
@@ -51,6 +56,8 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 0.91,
     elapsedMinutes: 8,
     health: "failed",
+    activeRunId: "run_api00003",
+    pauseReason: null,
     auth: null,
   }),
   defineWorkspace({
@@ -65,6 +72,8 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 0.12,
     elapsedMinutes: 3,
     health: "healthy",
+    activeRunId: "run_docs0004",
+    pauseReason: null,
     auth: null,
   }),
   defineWorkspace({
@@ -79,6 +88,8 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 3.45,
     elapsedMinutes: 45,
     health: "healthy",
+    activeRunId: "run_db000005",
+    pauseReason: null,
     auth: null,
   }),
 ];

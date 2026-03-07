@@ -31,27 +31,27 @@ Implement the core event, tracing, and policy systems that make agent runs expla
 
 ### Phase 1: Event model
 
-- [ ] Define workspace, run, tool, auth, preview, and validation event types.
-- [ ] Add structured emission points in `agentd`.
-- [ ] Define stable IDs and correlation rules across services.
+- [x] Define workspace, run, tool, auth, preview, and validation event types.
+- [x] Add structured emission points in `agentd`.
+- [x] Define stable IDs and correlation rules across services.
 
 ### Phase 2: Tracing and cost
 
-- [ ] Wire the event model into OpenTelemetry-compatible tracing.
-- [ ] Track model usage, token counts, and derived spend.
-- [ ] Expose run-level summaries to Mission Control.
+- [x] Wire the event model into OpenTelemetry-compatible tracing.
+- [x] Track model usage, token counts, and derived spend.
+- [x] Expose run-level summaries to Mission Control.
 
 ### Phase 3: Policy controls
 
-- [ ] Implement budget caps and warnings.
-- [ ] Implement repeated-failure loop detection.
-- [ ] Implement approval-required action categories and pause behavior.
+- [x] Implement budget caps and warnings.
+- [x] Implement repeated-failure loop detection.
+- [x] Implement approval-required action categories and pause behavior.
 
 ### Phase 4: Reliability tests
 
-- [ ] Test event emission for major lifecycle transitions.
-- [ ] Test budget exceed behavior.
-- [ ] Test pause-on-loop behavior.
+- [x] Test event emission for major lifecycle transitions.
+- [x] Test budget exceed behavior.
+- [x] Test pause-on-loop behavior.
 
 ## Definition of Done
 

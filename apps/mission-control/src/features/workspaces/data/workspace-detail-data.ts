@@ -1,4 +1,11 @@
-import type { WorkspaceSummary } from "@takomi/contracts";
+import type {
+  AgentEvent,
+  AgentRunSummary,
+  AgentTraceSpan,
+  WorkspaceRuntimeState,
+  WorkspaceSummary,
+} from "@takomi/contracts";
+import { resolveMissionControlEnv } from "@/lib/env";
 import { sampleWorkspaces } from "./sample-workspaces";
 
 export interface WorkspaceActivityItem {
@@ -466,10 +473,252 @@ const workspaceDetails: Record<string, WorkspaceDetailModel> = {
   },
 };
 
-export function getWorkspace(workspaceId: string): WorkspaceSummary | null {
+interface AgentdWorkspaceDetailResponse {
+  workspace: WorkspaceSummary;
+  run: AgentRunSummary | null;
+  runtime: WorkspaceRuntimeState | null;
+  events: AgentEvent[];
+  spans: AgentTraceSpan[];
+}
+
+function getSampleWorkspace(workspaceId: string): WorkspaceSummary | null {
   return sampleWorkspaces.find((workspace) => workspace.id === workspaceId) ?? null;
 }
 
-export function getWorkspaceDetail(workspaceId: string): WorkspaceDetailModel | null {
+function getSampleWorkspaceDetail(workspaceId: string): WorkspaceDetailModel | null {
   return workspaceDetails[workspaceId] ?? null;
+}
+
+function formatShortTime(value: string) {
+  return value.slice(11, 16);
+}
+
+function formatDuration(durationMs: number) {
+  if (durationMs < 1000) {
+    return `${durationMs}ms`;
+  }
+
+  if (durationMs < 60_000) {
+    return durationMs % 1000 === 0
+      ? `${Math.floor(durationMs / 1000)}s`
+      : `${(durationMs / 1000).toFixed(1)}s`;
+  }
+
+  return `${Math.floor(durationMs / 60_000)}m ${Math.floor((durationMs % 60_000) / 1000)}s`;
+}
+
+function mapActivityKind(event: AgentEvent): WorkspaceActivityItem["kind"] {
+  switch (event.category) {
+    case "tool":
+      return "tool";
+    case "policy":
+      return "policy";
+    case "validation":
+      return "validation";
+    default:
+      return "lifecycle";
+  }
+}
+
+function derivePreviewState(runtime: WorkspaceRuntimeState | null): WorkspaceDetailModel["previewState"] {
+  if (!runtime || runtime.lifecycle === "failed") {
+    return "offline";
+  }
+
+  if (runtime.lifecycle === "booting" || runtime.healthStatus === "degraded") {
+    return "warming";
+  }
+
+  return runtime.preview ? "live" : "offline";
+}
+
+function deriveNextAction(run: AgentRunSummary | null) {
+  if (!run) {
+    return {
+      nextAction: "Start an agent run so observability and policy data can stream into Mission Control.",
+      nextActionDetail:
+        "The workspace is provisioned, but there is no active run summary yet. Start a run to populate trace, spend, and pause state.",
+      operatorNote:
+        "Mission Control is waiting on the first active run before it can show spend, trace, or pause context.",
+      approvalPrompt: null,
+      failurePrompt: null,
+    };
+  }
+
+  if (run.approvalRequired) {
+    return {
+      nextAction: "Review the approval-required action before resuming the run.",
+      nextActionDetail:
+        "The policy engine paused this run because the requested command falls into an approval-gated category.",
+      operatorNote:
+        "Use the trace and recent events to confirm the command intent before approving any risky mutation.",
+      approvalPrompt: run.pauseReason,
+      failurePrompt: null,
+    };
+  }
+
+  if (run.status === "paused") {
+    return {
+      nextAction: "Inspect the pause reason and decide whether the run should resume.",
+      nextActionDetail:
+        "The policy engine halted execution deterministically. Check the latest policy event and the preceding tool span for context.",
+      operatorNote:
+        "This run is interruptible by design, so the most important signal is the explicit stop reason rather than generic logs.",
+      approvalPrompt: null,
+      failurePrompt: run.pauseReason,
+    };
+  }
+
+  if (run.status === "failed") {
+    return {
+      nextAction: "Inspect the failing span and repair the run before trying again.",
+      nextActionDetail:
+        "The structured trace highlights which lifecycle or validation transition failed and what the last visible reason was.",
+      operatorNote:
+        "Prioritize the most recent error event and its matching span to avoid chasing stale logs.",
+      approvalPrompt: null,
+      failurePrompt: run.pauseReason ?? run.stopReason,
+    };
+  }
+
+  return {
+    nextAction: "Monitor the trace, validate the latest output, and review the resulting diff.",
+    nextActionDetail:
+      "Mission Control now has a live run summary, so supervision should focus on trace health, budget drift, and the newest validation evidence.",
+    operatorNote:
+      "The observability feed is the source of truth for what the agent just did and whether policy is about to intervene.",
+    approvalPrompt: null,
+    failurePrompt: null,
+  };
+}
+
+function buildDetailFromAgentdResponse(
+  payload: AgentdWorkspaceDetailResponse,
+): WorkspaceDetailModel {
+  const flow = deriveNextAction(payload.run);
+  const validationEvents = payload.events.filter(
+    (event) => event.category === "validation",
+  );
+
+  return {
+    mission: `Supervise ${payload.workspace.slug} with structured trace, spend visibility, and explicit policy state.`,
+    currentAction: payload.run?.lastAction ?? payload.workspace.lastAction,
+    nextAction: flow.nextAction,
+    nextActionDetail: flow.nextActionDetail,
+    operatorNote: flow.operatorNote,
+    approvalPrompt: flow.approvalPrompt,
+    failurePrompt: flow.failurePrompt,
+    previewState: derivePreviewState(payload.runtime),
+    activity: payload.events.slice(0, 12).map((event) => ({
+      timestamp: formatShortTime(event.timestamp),
+      kind: mapActivityKind(event),
+      title: event.summary,
+      detail: event.detail ?? event.type,
+    })),
+    trace: payload.spans.slice(0, 12).map((span) => ({
+      span: span.spanId,
+      tool: span.name,
+      status:
+        span.outcome === "error"
+          ? "failed"
+          : span.outcome === "warn"
+            ? "warn"
+            : span.outcome === "running"
+              ? "running"
+              : "ok",
+      duration: formatDuration(span.durationMs),
+      summary: span.summary,
+    })),
+    logs: payload.events.slice(0, 12).map((event) => ({
+      timestamp: event.timestamp.slice(11, 19),
+      stream:
+        event.outcome === "error"
+          ? "stderr"
+          : event.category === "policy"
+            ? "system"
+            : "stdout",
+      line: event.detail ?? event.summary,
+    })),
+    diff: [],
+    validation:
+      validationEvents.length > 0
+        ? validationEvents.slice(0, 6).map((event) => ({
+            label: event.summary,
+            status:
+              event.outcome === "error"
+                ? "failed"
+                : event.outcome === "running"
+                  ? "running"
+                  : "passed",
+            detail: event.detail ?? event.type,
+          }))
+        : [
+            {
+              label: "Runtime health",
+              status:
+                payload.runtime?.healthStatus === "failed"
+                  ? "failed"
+                  : payload.runtime?.lifecycle === "booting"
+                    ? "running"
+                    : "queued",
+              detail:
+                payload.runtime?.lastError ??
+                "Waiting for validation events to arrive from the active run.",
+            },
+          ],
+  };
+}
+
+async function fetchAgentdJson<T>(pathname: string): Promise<T> {
+  const env = resolveMissionControlEnv();
+  const response = await fetch(
+    `${env.public.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL}${pathname}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Agentd request failed for ${pathname} (${response.status}).`);
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function listWorkspaces(): Promise<WorkspaceSummary[]> {
+  try {
+    const payload = await fetchAgentdJson<{ items: WorkspaceSummary[] }>(
+      "/api/v1/mission-control/workspaces",
+    );
+
+    return payload.items;
+  } catch {
+    return sampleWorkspaces;
+  }
+}
+
+export async function getWorkspace(workspaceId: string): Promise<WorkspaceSummary | null> {
+  try {
+    const payload = await fetchAgentdJson<AgentdWorkspaceDetailResponse>(
+      `/api/v1/mission-control/workspaces/${workspaceId}`,
+    );
+
+    return payload.workspace;
+  } catch {
+    return getSampleWorkspace(workspaceId);
+  }
+}
+
+export async function getWorkspaceDetail(
+  workspaceId: string,
+): Promise<WorkspaceDetailModel | null> {
+  try {
+    const payload = await fetchAgentdJson<AgentdWorkspaceDetailResponse>(
+      `/api/v1/mission-control/workspaces/${workspaceId}`,
+    );
+
+    return buildDetailFromAgentdResponse(payload);
+  } catch {
+    return getSampleWorkspaceDetail(workspaceId);
+  }
 }
