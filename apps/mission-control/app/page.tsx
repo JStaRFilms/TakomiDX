@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { CreateWorkspacePanel } from "@/features/workspaces/components/create-workspace-panel";
 import { WorkspaceGrid } from "@/features/workspaces/components/workspace-grid";
 import { listWorkspaces } from "@/features/workspaces/data/workspace-detail-data";
 import { resolveMissionControlEnv } from "@/lib/env";
@@ -30,6 +31,10 @@ export default async function HomePage() {
               </span>
             </div>
           </header>
+        </div>
+
+        <div className="mx-auto w-full max-w-6xl px-4 lg:px-6">
+          <CreateWorkspacePanel />
         </div>
 
         <section>
