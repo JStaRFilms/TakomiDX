@@ -23,6 +23,7 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 1.82,
     elapsedMinutes: 14,
     health: "healthy",
+    auth: null,
   }),
   defineWorkspace({
     id: "ws_runtime01",
@@ -36,6 +37,7 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 0,
     elapsedMinutes: 0,
     health: "degraded",
+    auth: null,
   }),
   defineWorkspace({
     id: "ws_review001",
@@ -49,5 +51,6 @@ export const sampleWorkspaces: WorkspaceSummary[] = [
     tokenCostUsd: 0.64,
     elapsedMinutes: 6,
     health: "healthy",
+    auth: null,
   }),
 ];

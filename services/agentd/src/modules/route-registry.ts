@@ -6,7 +6,7 @@ import {
   type PreviewRouteRecord,
   type PreviewRouteStatus,
 } from "@takomi/contracts";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 export interface DeveloperEdgeAdapter {
@@ -108,6 +108,25 @@ export function createRouteRegistry(options: CreateRouteRegistryOptions) {
     writeJsonFile(getRouteStatePath(route.workspaceId), route);
     routes.set(route.workspaceId, route);
   }
+
+  function listPersistedRouteIds() {
+    mkdirSync(options.routesDir, { recursive: true });
+
+    return readdirSync(options.routesDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+      .map((entry) => entry.name.replace(/\.json$/, ""));
+  }
+
+  function restorePersistedRoutes() {
+    for (const workspaceId of listPersistedRouteIds()) {
+      const route = previewRouteRecordSchema.parse(
+        JSON.parse(readFileSync(getRouteStatePath(workspaceId), "utf8")),
+      );
+      routes.set(route.workspaceId, route);
+    }
+  }
+
+  restorePersistedRoutes();
 
   async function syncRoute(route: PreviewRouteRecord) {
     persistRoute(route);

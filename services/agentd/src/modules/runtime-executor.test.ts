@@ -191,4 +191,77 @@ describe("runtime executor and route registry", () => {
     expect(routeRecord.status).toBe("failed");
     expect(routeRecord.lastError).toContain("Caddy admin API");
   });
+
+  it("restores persisted route records after registry restart", async () => {
+    const root = createTempDir();
+    const firstRegistry = createRouteRegistry({
+      routesDir: path.join(root, "routes"),
+    });
+
+    await firstRegistry.register({
+      workspaceId: "ws_restore01",
+      host: "restore-route.takomi.localhost",
+      target: "127.0.0.1:45231",
+      targetPort: 45231,
+      protocol: "http",
+      healthPath: "/healthz",
+      healthStatus: "healthy",
+    });
+
+    const secondRegistry = createRouteRegistry({
+      routesDir: path.join(root, "routes"),
+    });
+
+    expect(secondRegistry.get("ws_restore01")).toMatchObject({
+      host: "restore-route.takomi.localhost",
+      status: "registered",
+    });
+    expect(secondRegistry.list()).toHaveLength(1);
+  });
+
+  it("restores persisted runtime state and config after executor restart", async () => {
+    const root = createTempDir();
+    const firstExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_restore02",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    const booted = await firstExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_restore02",
+        workspaceSlug: "restore-runtime",
+      }),
+    );
+
+    expect(booted.lifecycle).toBe("running");
+
+    const secondExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    expect(secondExecutor.get("ws_restore02")).toMatchObject({
+      workspaceId: "ws_restore02",
+      assignedHostPort: 45231,
+      lifecycle: "running",
+    });
+
+    const refreshed = await secondExecutor.refreshHealth("ws_restore02");
+    expect(refreshed).not.toBeNull();
+    expect(refreshed?.healthStatus).toBe("healthy");
+  });
 });

@@ -17,6 +17,11 @@ Turn the TakomiDX platform spec into an execution-ready build plan with clean ta
 
 This is greenfield implementation planning.
 
+## Current Execution Notes
+
+- Task 00 completed the Genesis backfill for requirements, standards, issue files, builder guidance, and verification baseline.
+- Task 04 is in progress and must be reconciled against Task 00 outputs during downstream integration review.
+
 ## Scope Guardrails
 
 - MVP is local-first.
@@ -57,20 +62,25 @@ This is greenfield implementation planning.
 
 | # | Subtask | Mode | Workflow | Skills | Depends On | Parallel Group |
 |---|---------|------|----------|--------|------------|----------------|
-| 01 | Foundation and repo scaffold | architect/code | `mode-architect` | `takomi`, `spawn-task`, `avoid-feature-creep`, `monorepo-management`, `nextjs-standards` | none | Wave 1 |
-| 02 | Workspace lifecycle and persistence | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 01 | Wave 2 |
-| 03 | Runtime executor and developer edge routing | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 01, 02 | Wave 3 |
+| 00 | Genesis backfill for product docs and standards | architect | `vibe-genesis` | `takomi`, `spawn-task`, `avoid-feature-creep`, `nextjs-standards`, `sync-docs` | none | Wave 0 |
+| 01 | Foundation and repo scaffold | architect/code | `mode-architect` | `takomi`, `spawn-task`, `avoid-feature-creep`, `monorepo-management`, `nextjs-standards` | 00 | Wave 1 |
+| 02 | Workspace lifecycle and persistence | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 00, 01 | Wave 2 |
+| 03 | Runtime executor and developer edge routing | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 00, 01, 02 | Wave 3 |
 | 04 | Auth broker and session routing | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 03 | Wave 4A |
-| 05 | Mission Control UI shell and workspace DX | design/code | `vibe-design` | `takomi`, `nextjs-standards`, `frontend-design`, `avoid-feature-creep` | 01, 02, 03 | Wave 4B |
-| 06 | Observability and policy engine | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 02, 03 | Wave 4C |
+| 05 | Mission Control UI shell and workspace DX | design/code | `vibe-design` | `takomi`, `nextjs-standards`, `frontend-design`, `avoid-feature-creep` | 00, 01, 02, 03 | Wave 4B |
+| 06 | Observability and policy engine | code | `vibe-build` | `takomi`, `avoid-feature-creep` | 00, 02, 03 | Wave 4C |
 | 07 | Browser sidecar and validation bundles | code/test | `vibe-build` | `takomi`, `webapp-testing`, `avoid-feature-creep` | 03, 05, 06 | Wave 5A |
 | 08 | VS Code extension and editor hooks | code | `vibe-build` | `takomi`, `nextjs-standards`, `avoid-feature-creep` | 05, 06, 07 | Wave 5B |
-| 09 | Integration hardening, review, and doc sync | review | `review_code` | `takomi`, `code-review`, `sync-docs`, `webapp-testing` | 01-08 | Wave 6 |
+| 09 | Integration hardening, review, and doc sync | review | `review_code` | `takomi`, `code-review`, `sync-docs`, `webapp-testing` | 00-08 | Wave 6 |
 
 ## Dependency Graph
 
 ```mermaid
 flowchart LR
+    T00["00 Genesis Backfill"] --> T01["01 Foundation and Scaffold"]
+    T00 --> T02["02 Workspace Lifecycle"]
+    T00 --> T05["05 Mission Control UI"]
+    T00 --> T06["06 Observability and Policy"]
     T01["01 Foundation and Scaffold"] --> T02["02 Workspace Lifecycle"]
     T01 --> T03["03 Runtime and Routing"]
     T02 --> T03
@@ -103,10 +113,11 @@ flowchart LR
 
 ## Progress Checklist
 
+- [x] Task 00 complete
 - [x] Task 01 complete
 - [x] Task 02 complete
 - [x] Task 03 complete
-- [ ] Task 04 complete
+- [x] Task 04 complete
 - [ ] Task 05 complete
 - [ ] Task 06 complete
 - [ ] Task 07 complete

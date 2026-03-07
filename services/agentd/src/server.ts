@@ -5,15 +5,16 @@ import {
 } from "@takomi/contracts";
 import { buildHealthPayload } from "./health";
 import {
+  AuthBrokerError,
+  createAuthBroker,
+  createAuthBrokerBoundary,
+} from "./modules/auth-broker";
+import {
   RouteRegistrationError,
   createRouteRegistry,
   createRouteRegistryBoundary,
 } from "./modules/route-registry";
-import {
-  RuntimeBootError,
-  createRuntimeExecutor,
-  createRuntimeExecutorBoundary,
-} from "./modules/runtime-executor";
+import { RuntimeBootError, createRuntimeExecutor, createRuntimeExecutorBoundary } from "./modules/runtime-executor";
 import {
   WorkspaceLifecycleError,
   createWorkspaceManager,
@@ -27,6 +28,15 @@ function json(body: unknown, init?: { status?: number }) {
       "content-type": "application/json; charset=utf-8",
     },
     status: init?.status ?? 200,
+  });
+}
+
+function redirect(url: string, status: number = 302) {
+  return new Response(null, {
+    headers: {
+      location: url,
+    },
+    status,
   });
 }
 
@@ -57,10 +67,26 @@ export function createAgentdServer(config: AgentdConfig) {
   const routeRegistry = createRouteRegistry({
     routesDir: config.routesDir,
   });
+  const authBroker = createAuthBroker({
+    authBrokerHost: config.authBrokerHost,
+    stateDir: config.stateDir,
+  });
 
   return createHttpServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
     let result: Response;
+    const authCallbackMatch = url.pathname.match(
+      /^\/callback\/([a-z0-9]+(?:[-_][a-z0-9]+)*)\/(ws_[a-z0-9]{8,})$/,
+    );
+    const authSessionMatch = url.pathname.match(
+      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})$/,
+    );
+    const authRedeemMatch = url.pathname.match(
+      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/redeem$/,
+    );
+    const authDeviceResolveMatch = url.pathname.match(
+      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/device\/resolve$/,
+    );
     const runtimeWorkspaceMatch = url.pathname.match(
       /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})$/,
     );
@@ -90,8 +116,294 @@ export function createAgentdServer(config: AgentdConfig) {
           ),
           createRuntimeExecutorBoundary(runtimeExecutor.list().length),
           createRouteRegistryBoundary(routeRegistry.list().length),
+          createAuthBrokerBoundary(authBroker.list().length),
         ],
       });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/auth/events"
+    ) {
+      result = json({
+        items: authBroker.listEvents(url.searchParams.get("workspaceId") ?? undefined),
+      });
+    } else if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/auth/sessions"
+    ) {
+      result = json({
+        items: authBroker.list(url.searchParams.get("workspaceId") ?? undefined),
+      });
+    } else if (request.method === "POST" && url.pathname === "/api/v1/auth/sessions") {
+      try {
+        const body = (await readJsonBody(request)) as
+          | Record<string, unknown>
+          | null;
+        const workspaceId =
+          typeof body?.workspaceId === "string" ? body.workspaceId : null;
+        const provider = typeof body?.provider === "string" ? body.provider : null;
+        const flow =
+          body?.flow === "device_code" ? "device_code" : "browser_callback";
+
+        if (!workspaceId || !provider) {
+          throw new Error("workspaceId and provider are required.");
+        }
+
+        const workspace = workspaceManager.get(workspaceId);
+
+        if (!workspace) {
+          result = json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+        } else if (flow === "device_code") {
+          const device =
+            body?.device && typeof body.device === "object" ? body.device : null;
+          const ttlSeconds =
+            typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
+          const forwardPath =
+            typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
+
+          if (!device) {
+            throw new Error("device flow requests require a device payload.");
+          }
+
+          result = json(
+            authBroker.createDeviceSession({
+              workspaceId,
+              previewHost: workspace.previewHost,
+              provider,
+              device: device as never,
+              ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+              ...(forwardPath ? { forwardPath } : {}),
+            }),
+            { status: 201 },
+          );
+        } else {
+          const ttlSeconds =
+            typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
+          const forwardPath =
+            typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
+
+          result = json(
+            authBroker.createBrowserSession({
+              workspaceId,
+              previewHost: workspace.previewHost,
+              provider,
+              ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+              ...(forwardPath ? { forwardPath } : {}),
+            }),
+            { status: 201 },
+          );
+        }
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          result = json(
+            {
+              error: "invalid_json",
+              message: "The request body must be valid JSON.",
+            },
+            { status: 400 },
+          );
+        } else if (error instanceof AuthBrokerError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+              detail: error.errorDetail,
+              session: error.session,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "invalid_auth_request",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "auth_request_failed",
+              message: "The auth session could not be created.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } else if (request.method === "GET" && authSessionMatch) {
+      const sessionId = authSessionMatch[1]!;
+      const session = authBroker.get(sessionId);
+
+      result = session
+        ? json(session)
+        : json(
+            {
+              error: "session_not_found",
+              message: `No auth session is registered for ${sessionId}.`,
+            },
+            { status: 404 },
+          );
+    } else if (request.method === "POST" && authRedeemMatch) {
+      try {
+        const sessionId = authRedeemMatch[1]!;
+        const body = (await readJsonBody(request)) as
+          | Record<string, unknown>
+          | null;
+        const handoffToken =
+          typeof body?.handoffToken === "string" ? body.handoffToken : null;
+
+        if (!handoffToken) {
+          throw new Error("handoffToken is required.");
+        }
+
+        result = json(
+          authBroker.redeemCallback({
+            sessionId,
+            handoffToken,
+          }),
+        );
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          result = json(
+            {
+              error: "invalid_json",
+              message: "The request body must be valid JSON.",
+            },
+            { status: 400 },
+          );
+        } else if (error instanceof AuthBrokerError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+              detail: error.errorDetail,
+              session: error.session,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "invalid_auth_request",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "auth_redeem_failed",
+              message: "The auth handoff could not be redeemed.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } else if (request.method === "POST" && authDeviceResolveMatch) {
+      try {
+        const sessionId = authDeviceResolveMatch[1]!;
+        const body = (await readJsonBody(request)) as
+          | Record<string, unknown>
+          | null;
+        const outcome =
+          body?.outcome === "denied" || body?.outcome === "expired"
+            ? body.outcome
+            : "authorized";
+
+        result = json(
+          authBroker.resolveDeviceSession({
+            sessionId,
+            outcome,
+          }),
+        );
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          result = json(
+            {
+              error: "invalid_json",
+              message: "The request body must be valid JSON.",
+            },
+            { status: 400 },
+          );
+        } else if (error instanceof AuthBrokerError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+              detail: error.errorDetail,
+              session: error.session,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "invalid_auth_request",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "auth_request_failed",
+              message: "The device auth session could not be resolved.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    } else if (request.method === "GET" && authCallbackMatch) {
+      try {
+        const provider = authCallbackMatch[1]!;
+        const workspaceId = authCallbackMatch[2]!;
+        const resolution = authBroker.handleCallback({
+          provider,
+          workspaceId,
+          state: url.searchParams.get("state"),
+          code: url.searchParams.get("code"),
+          error: url.searchParams.get("error"),
+          errorDescription: url.searchParams.get("error_description"),
+          errorUri: url.searchParams.get("error_uri"),
+        });
+
+        result = redirect(resolution.redirectUrl);
+      } catch (error) {
+        if (error instanceof AuthBrokerError && error.redirectUrl) {
+          result = redirect(error.redirectUrl);
+        } else if (error instanceof AuthBrokerError) {
+          result = json(
+            {
+              error: error.code,
+              message: error.message,
+              detail: error.errorDetail,
+              session: error.session,
+            },
+            { status: error.status },
+          );
+        } else if (error instanceof Error) {
+          result = json(
+            {
+              error: "auth_callback_failed",
+              message: error.message,
+            },
+            { status: 400 },
+          );
+        } else {
+          result = json(
+            {
+              error: "auth_callback_failed",
+              message: "The auth callback could not be processed.",
+            },
+            { status: 500 },
+          );
+        }
+      }
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/workspaces/events"

@@ -10,7 +10,7 @@ import {
   type WorkspaceRuntimeState,
 } from "@takomi/contracts";
 import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 export interface ContainerStartRequest {
@@ -72,6 +72,10 @@ function writeRuntimeEnvFile(
 function writeJsonFile(filePath: string, value: unknown) {
   mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, JSON.stringify(value, null, 2) + "\n", "utf8");
+}
+
+function readJsonFile<T>(filePath: string): T {
+  return JSON.parse(readFileSync(filePath, "utf8")) as T;
 }
 
 async function runCommand(command: string, args: string[]) {
@@ -189,10 +193,54 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
     return path.join(options.workspacesDir, workspaceId, "runtime-state.json");
   }
 
+  function getConfigPath(workspaceId: string) {
+    return path.join(options.workspacesDir, workspaceId, "runtime-config.json");
+  }
+
+  function persistConfig(config: WorkspaceRuntimeConfig) {
+    writeJsonFile(getConfigPath(config.workspaceId), config);
+    configs.set(config.workspaceId, config);
+  }
+
   function persistState(state: WorkspaceRuntimeState) {
     writeJsonFile(getStatePath(state.workspaceId), state);
     runtimes.set(state.workspaceId, state);
   }
+
+  function listPersistedWorkspaceIds() {
+    mkdirSync(options.workspacesDir, { recursive: true });
+
+    return readdirSync(options.workspacesDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  }
+
+  function restorePersistedRuntimes() {
+    for (const workspaceId of listPersistedWorkspaceIds()) {
+      const statePath = getStatePath(workspaceId);
+      const configPath = getConfigPath(workspaceId);
+
+      try {
+        const restoredState = workspaceRuntimeStateSchema.parse(
+          readJsonFile<unknown>(statePath),
+        );
+        runtimes.set(restoredState.workspaceId, restoredState);
+      } catch {
+        // Ignore invalid or missing state files during restore.
+      }
+
+      try {
+        const restoredConfig = workspaceRuntimeConfigSchema.parse(
+          readJsonFile<unknown>(configPath),
+        );
+        configs.set(restoredConfig.workspaceId, restoredConfig);
+      } catch {
+        // Ignore invalid or missing config files during restore.
+      }
+    }
+  }
+
+  restorePersistedRuntimes();
 
   async function probeRuntimeState(
     state: WorkspaceRuntimeState,
@@ -232,7 +280,7 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
       );
       const envFilePath = path.join(workspaceDir, "runtime.env");
 
-      configs.set(config.workspaceId, config);
+      persistConfig(config);
       writeRuntimeEnvFile(envFilePath, config, containerName);
 
       const bootingState = workspaceRuntimeStateSchema.parse({

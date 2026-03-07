@@ -1,5 +1,6 @@
 import {
   createManualFallbackUrl,
+  createAuthBrokerCallbackUrl,
   createAuthBrokerHost,
   createWorkspaceBranchName,
   createPreviewHost,
@@ -23,6 +24,16 @@ describe("@takomi/contracts", () => {
     expect(createAuthBrokerHost("takomi.localhost")).toBe(
       "auth.takomi.localhost",
     );
+  });
+
+  it("builds stable auth broker callback URLs", () => {
+    expect(
+      createAuthBrokerCallbackUrl(
+        "auth.takomi.localhost",
+        "github",
+        "ws_abcd1234",
+      ),
+    ).toBe("http://auth.takomi.localhost/callback/github/ws_abcd1234");
   });
 
   it("builds predictable workspace data roots", () => {

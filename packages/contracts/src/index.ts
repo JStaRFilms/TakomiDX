@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const workspaceIdSchema = z.string().regex(/^ws_[a-z0-9]{8,}$/);
 export const runIdSchema = z.string().regex(/^run_[a-z0-9]{8,}$/);
+export const authSessionIdSchema = z.string().regex(/^auth_[a-z0-9]{8,}$/);
 export const workspaceSlugSchema = z
   .string()
   .min(3)
@@ -42,6 +43,79 @@ export const previewRouteStatusSchema = z.enum([
   "removed",
 ]);
 export const routeTargetSchema = z.string().regex(/^[a-z0-9.-]+:\d{1,5}$/i);
+export const authProviderSchema = z
+  .string()
+  .min(2)
+  .max(64)
+  .regex(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/);
+export const authFlowTypeSchema = z.enum(["browser_callback", "device_code"]);
+export const authSessionStatusSchema = z.enum([
+  "requested",
+  "awaiting_user",
+  "callback_received",
+  "failed",
+  "completed",
+]);
+export const authDeviceFlowStatusSchema = z.enum([
+  "pending",
+  "awaiting_user",
+  "authorized",
+  "denied",
+  "expired",
+]);
+export const authErrorCodeSchema = z.enum([
+  "invalid_state",
+  "expired_state",
+  "provider_error",
+  "session_not_found",
+  "workspace_not_found",
+  "workspace_mismatch",
+  "invalid_handoff",
+  "device_flow_denied",
+  "device_flow_expired",
+]);
+
+export const authErrorSchema = z.object({
+  code: authErrorCodeSchema,
+  title: z.string().min(1),
+  message: z.string().min(1),
+  providerMessage: z.string().min(1).nullable().default(null),
+  expectedCallbackUrl: z.string().url().nullable().default(null),
+  receivedCallbackUrl: z.string().url().nullable().default(null),
+  resolution: z.string().min(1).nullable().default(null),
+});
+
+export const authStatePayloadSchema = z.object({
+  sessionId: authSessionIdSchema,
+  workspaceId: workspaceIdSchema,
+  provider: authProviderSchema,
+  nonce: z.string().min(16),
+  expiresAt: z.string().datetime({ offset: true }),
+});
+
+export const authHandoffPayloadSchema = z.object({
+  sessionId: authSessionIdSchema,
+  workspaceId: workspaceIdSchema,
+  provider: authProviderSchema,
+  nonce: z.string().min(16),
+  expiresAt: z.string().datetime({ offset: true }),
+});
+
+export const authCallbackPayloadSchema = z.object({
+  code: z.string().min(1).nullable().default(null),
+  error: z.string().min(1).nullable().default(null),
+  errorDescription: z.string().min(1).nullable().default(null),
+  errorUri: z.string().url().nullable().default(null),
+  receivedAt: z.string().datetime({ offset: true }),
+});
+
+export const authDeviceFlowSchema = z.object({
+  status: authDeviceFlowStatusSchema,
+  userCode: z.string().min(1),
+  verificationUri: z.string().url(),
+  verificationUriComplete: z.string().url().nullable().default(null),
+  intervalSeconds: z.number().int().min(1).nullable().default(null),
+});
 
 export const sharedRuntimeEnvSchema = z.object({
   TAKOMI_APP_NAME: z.string().default("TakomiDX"),
@@ -125,6 +199,65 @@ export const workspaceLifecycleEventSchema = z.object({
   detail: z.string().min(1).nullable().default(null),
 });
 
+export const authSessionSchema = z.object({
+  id: authSessionIdSchema,
+  workspaceId: workspaceIdSchema,
+  provider: authProviderSchema,
+  flow: authFlowTypeSchema,
+  status: authSessionStatusSchema,
+  stateNonce: z.string().min(16),
+  callbackUrl: z.string().url().nullable().default(null),
+  previewUrl: z.string().url(),
+  forwardPath: z.string().min(1).default("/.takomi/auth/callback"),
+  requestedAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+  expiresAt: z.string().datetime({ offset: true }),
+  completedAt: z.string().datetime({ offset: true }).nullable().default(null),
+  lastError: authErrorSchema.nullable().default(null),
+  callback: authCallbackPayloadSchema.nullable().default(null),
+  device: authDeviceFlowSchema.nullable().default(null),
+  forwardUrl: z.string().url().nullable().default(null),
+});
+
+export const authSessionStartResponseSchema = z.object({
+  session: authSessionSchema,
+  state: z.string().min(1).nullable().default(null),
+});
+
+export const workspaceAuthSummarySchema = z.object({
+  sessionId: authSessionIdSchema,
+  provider: authProviderSchema,
+  flow: authFlowTypeSchema,
+  status: authSessionStatusSchema,
+  label: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
+  callbackUrl: z.string().url().nullable().default(null),
+  error: authErrorSchema.nullable().default(null),
+  device: authDeviceFlowSchema.nullable().default(null),
+});
+
+export const authLifecycleEventTypeSchema = z.enum([
+  "auth.session.requested",
+  "auth.device.requested",
+  "auth.callback.received",
+  "auth.session.failed",
+  "auth.session.completed",
+]);
+
+export const authLifecycleEventSchema = z.object({
+  id: z.string().min(1),
+  sessionId: authSessionIdSchema,
+  workspaceId: workspaceIdSchema,
+  provider: authProviderSchema,
+  flow: authFlowTypeSchema,
+  type: authLifecycleEventTypeSchema,
+  status: authSessionStatusSchema,
+  timestamp: z.string().datetime({ offset: true }),
+  summary: z.string().min(1),
+  detail: z.string().min(1).nullable().default(null),
+  error: authErrorSchema.nullable().default(null),
+});
+
 export const workspaceSummarySchema = z.object({
   id: workspaceIdSchema,
   slug: workspaceSlugSchema,
@@ -137,6 +270,7 @@ export const workspaceSummarySchema = z.object({
   tokenCostUsd: z.number().min(0),
   elapsedMinutes: z.number().int().min(0),
   health: healthStatusSchema,
+  auth: workspaceAuthSummarySchema.nullable().default(null),
 });
 
 export const containerRuntimeSpecSchema = z.object({
@@ -211,6 +345,10 @@ export type HealthStatus = z.infer<typeof healthStatusSchema>;
 export type RuntimeLifecycleState = z.infer<typeof runtimeLifecycleStateSchema>;
 export type PreviewProtocol = z.infer<typeof previewProtocolSchema>;
 export type PreviewRouteStatus = z.infer<typeof previewRouteStatusSchema>;
+export type AuthFlowType = z.infer<typeof authFlowTypeSchema>;
+export type AuthSessionStatus = z.infer<typeof authSessionStatusSchema>;
+export type AuthDeviceFlowStatus = z.infer<typeof authDeviceFlowStatusSchema>;
+export type AuthErrorCode = z.infer<typeof authErrorCodeSchema>;
 export type SharedRuntimeEnv = z.infer<typeof sharedRuntimeEnvSchema>;
 export type MissionControlPublicEnv = z.infer<
   typeof missionControlPublicEnvSchema
@@ -228,6 +366,20 @@ export type WorkspaceLifecycleEventType = z.infer<
 export type WorkspaceLifecycleEvent = z.infer<
   typeof workspaceLifecycleEventSchema
 >;
+export type AuthError = z.infer<typeof authErrorSchema>;
+export type AuthStatePayload = z.infer<typeof authStatePayloadSchema>;
+export type AuthHandoffPayload = z.infer<typeof authHandoffPayloadSchema>;
+export type AuthCallbackPayload = z.infer<typeof authCallbackPayloadSchema>;
+export type AuthDeviceFlow = z.infer<typeof authDeviceFlowSchema>;
+export type AuthSession = z.infer<typeof authSessionSchema>;
+export type AuthSessionStartResponse = z.infer<
+  typeof authSessionStartResponseSchema
+>;
+export type WorkspaceAuthSummary = z.infer<typeof workspaceAuthSummarySchema>;
+export type AuthLifecycleEventType = z.infer<
+  typeof authLifecycleEventTypeSchema
+>;
+export type AuthLifecycleEvent = z.infer<typeof authLifecycleEventSchema>;
 export type WorkspaceSummary = z.infer<typeof workspaceSummarySchema>;
 export type ContainerRuntimeSpec = z.infer<typeof containerRuntimeSpecSchema>;
 export type WorkspaceRuntimePort = z.infer<typeof workspaceRuntimePortSchema>;
@@ -262,6 +414,25 @@ export function createWorkspaceBranchName(
 
 export function createAuthBrokerHost(previewDomain: string): string {
   return `auth.${previewDomain}`;
+}
+
+export function createAuthBrokerCallbackPath(
+  provider: string,
+  workspaceId: string,
+): string {
+  return `/callback/${provider}/${workspaceId}`;
+}
+
+export function createAuthBrokerCallbackUrl(
+  authBrokerHost: string,
+  provider: string,
+  workspaceId: string,
+  protocol: PreviewProtocol = "http",
+): string {
+  return `${protocol}://${authBrokerHost}${createAuthBrokerCallbackPath(
+    provider,
+    workspaceId,
+  )}`;
 }
 
 export function createWorkspaceDataRoot(
