@@ -80,8 +80,8 @@ flowchart LR
 
 ## Progress Checklist
 
-- [ ] Session scaffold created
-- [ ] Task 01 complete
+- [x] Session scaffold created
+- [x] Task 01 complete
 - [ ] Task 02 complete
 - [ ] Task 03 complete
 - [ ] Task 04 complete

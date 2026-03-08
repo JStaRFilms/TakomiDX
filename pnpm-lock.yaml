@@ -114,6 +114,34 @@ importers:
         specifier: ^8.4.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
 
+  packages/takomidx:
+    dependencies:
+      '@takomi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.22.0
+        version: 9.39.4
+      '@takomi/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: ^22.13.10
+        version: 22.19.15
+      eslint:
+        specifier: ^9.22.0
+        version: 9.39.4(jiti@2.6.1)
+      tsup:
+        specifier: ^8.3.6
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.26.1
+        version: 8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+
   packages/tsconfig: {}
 
   services/agentd:

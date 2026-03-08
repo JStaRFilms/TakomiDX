@@ -16,6 +16,9 @@ export const previewDomainSchema = z
 export const runtimeTypeSchema = z.enum(["container"]);
 export const editorTargetSchema = z.enum(["vscode"]);
 export const workspaceBranchTypeSchema = z.enum(["agent", "review"]);
+export const workspaceModeSchema = z.enum(["managed", "attached"]);
+export const runOwnershipSchema = z.enum(["owned", "external"]);
+export const toolFamilySchema = z.enum(["takomi", "codex", "cline", "cursor", "unknown"]);
 export const workspaceStatusSchema = z.enum([
   "queued",
   "booting",
@@ -162,6 +165,8 @@ export const createWorkspaceInputSchema = z.object({
   baseBranch: z.string().min(1).default("main"),
   branchType: workspaceBranchTypeSchema.default("agent"),
   runtimeType: runtimeTypeSchema.default("container"),
+  mode: workspaceModeSchema.default("managed"),
+  previewUrlHint: z.string().url().nullable().default(null),
 });
 
 export const deleteWorkspaceInputSchema = z.object({
@@ -179,7 +184,9 @@ export const workspaceMetadataSchema = z.object({
   baseBranch: z.string().min(1),
   branchType: workspaceBranchTypeSchema,
   runtimeType: runtimeTypeSchema,
+  mode: workspaceModeSchema.default("managed"),
   previewHost: previewDomainSchema,
+  previewUrlHint: z.string().url().nullable().default(null),
   status: workspaceStatusSchema,
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
@@ -421,6 +428,10 @@ export const agentRunSummarySchema = z.object({
   pauseReason: z.string().min(1).nullable().default(null),
   approvalRequired: z.boolean().default(false),
   budget: agentRunBudgetSchema,
+  ownership: runOwnershipSchema.default("owned"),
+  toolFamily: toolFamilySchema.default("takomi"),
+  cwd: z.string().min(1).nullable().default(null),
+  pid: z.number().int().positive().nullable().default(null),
   lastEventId: z.string().min(1).nullable().default(null),
   warningCount: z.number().int().min(0).default(0),
   policyState: policyDecisionSchema.nullable().default(null),
@@ -431,6 +442,10 @@ export const createAgentRunInputSchema = z.object({
   agentType: z.string().min(1),
   budgetUsd: z.number().min(0).default(10),
   warningBudgetUsd: z.number().min(0).nullable().default(null),
+  ownership: runOwnershipSchema.default("owned"),
+  toolFamily: toolFamilySchema.default("takomi"),
+  cwd: z.string().min(1).nullable().default(null),
+  pid: z.number().int().positive().nullable().default(null),
 });
 
 export const recordAgentEventInputSchema = z.object({
@@ -770,6 +785,9 @@ export const editorCompanionWorkspaceDetailResponseSchema = z.object({
 export type RuntimeType = z.infer<typeof runtimeTypeSchema>;
 export type EditorTarget = z.infer<typeof editorTargetSchema>;
 export type WorkspaceBranchType = z.infer<typeof workspaceBranchTypeSchema>;
+export type WorkspaceMode = z.infer<typeof workspaceModeSchema>;
+export type RunOwnership = z.infer<typeof runOwnershipSchema>;
+export type ToolFamily = z.infer<typeof toolFamilySchema>;
 export type WorkspaceStatus = z.infer<typeof workspaceStatusSchema>;
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
 export type RuntimeLifecycleState = z.infer<typeof runtimeLifecycleStateSchema>;

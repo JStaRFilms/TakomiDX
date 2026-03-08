@@ -207,4 +207,48 @@ describe("workspace manager", () => {
       workspaceId: workspace.id,
     });
   });
+
+  it("skips git worktree creation for attached workspaces", async () => {
+    const root = createTempDir();
+    const git = createFakeGitDriver();
+    const { manager, repoPath } = createDeterministicManager(root, git.driver);
+
+    const workspace = await manager.create({
+      slug: "codex-session",
+      repoPath,
+      baseBranch: "main",
+      mode: "attached",
+      previewUrlHint: "http://127.0.0.1:3000",
+    });
+
+    expect(workspace.mode).toBe("attached");
+    expect(workspace.worktreePath).toBeNull();
+    expect(workspace.previewUrlHint).toBe("http://127.0.0.1:3000");
+    expect(git.addCalls).toHaveLength(0);
+  });
+
+  it("does not try to delete a git branch for attached workspaces", async () => {
+    const root = createTempDir();
+    const git = createFakeGitDriver();
+    const { manager, repoPath } = createDeterministicManager(root, git.driver);
+    const workspace = await manager.create({
+      slug: "attached-review",
+      repoPath,
+      baseBranch: "main",
+      mode: "attached",
+    });
+
+    await manager.archive(workspace.id);
+    const deletion = await manager.delete(workspace.id, {
+      confirm: true,
+      deleteBranch: true,
+    });
+
+    expect(deletion).toMatchObject({
+      workspaceId: workspace.id,
+      deletedBranch: false,
+    });
+    expect(git.removeCalls).toHaveLength(0);
+    expect(git.deleteBranchCalls).toHaveLength(0);
+  });
 });

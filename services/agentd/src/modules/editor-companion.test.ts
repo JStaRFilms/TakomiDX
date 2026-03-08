@@ -15,7 +15,9 @@ const workspace: BuildEditorCompanionWorkspaceInput["workspace"] = {
   baseBranch: "main",
   branchType: "agent" as const,
   runtimeType: "container" as const,
+  mode: "managed" as const,
   previewHost: "billing-fix.takomi.localhost",
+  previewUrlHint: null,
   status: "queued" as const,
   createdAt: "2026-03-07T03:07:31.000Z",
   updatedAt: "2026-03-07T03:17:31.000Z",
@@ -82,15 +84,19 @@ const run: NonNullable<BuildEditorCompanionWorkspaceInput["run"]> = {
   lastEventId: "evt_002",
   warningCount: 0,
   policyState: null,
+  ownership: "owned" as const,
+  toolFamily: "takomi" as const,
+  cwd: null,
+  pid: null,
 };
 
 const validationSummary: BuildEditorCompanionWorkspaceInput["validationSummary"] =
-  {
+{
   status: "failed" as const,
   summary: "Validation failed with 1 failed checks, 1 console errors, and 0 network failures.",
   lastValidatedAt: "2026-03-07T03:17:31.000Z",
   bundleId: "bundle_001",
-  };
+};
 
 describe("editor companion workspace models", () => {
   it("builds a thin workspace item with actions and approval state", () => {

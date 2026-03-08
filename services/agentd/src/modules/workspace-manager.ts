@@ -378,23 +378,26 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
       const workspaceId = idGenerator();
       const timestamp = now().toISOString();
       const branch = createWorkspaceBranchName(request.branchType, request.slug);
-      const worktreePath = path.join(options.worktreeRootDir, workspaceId);
+      let worktreePath: string | null = null;
 
-      try {
-        await gitDriver.add({
-          repoPath: request.repoPath,
-          worktreePath,
-          branch,
-          baseBranch: request.baseBranch,
-        });
-      } catch (error) {
-        throw new WorkspaceLifecycleError(
-          error instanceof Error
-            ? error.message
-            : "Git failed to provision the worktree.",
-          "workspace_git_error",
-          500,
-        );
+      if (request.mode === "managed") {
+        worktreePath = path.join(options.worktreeRootDir, workspaceId);
+        try {
+          await gitDriver.add({
+            repoPath: request.repoPath,
+            worktreePath,
+            branch,
+            baseBranch: request.baseBranch,
+          });
+        } catch (error) {
+          throw new WorkspaceLifecycleError(
+            error instanceof Error
+              ? error.message
+              : "Git failed to provision the worktree.",
+            "workspace_git_error",
+            500,
+          );
+        }
       }
 
       const workspace = workspaceMetadataSchema.parse({
@@ -406,7 +409,9 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
         baseBranch: request.baseBranch,
         branchType: request.branchType,
         runtimeType: request.runtimeType,
+        mode: request.mode,
         previewHost: createPreviewHost(request.slug, options.previewDomain),
+        previewUrlHint: request.previewUrlHint,
         status: "queued",
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -507,14 +512,17 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
 
           throw new WorkspaceLifecycleError(
             failedWorkspace.lastError ??
-              "Git failed to remove the worktree during delete.",
+            "Git failed to remove the worktree during delete.",
             "workspace_git_error",
             500,
           );
         }
       }
 
-      if (request.deleteBranch) {
+      const shouldDeleteBranch =
+        request.deleteBranch && workspace.mode === "managed";
+
+      if (shouldDeleteBranch) {
         try {
           await gitDriver.deleteBranch({
             repoPath: workspace.repoPath,
@@ -530,7 +538,7 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
 
           throw new WorkspaceLifecycleError(
             failedWorkspace.lastError ??
-              "Git failed to delete the workspace branch.",
+            "Git failed to delete the workspace branch.",
             "workspace_git_error",
             500,
           );
@@ -550,7 +558,7 @@ export function createWorkspaceManager(options: CreateWorkspaceManagerOptions) {
 
       return {
         workspaceId,
-        deletedBranch: request.deleteBranch,
+        deletedBranch: shouldDeleteBranch,
       } satisfies DeleteWorkspaceResult;
     },
 

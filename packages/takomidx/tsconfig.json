@@ -1,0 +1,18 @@
+{
+    "extends": "@takomi/tsconfig/node.json",
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "outDir": "dist",
+        "rootDir": "src",
+        "paths": {
+            "@takomi/contracts": [
+                "../contracts/src"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

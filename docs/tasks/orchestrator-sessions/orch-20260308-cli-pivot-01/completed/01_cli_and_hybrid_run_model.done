@@ -1,0 +1,29 @@
+# Task Completion Summary
+
+**Task:** 01_cli_and_hybrid_run_model
+**Completed At:** 2026-03-08T15:10:00+01:00
+**Mode:** Code
+
+## Results
+
+Implemented the first milestone of the `takomi` CLI entrypoint in package `takomidx` (placed in `packages/takomidx`). Updated shared contracts and `agentd` to encode hybrid attached-vs-managed workspaces and owned-vs-external runs. Scaffolded the command surface for `run`, `attach`, `status`, `open`, and `logs`.
+
+## Files Created/Modified
+
+- `packages/contracts/src/index.ts` - Added `workspaceModeSchema`, `runOwnershipSchema`, and `toolFamilySchema`.
+- `services/agentd/src/modules/workspace-manager.ts` - Support for attaching workspaces without generating worktrees.
+- `services/agentd/src/modules/observability-policy-engine.ts` - Extended schema mappings.
+- `packages/takomidx/package.json` - Scaffolded the new CLI package.
+- `packages/takomidx/tsup.config.ts` - Build configuration.
+- `packages/takomidx/src/cli.ts` - Command definitions and argument parsing structure.
+
+## Verification Status
+
+- [x] TypeScript: PASS
+- [x] Lint: PASS
+- [x] Build: PASS
+- [x] Tests: PASS
+
+## Notes
+
+The package is explicitly named `takomidx` but exposes both the `takomi` and `takomidx` commands in `package.json` bin.
