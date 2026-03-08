@@ -146,12 +146,12 @@
         "takomi.agentdBaseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:4000",
-          "description": "Base URL for the local Takomi agentd service."
+          "description": "Base URL for the local TakomiDX agentd service."
         },
         "takomi.missionControlBaseUrl": {
           "type": "string",
           "default": "http://127.0.0.1:3000",
-          "description": "Base URL for the local Takomi Mission Control app."
+          "description": "Base URL for the local TakomiDX Mission Control app."
         },
         "takomi.logsTail": {
           "type": "number",

@@ -452,8 +452,8 @@ export function WorkspaceOperatorPanel({
           {activeRuntime.preview && !isLivePreviewHost && (
             <div className="mt-3 rounded-lg border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
               {isFallbackPreview
-                ? "Takomi knows the route target, but the local edge proxy is unavailable. Keep using the fallback port URL and free port 80 on this machine if another process is occupying it."
-                : "The local edge proxy is up, but this workspace host is not live yet. Takomi will keep polling runtime and route health until the custom host is ready."}
+                ? "TakomiDX knows the route target, but the local edge proxy is unavailable. Keep using the fallback port URL and free port 80 on this machine if another process is occupying it."
+                : "The local edge proxy is up, but this workspace host is not live yet. TakomiDX will keep polling runtime and route health until the custom host is ready."}
             </div>
           )}
 

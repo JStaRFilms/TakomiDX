@@ -93,7 +93,7 @@ function deriveLastError(
   }
 
   if (proxyStatus !== "ready") {
-    return route.lastError ?? "Takomi local edge is unavailable on this machine.";
+    return route.lastError ?? "TakomiDX local edge is unavailable on this machine.";
   }
 
   if (route.healthStatus !== "healthy") {
@@ -150,7 +150,7 @@ async function probeProxyRoute(
 
     return {
       proxyStatus: "failed",
-      lastError: `Takomi local edge returned ${response.status} while probing ${route.host}.`,
+      lastError: `TakomiDX local edge returned ${response.status} while probing ${route.host}.`,
     };
   } catch (error) {
     return {
@@ -158,7 +158,7 @@ async function probeProxyRoute(
       lastError:
         error instanceof Error
           ? error.message
-          : "Takomi local edge probe failed unexpectedly.",
+          : "TakomiDX local edge probe failed unexpectedly.",
     };
   }
 }
@@ -217,7 +217,7 @@ export function createRouteRegistry(options: CreateRouteRegistryOptions) {
 
       if (throwOnFailure) {
         throw new RouteRegistrationError(
-          `Takomi local edge is unavailable for ${route.workspaceId}.`,
+          `TakomiDX local edge is unavailable for ${route.workspaceId}.`,
           nextRoute,
           createPreviewRegistrationPayload(nextRoute),
         );
@@ -235,7 +235,7 @@ export function createRouteRegistry(options: CreateRouteRegistryOptions) {
         "failed",
         error instanceof Error
           ? error.message
-          : "Takomi local edge rejected the preview route.",
+          : "TakomiDX local edge rejected the preview route.",
       );
       persistRoute(nextRoute);
 
@@ -261,7 +261,7 @@ export function createRouteRegistry(options: CreateRouteRegistryOptions) {
 
     if (proxyProbe.proxyStatus !== "ready" && throwOnFailure) {
       throw new RouteRegistrationError(
-        `Takomi local edge could not serve ${route.host}.`,
+        `TakomiDX local edge could not serve ${route.host}.`,
         nextRoute,
         createPreviewRegistrationPayload(nextRoute),
       );

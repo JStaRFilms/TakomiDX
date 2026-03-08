@@ -29,12 +29,12 @@ function writePlainText(
 
   socket.end(
     `HTTP/1.1 ${statusCode} ${statusText}\r\n` +
-      "Connection: close\r\n" +
-      "Content-Type: text/plain; charset=utf-8\r\n" +
-      `Content-Length: ${Buffer.byteLength(message, "utf8")}\r\n` +
-      `X-Takomi-Edge-Proxy: ${EDGE_PROXY_SIGNATURE}\r\n` +
-      "\r\n" +
-      message,
+    "Connection: close\r\n" +
+    "Content-Type: text/plain; charset=utf-8\r\n" +
+    `Content-Length: ${Buffer.byteLength(message, "utf8")}\r\n` +
+    `X-Takomi-Edge-Proxy: ${EDGE_PROXY_SIGNATURE}\r\n` +
+    "\r\n" +
+    message,
   );
 }
 
@@ -131,7 +131,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
       writeRouteFailure(
         response,
         502,
-        `Takomi local edge could not reach ${route.target}: ${error.message}`,
+        `TakomiDX local edge could not reach ${route.target}: ${error.message}`,
       );
     });
 
@@ -174,7 +174,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
         socket,
         502,
         "Bad Gateway",
-        `Takomi local edge could not upgrade ${route.target}: ${error.message}`,
+        `TakomiDX local edge could not upgrade ${route.target}: ${error.message}`,
       );
     });
   }
@@ -187,7 +187,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
     const route = host ? routesByHost.get(host) ?? null : null;
 
     if (!route) {
-      writeRouteFailure(response, 404, "No Takomi preview route is registered for this host.");
+      writeRouteFailure(response, 404, "No TakomiDX preview route is registered for this host.");
       return;
     }
 
@@ -204,7 +204,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
         response,
         route.healthStatus === "failed" ? 503 : 502,
         route.lastError ??
-          `Preview route ${route.host} is ${route.healthStatus} and not proxying browser traffic yet.`,
+        `Preview route ${route.host} is ${route.healthStatus} and not proxying browser traffic yet.`,
       );
       return;
     }
@@ -221,7 +221,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
     const route = host ? routesByHost.get(host) ?? null : null;
 
     if (!route) {
-      writePlainText(socket, 404, "Not Found", "No Takomi preview route is registered for this host.");
+      writePlainText(socket, 404, "Not Found", "No TakomiDX preview route is registered for this host.");
       return;
     }
 
@@ -231,7 +231,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
         route.healthStatus === "failed" ? 503 : 502,
         "Bad Gateway",
         route.lastError ??
-          `Preview route ${route.host} is ${route.healthStatus} and not proxying upgrade traffic yet.`,
+        `Preview route ${route.host} is ${route.healthStatus} and not proxying upgrade traffic yet.`,
       );
       return;
     }
@@ -264,7 +264,7 @@ export function createLocalEdgeProxy(options: CreateLocalEdgeProxyOptions) {
             status: error.code === "EADDRINUSE" ? "unavailable" : "failed",
             lastError:
               error.code === "EADDRINUSE"
-                ? `Takomi local edge could not bind ${options.host}:${options.port} because the port is already in use.`
+                ? `TakomiDX local edge could not bind ${options.host}:${options.port} because the port is already in use.`
                 : error.message,
           }),
         );

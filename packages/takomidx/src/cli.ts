@@ -20,7 +20,7 @@ if (command === "help") {
 Usage: takomi <command> [args]
 
 Commands:
-  run      Launch a Takomi-owned tracked command
+  run      Launch a TakomiDX-owned tracked command
   attach   Attach an existing agent session
   status   View workspace/run status
   open     Open preview or control plane
@@ -150,7 +150,7 @@ try {
     const run = (await runRes.json()) as { id: string };
     const runId = run.id;
 
-    console.log(`[takomi] Launching Takomi-owned tracked run: ${runId}`);
+    console.log(`[takomi] Launching TakomiDX-owned tracked run: ${runId}`);
     console.log(`[takomi] Workspace: ${workspaceId} (${slug})`);
 
     // 2. Spawn the local process
@@ -250,7 +250,7 @@ try {
       resolveStringOption(values, "tool", "tool-family") ?? "unknown";
     const pid = resolveNumberOption(values, "pid");
 
-    console.log(`[takomi] Attaching external run to Takomi control plane for ${slug}.`);
+    console.log(`[takomi] Attaching external run to TakomiDX control plane for ${slug}.`);
 
     const attachRes = await fetch(`${agentdUrl}/api/v1/observability/runs`, {
       method: "POST",

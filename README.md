@@ -2,7 +2,7 @@
 
 **The CLI-First Local Control Plane for Managed and Attached Agent Workspaces.**
 
-TakomiDX is a local control plane for multi-agent coding. It gives you terminal-native observability and lifecycle management for both Takomi-managed task capsules and existing projects where you've "attached" Takomi to track and validate agent runs.
+TakomiDX is a local control plane for multi-agent coding. It gives you terminal-native observability and lifecycle management for both TakomiDX-managed task capsules and existing projects where you've "attached" TakomiDX to track and validate agent runs.
 
 Instead of juggling mystery ports, drifting previews, and unverified PRs, TakomiDX makes every agent task—whether it's running in a managed container or directly in your current directory—a first-class local object you can inspect, validate, and review.
 
@@ -34,8 +34,8 @@ TakomiDX provides the infrastructure to make these agent workflows trustworthy, 
 
 TakomiDX supports two primary modes:
 
-1. **Managed Workspaces (`managed`)**: Fully orchestrated task capsules. Takomi creates a dedicated `git worktree`, boots an isolated container runtime, and manages the lifecycle through the existing managed-workspace surfaces.
-2. **Attached Projects (`attached`)**: Takomi tracks runs against your existing local project so the terminal, Mission Control, and VS Code all share the same workspace identity.
+1. **Managed Workspaces (`managed`)**: Fully orchestrated task capsules. TakomiDX creates a dedicated `git worktree`, boots an isolated container runtime, and manages the lifecycle through the existing managed-workspace surfaces.
+2. **Attached Projects (`attached`)**: TakomiDX tracks runs against your existing local project so the terminal, Mission Control, and VS Code all share the same workspace identity.
 
 ## Core Workflows
 

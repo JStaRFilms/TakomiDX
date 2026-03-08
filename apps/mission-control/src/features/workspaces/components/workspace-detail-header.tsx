@@ -116,8 +116,8 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
         {runtime?.preview && !isLivePreviewHost && (
           <div className="rounded-lg border border-[var(--color-warning)]/25 bg-[var(--color-warning)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
             {isUsingFallbackPreview
-              ? "Takomi detected the workspace route, but the local edge proxy is unavailable on this machine. Use the fallback port URL until the proxy can bind the preview host."
-              : "Takomi has the preview host registered, but the host path is not live yet. Keep using the workspace page while the runtime or proxy health settles."}
+              ? "TakomiDX detected the workspace route, but the local edge proxy is unavailable on this machine. Use the fallback port URL until the proxy can bind the preview host."
+              : "TakomiDX has the preview host registered, but the host path is not live yet. Keep using the workspace page while the runtime or proxy health settles."}
           </div>
         )}
 

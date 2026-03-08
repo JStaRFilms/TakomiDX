@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Expose Takomi workspace awareness inside VS Code, complementing the CLI-first workflow without rebuilding a full review surface in the editor.
+Expose TakomiDX workspace awareness inside VS Code, complementing the CLI-first workflow without rebuilding a full review surface in the editor.
 
 ## Scope
 
@@ -17,7 +17,7 @@ Expose Takomi workspace awareness inside VS Code, complementing the CLI-first wo
 - `packages/contracts` owns the editor companion schemas
 - `services/agentd` owns the `/api/v1/editor/workspaces` read model
 - `apps/vscode-companion` owns the VS Code tree, commands, and `agentd` client
-- **Takomi CLI** is the primary driver for creating and starting runs
+- **TakomiDX CLI** is the primary driver for creating and starting runs
 - **Mission Control** remains the primary "Review Plane" for deep trace and validation review
 
 ## UX Model

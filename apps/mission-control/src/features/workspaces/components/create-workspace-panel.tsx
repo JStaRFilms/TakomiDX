@@ -107,7 +107,7 @@ export function CreateWorkspacePanel({
             Provision Managed Workspace
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
-            Spin up a container-isolated workspace for Takomi-owned runs. For local processes,
+            Spin up a container-isolated workspace for TakomiDX-owned runs. For local processes,
             run <span className="font-mono text-[var(--color-ink)]">takomi attach</span> in your terminal
             to track them here automatically.
           </p>

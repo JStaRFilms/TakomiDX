@@ -87,8 +87,7 @@ class MessageTreeItem extends vscode.TreeItem {
 }
 
 export class TakomiWorkspaceTreeProvider
-  implements vscode.TreeDataProvider<TakomiTreeNode>
-{
+  implements vscode.TreeDataProvider<TakomiTreeNode> {
   private readonly onDidChangeTreeDataEmitter =
     new vscode.EventEmitter<TakomiTreeNode | undefined>();
   private workspaces: EditorCompanionWorkspaceItem[] = [];
@@ -96,7 +95,7 @@ export class TakomiWorkspaceTreeProvider
 
   readonly onDidChangeTreeData = this.onDidChangeTreeDataEmitter.event;
 
-  constructor(private readonly client: TakomiAgentdClient) {}
+  constructor(private readonly client: TakomiAgentdClient) { }
 
   getTreeItem(element: TakomiTreeNode) {
     return element;
@@ -111,7 +110,7 @@ export class TakomiWorkspaceTreeProvider
           return [
             new MessageTreeItem(
               "No active workspaces",
-              "Takomi agentd is reachable, but there are no active workspace capsules right now.",
+              "TakomiDX agentd is reachable, but there are no active workspace capsules right now.",
             ),
           ];
         }
@@ -123,7 +122,7 @@ export class TakomiWorkspaceTreeProvider
         return [
           new MessageTreeItem(
             "Unable to load workspaces",
-            error instanceof Error ? error.message : "Takomi agentd is unavailable.",
+            error instanceof Error ? error.message : "TakomiDX agentd is unavailable.",
           ),
         ];
       }
@@ -152,7 +151,7 @@ export class TakomiWorkspaceTreeProvider
       return [
         new MessageTreeItem(
           "Unable to load workspace detail",
-          error instanceof Error ? error.message : "Takomi agentd detail request failed.",
+          error instanceof Error ? error.message : "TakomiDX agentd detail request failed.",
         ),
       ];
     }

@@ -36,7 +36,7 @@ describe("Attached Workspace Lifecycle", () => {
     });
 
     server = createAgentdServer({
-      appName: "Takomi Test",
+      appName: "TakomiDX Test",
       authBrokerHost: "auth.takomi.localhost",
       dataDir,
       edgeHost: "127.0.0.1",

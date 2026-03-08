@@ -39,7 +39,7 @@ TakomiDX turns a developer machine into a structured, multi-tenant local platfor
 
 - Replacing GitHub or existing git hosting services.
 - Building a full general-purpose operating system in the MVP.
-- Replacing primary editors (Takomi is a companion surface).
+- Replacing primary editors (TakomiDX is a companion surface).
 - Providing a native chat shell in the first milestone (deferred).
 
 ## Core Product Thesis: The Run Capsule
@@ -47,8 +47,8 @@ TakomiDX turns a developer machine into a structured, multi-tenant local platfor
 TakomiDX is designed around the concept of a **Run Capsule** within a **Workspace**.
 
 A Workspace is a durable container for a specific task. It can be:
-- **Managed**: Takomi owns the worktree and runtime (container-based).
-- **Attached**: Takomi tracks the run in an existing directory on the host.
+- **Managed**: TakomiDX owns the worktree and runtime (container-based).
+- **Attached**: TakomiDX tracks the run in an existing directory on the host.
 
 The Run Capsule bundles:
 - agent session metadata
@@ -105,7 +105,7 @@ The user should be able to answer in under 5 seconds:
 
 ```mermaid
 flowchart TD
-    U["User / Terminal"] --> CLI["Takomi CLI"]
+    U["User / Terminal"] --> CLI["TakomiDX CLI"]
     CLI --> AD["agentd daemon"]
     MC["Mission Control (Review Plane)"] --> AD
     IDE["VS Code Companion"] --> AD
@@ -512,7 +512,7 @@ The IDE extension should not replace Mission Control. It should make workspace c
 ```mermaid
 sequenceDiagram
     participant U as User / Terminal
-    participant CLI as Takomi CLI
+    participant CLI as TakomiDX CLI
     participant AD as agentd
     participant MC as Mission Control
     participant RT as Runtime / Tracking

@@ -29,7 +29,7 @@ function isRuntimeLogsResponse(value: unknown): value is RuntimeLogsResponse {
 }
 
 export class TakomiAgentdClient {
-  constructor(private readonly getConfig: () => TakomiExtensionConfig) {}
+  constructor(private readonly getConfig: () => TakomiExtensionConfig) { }
 
   private buildUrl(pathname: string) {
     return `${this.getConfig().agentdBaseUrl}${pathname}`;
@@ -51,11 +51,11 @@ export class TakomiAgentdClient {
     if (!response.ok) {
       const message =
         typeof payload === "object" &&
-        payload !== null &&
-        "message" in payload &&
-        typeof payload.message === "string"
+          payload !== null &&
+          "message" in payload &&
+          typeof payload.message === "string"
           ? payload.message
-          : `Takomi agentd request failed with ${response.status}.`;
+          : `TakomiDX agentd request failed with ${response.status}.`;
 
       throw new Error(message);
     }
@@ -85,7 +85,7 @@ export class TakomiAgentdClient {
       `/api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail}`,
       (value) => {
         if (!isRuntimeLogsResponse(value)) {
-          throw new Error("Takomi agentd returned an invalid logs payload.");
+          throw new Error("TakomiDX agentd returned an invalid logs payload.");
         }
 
         return value;

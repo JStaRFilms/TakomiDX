@@ -48,7 +48,7 @@ TakomiDX v1 must make the following workflow credible:
 
 ### In Scope for v1 (Milestone CLI-Pivot)
 
-- Takomi CLI for run/workspace management
+- TakomiDX CLI for run/workspace management
 - Hybrid execution model (Managed + Attached)
 - Stable preview routing and local edge proxy
 - Local auth broker
@@ -59,7 +59,7 @@ TakomiDX v1 must make the following workflow credible:
 
 ### Explicitly Out of Scope for v1
 
-- Native Takomi chat-shell
+- Native TakomiDX chat-shell
 - multi-user collaboration
 - remote cloud fleet orchestration
 - microVM runtime implementation
