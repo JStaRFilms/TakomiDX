@@ -1,0 +1,33 @@
+# Task Completion Summary
+
+**Task:** Task 04: Product Docs and Platform Framing Rewrite for the CLI-First Thesis
+**Completed At:** 2026-03-08T17:55:00+01:00
+**Mode:** Code
+
+## Results
+
+Rewrote the core product documentation to align with the CLI-first pivot. Takomi is now consistently framed as a local control plane driven by the terminal, with Mission Control serving as a secondary "Review Plane" for observability and validation.
+
+**Key Changes:**
+- **README.md**: Updated tagline, introduced Hybrid Model (Managed vs Attached), and defined Core CLI Workflows.
+- **Project_Requirements.md**: Updated mission and constraints to prioritize CLI-first management and observability.
+- **Platform Spec**: Updated high-level architecture and user flows to reflect the CLI as the primary driver and Mission Control as an observer.
+- **VS Code Companion**: Reframed as a companion to the CLI and Mission Control, supporting both Managed and Attached workspaces.
+
+## Files Modified
+
+- `README.md`
+- `docs/Project_Requirements.md`
+- `docs/features/TakomiDX_Agent_Workspace_Platform_Spec.md`
+- `docs/features/VSCode_Companion.md`
+
+## Verification Status
+
+- [x] Terminology Consistency: PASS (Managed, Attached, Run Capsule)
+- [x] CLI-First Alignment: PASS
+- [x] Mission Control Reframe: PASS (Secondary Review surface)
+- [x] Deferred Features: PASS (Chat-shell work explicitly deferred)
+
+## Notes
+
+All primary documentation now reflects the milestone's CLI-first thesis. The transition from "Mission Control as primary" to "Mission Control as review plane" is now encoded in the PRD and Platform Specs.

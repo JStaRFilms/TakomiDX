@@ -2,53 +2,37 @@
 
 ## Purpose
 
-Expose Takomi workspace awareness inside VS Code without rebuilding Mission Control in the editor.
+Expose Takomi workspace awareness inside VS Code, complementing the CLI-first workflow without rebuilding a full review surface in the editor.
 
 ## Scope
 
-- show active workspaces from `agentd`
-- surface Mission Control-aligned status, validation, and approval summaries in a tree view
-- make preview, logs, trace, validation, approvals, repo, and worktree actions one click away
+- show active **Managed** and **Attached** workspaces from `agentd`
+- surface status, validation, approval, and attached-run context summaries in a tree view
+- provide one-click actions for previews, logs, traces, and Mission Control deep-links
 - keep the editor surface read-only and deep-link oriented
+- provide quick-access to workspace worktrees and repo paths
 
 ## Boundaries
 
 - `packages/contracts` owns the editor companion schemas
 - `services/agentd` owns the `/api/v1/editor/workspaces` read model
 - `apps/vscode-companion` owns the VS Code tree, commands, and `agentd` client
-- Mission Control remains the source of truth for richer trace, validation, and approval review surfaces
-
-## Contracts
-
-The extension consumes:
-
-- `editorCompanionWorkspaceListResponseSchema`
-- `editorCompanionWorkspaceDetailResponseSchema`
-- `editorCompanionActionSchema`
-
-These contracts carry:
-
-- workspace identity and status
-- validation and approval summaries
-- repo and worktree paths
-- editor action targets mapped to either preview URLs, Mission Control paths, or filesystem paths
+- **Takomi CLI** is the primary driver for creating and starting runs
+- **Mission Control** remains the primary "Review Plane" for deep trace and validation review
 
 ## UX Model
 
-- root tree items are active workspaces
-- child rows show status, validation, approval, and any active auth/review state
-- action rows trigger focused commands instead of duplicating Mission Control UI
-- runtime logs open as editor text documents
-- preview and Mission Control routes open in VS Code's simple browser when available
-- preview actions prefer the runtime `manualFallbackUrl` when the local `.takomi.localhost` route is not yet attached by the edge proxy layer
+- root tree items are active workspaces, with attached workspaces prefixed as `[Ext]`
+- child rows show status, validation health, approval state, run context, and active auth sessions
+- action rows trigger focused commands or open external observability links
+- runtime logs open as editor text documents for easy searching
+- preview and Mission Control routes open in VS Code's internal browser when available
+- preview actions prefer the runtime `manualFallbackUrl` when the local `.takomi.localhost` route is not yet healthy
 
 ## Verification
 
-Current implementation was verified with:
+The companion is verified against the hybrid run model, ensuring it correctly displays PID and CWD metadata for attached projects alongside orchestrator state for managed capsules.
 
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm build`
-- live `agentd` editor payloads returning fallback preview URLs, Mission Control paths, and filesystem deep links for active workspaces
-
-`python scripts/vibe-verify.py` still skips checks because its command wiring is not configured yet.

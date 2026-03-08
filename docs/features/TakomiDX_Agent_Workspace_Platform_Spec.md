@@ -2,180 +2,126 @@
 
 ## Overview
 
-TakomiDX is a local-first agent orchestration platform for multi-agent coding workflows. It exists to solve the mismatch between modern coding agents and the current desktop environment.
+TakomiDX is a local-first agent orchestration platform for multi-agent coding workflows. It provides a CLI-first control plane for managing agent execution, lifecycle, and observability across both managed task capsules and attached local projects.
 
 The core product thesis is:
 
 > Multi-agent coding is not a terminal problem. It is a local platform problem.
 
-Today's operating systems treat development as a single-user, single-focus workflow. Agentic coding breaks that assumption. Multiple agents need stable identity, isolated runtime state, stable preview routing, traceability, and a control plane that lets a human supervise work without getting lost in tabs, ports, or PR noise.
+Today's operating systems treat development as a single-user, single-focus workflow. Agentic coding breaks that assumption. Multiple agents need stable identity, isolated or tracked runtime state, stable preview routing, traceability, and a control plane that lets a human supervise work without getting lost in tabs, ports, or PR noise.
 
 TakomiDX turns a developer machine into a structured, multi-tenant local platform with the following guarantees:
 
-- Every agent gets a durable workspace.
-- Every workspace gets stable identity.
-- Every preview gets a human-readable hostname.
-- Every auth flow gets a stable callback surface.
-- Every run gets a trace, cost record, and replayable event log.
-- Every code change must be validated through a runnable review loop, not dumped as an opaque PR.
-
-This document defines how the product should work end to end, including system architecture, DX patterns, implementation guidance, data model, and phased rollout.
+- Every agent run is tracked within a workspace (Managed or Attached).
+- Every workspace gets a stable identity and preview hostname.
+- Every auth flow is routed via a stable local broker.
+- Every run captures a structured Trace Capsule (logs, costs, tool calls).
+- Every code change is verified through a high-fidelity review loop in Mission Control.
 
 ## Product Goals
 
 ### Primary goals
 
-- Run many coding agents in parallel without terminal chaos.
-- Eliminate manual port management.
-- Make auth flows reliable in local multi-workspace development.
-- Give users one place to see what each agent is doing.
-- Make agent decisions observable and debuggable.
-- Replace low-trust PR dumping with high-trust local validation and review bundles.
-- Preserve local developer control while allowing cloud or remote execution later.
+- Run and track many coding agents in parallel without terminal chaos.
+- Provide a CLI-first workflow (`takomi run`) compatible with external tools like Codex.
+- Support both **Managed** (orchestrated worktrees) and **Attached** (native CWD) workspaces.
+- Make auth flows reliable across concurrent local environments.
+- Give users a high-fidelity "Review Plane" (Mission Control) to validate agent output.
 
 ### Secondary goals
 
-- Make workspaces resumable after machine restarts.
-- Support both solo developers and small teams.
+- Make workspaces resumable and persistent across machine restarts.
+- Provide deep-link integration between CLI, Editor, and Review Plane.
 - Support local, containerized, and remote execution backends under one model.
-- Provide an upgrade path from MVP to a full agent-native desktop environment.
+- Provide an upgrade path towards a full agent-native desktop environment.
 
 ### Non-goals
 
-- Replacing GitHub, GitLab, or existing git hosting.
-- Building a full general-purpose operating system in v1.
-- Replacing existing editors in v1.
-- Solving every possible auth provider edge case on day one.
-- Providing a full cloud-hosted IDE in the MVP.
+- Replacing GitHub or existing git hosting services.
+- Building a full general-purpose operating system in the MVP.
+- Replacing primary editors (Takomi is a companion surface).
+- Providing a native chat shell in the first milestone (deferred).
 
-## Core Product Thesis
+## Core Product Thesis: The Run Capsule
 
-TakomiDX should be designed around the concept of a **workspace capsule**.
+TakomiDX is designed around the concept of a **Run Capsule** within a **Workspace**.
 
-A workspace capsule is the main unit of execution and supervision. It bundles:
+A Workspace is a durable container for a specific task. It can be:
+- **Managed**: Takomi owns the worktree and runtime (container-based).
+- **Attached**: Takomi tracks the run in an existing directory on the host.
 
-- a git worktree or checkout
-- an isolated runtime
-- one or more agent sessions
-- preview URLs
-- auth session routing
-- logs
-- traces
-- browser automation state
-- review artifacts
-
-The user should never need to think first about:
-
-- terminal tabs
-- random ports
-- which browser tab belongs to which agent
-- where logs live
-- why OAuth broke on port 3001
+The Run Capsule bundles:
+- agent session metadata
+- structured traces (tool calls, reasoning)
+- runtime logs
+- token usage and cost metrics
+- browser-aware validation artifacts (screenshots, console logs)
+- approval and review status
 
 The user should think first about:
-
 - which task is running
 - whether it is healthy
-- what changed
-- how to validate it
-- whether to approve, steer, or stop it
+- how much it has cost
+- how to validate and review the output
 
 ## Design Principles
 
-### 1. Workspaces before processes
+### 1. CLI First, UI for Review
+The primary driver for starting and managing tasks is the terminal. The UI is for rich observability and review.
 
-The product should model tasks as durable workspaces, not ephemeral shell commands.
+### 2. Managed vs. Attached Flexibility
+Support both clean-slate managed worktrees and "brownfield" attachment to existing local projects.
 
-### 2. Stable identity everywhere
+### 3. Stable Identity Everywhere
+Every workspace has a stable name, hostname, and trace ID prefix.
 
-Every workspace should have a stable name, hostname, trace ID prefix, and notification identity.
+### 4. Human-Readable Routing
+Users open `billing-fix.myapp.localhost`, not `localhost:3017`.
 
-### 3. Isolation by default
+### 5. Verification over Generation
+The goal is trusted, validated progress—not just generating more code.
 
-Agents should not share mutable runtime state unless explicitly configured to do so.
-
-### 4. Human-readable routing
-
-Users should open `billing-fix.myapp.localhost`, not `localhost:3017`.
-
-### 5. Verification over generation
-
-The goal is not to maximize lines of code produced. The goal is to maximize trusted, validated progress.
-
-### 6. Observability is a product feature
-
-Tracing, cost visibility, and replay are not internal plumbing. They are core DX.
-
-### 7. Incremental adoption
-
-The architecture should allow a user to start with local worktrees and containers, then later adopt richer components like microVMs, IDE integrations, and remote execution.
-
-## Key User Personas
-
-### Solo power user
-
-Runs 2-8 agents locally while coding in an existing editor. Needs speed, low friction, and clear control.
-
-### Staff engineer / tech lead
-
-Oversees multiple parallel tasks, reviews results, and cares deeply about traceability, review quality, and risk.
-
-### Small team
-
-Uses agents for feature work, migrations, tests, and cleanup. Needs consistent workflow and shareable artifacts.
-
-### Platform builder
-
-Wants policy controls, spend limits, security boundaries, and reproducible environments.
+### 6. Observability is a Product Feature
+Tracing and cost visibility are core DX, not internal logs.
 
 ## The Mental Model
 
-TakomiDX should feel like a local mission control system for autonomous workers.
+TakomiDX is a local "Control Plane" for autonomous workers.
 
-Each workspace is a card, not a terminal tab.
+Each workspace is a **Task**, managed via CLI:
+```bash
+takomi run -- "fix the landing page"
+```
 
-Each card owns:
+Each Task has a **Review Item** in Mission Control once validation is generated.
 
-- task name
-- repo and branch
-- assigned agent
-- status
-- preview
-- logs
-- traces
-- review checklist
-
-The user should be able to answer the following at any time in under 5 seconds:
-
+The user should be able to answer in under 5 seconds:
 - What is running?
-- What is blocked?
-- What already finished?
-- Which workspace triggered the notification?
-- What URL should I open?
-- What changed?
-- Why did it stop?
-- How much did it cost?
+- How much has it cost?
+- Is the preview healthy?
+- What validation evidence do I have?
 
 ## High-Level Architecture
 
 ```mermaid
-flowchart LR
-    U["User"] --> MC["Mission Control UI"]
-    MC --> AD["agentd daemon"]
+flowchart TD
+    U["User / Terminal"] --> CLI["Takomi CLI"]
+    CLI --> AD["agentd daemon"]
+    MC["Mission Control (Review Plane)"] --> AD
+    IDE["VS Code Companion"] --> AD
+    
     AD --> WM["Workspace Manager"]
-    AD --> PM["Policy Manager"]
+    AD --> RT["Runtime Executor"]
+    AD --> PX["Local Edge Proxy"]
+    
+    WM --> GW["Managed Worktrees"]
+    WM --> AT["Attached Directories"]
+    
+    RT --> CT["Containers (Managed)"]
+    RT --> HP["Host Processes (Attached)"]
+    
     AD --> OBS["Observability Pipeline"]
-    WM --> GW["Git Worktree Layer"]
-    WM --> RT["Runtime Executor"]
-    RT --> CT["Container or MicroVM"]
-    RT --> PX["Developer Edge Proxy"]
-    RT --> AB["Auth Broker"]
-    RT --> BS["Browser Sidecar"]
-    OBS --> OT["OpenTelemetry Collector"]
-    OT --> TV["Trace Viewer / Langfuse / Jaeger"]
-    PX --> PR["Preview URLs under .localhost"]
-    AB --> AP["OAuth Providers"]
-    MC --> IDE["IDE Extension"]
+    OBS --> OT["OTel / Trace Storage"]
 ```
 
 ## Current MVP Integration Notes
@@ -239,70 +185,48 @@ flowchart LR
 
 ### 2. Workspace Manager
 
-The Workspace Manager creates the durable task capsule.
+The Workspace Manager manages the lifecycle of **Managed** and **Attached** workspaces.
 
 ### Responsibilities
+- **Managed Mode**: Create git worktrees, provision metadata, and manage the capsule lifecycle.
+- **Attached Mode**: Register existing directories, track active PIDs, and map external runs to the Control Plane.
+- Restore all workspace routes and metadata on `agentd` startup.
+- Clean up artifacts and worktrees on archival.
 
-- Create a git worktree for the task.
-- Attach runtime config.
-- Create metadata record.
-- Restore previous workspace state on restart.
-- Clean up after completion or archival.
-
-### Suggested workspace layout
-
+### Suggested workspace layout (Managed)
 ```text
 takomi/
   workspaces/
     ws_01HZX8Y7B7/
       meta.json
       runtime.env
-      review/
-      traces/
-      logs/
-      browser/
+      review/        # Review Plane artifacts
+      traces/        # OTel spans
+      logs/          # Run logs
+      browser/       # Screenshots & validation
 ```
 
-### Git strategy
-
+### Git strategy (Managed)
 - Base repo remains untouched.
 - Each workspace uses `git worktree`.
-- Branch naming convention:
-  - `agent/<task-slug>`
-  - `review/<task-slug>`
-
-### Why worktrees matter
-
-This allows the user to open, inspect, and run agent output locally without switching away from their main branch.
+- Branch naming: `agent/<slug>` or `review/<slug>`.
 
 ### 3. Runtime Executor
 
-The Runtime Executor runs the workspace in an isolated environment.
+The Runtime Executor orchestrates the execution environment.
 
 ### Supported modes
-
-- Local process mode
-- Container mode
-- MicroVM mode
-- Remote mode
-
-### Recommended default
-
-For MVP on Windows and cross-platform development:
-
-- use git worktrees on the host
-- use containers for runtime isolation
-- optionally use WSL2-backed Docker where needed
+- **Container mode (Default for Managed)**: Isolated container runtime with mounted worktree.
+- **Host mode (Default for Attached)**: Direct execution on the host machine with OTel tracing sidecars.
+- **MicroVM mode (Planned)**: Hardware-level isolation for untrusted agents.
 
 ### Responsibilities
-
-- boot runtime
-- inject environment variables
-- mount workspace
-- start dev server
-- expose preview metadata
-- run agent process
-- report health
+- Boot and supervise runtimes.
+- Inject `TAKOMI_*` environment variables for tool-family awareness.
+- Start and health-check the Dev Server.
+- Register preview routes with the Local Edge Proxy.
+- Capture agent tool output and reasoning traces.
+- Report process/container health to Mission Control.
 
 ### Container mode implementation
 
@@ -583,41 +507,30 @@ The IDE extension should not replace Mission Control. It should make workspace c
 
 ## End-to-End User Flows
 
-### Flow 1: Create a workspace and start an agent
+### Flow 1: Start an agent from the terminal and review it in Mission Control
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant MC as Mission Control
+    participant U as User / Terminal
+    participant CLI as Takomi CLI
     participant AD as agentd
-    participant GW as Git Worktree
-    participant RT as Runtime
-    participant PX as Proxy
+    participant MC as Mission Control
+    participant RT as Runtime / Tracking
 
-    U->>MC: Create task "Fix billing page auth bug"
-    MC->>AD: createWorkspace(task)
-    AD->>GW: create worktree + branch
-    AD->>RT: boot isolated runtime
-    RT-->>AD: preview on dynamic port
-    AD->>PX: register billing-fix.myapp.localhost
-    AD-->>MC: workspace ready
-    MC-->>U: card appears with preview and status
+    U->>CLI: takomi run -- "claude solve..."
+    CLI->>AD: start or register owned run
+    AD->>RT: execute or track run context
+    AD-->>MC: update review plane (observer)
+    AD-->>MC: stream traces & logs
 ```
 
 ### DX example
 
-The user clicks `New Workspace`.
+The approved terminal entrypoints in this milestone are `takomi run` and `takomi attach`.
 
-The modal asks for:
+The current repo centers the pivot on those entrypoints while `agentd`, Mission Control, and the VS Code companion share the same attached-vs-managed workspace model.
 
-- task title
-- repo
-- base branch
-- runtime type
-- agent type
-- validation mode
-
-The system returns immediately with a new card in `booting` state. Within seconds the card resolves to `running`, with an `Open Preview` button already wired to the stable hostname.
+While the run is active, Mission Control displays the workspace as a reviewable tracked item. The user can move between terminal, Mission Control, and VS Code without losing workspace identity.
 
 ### Flow 2: OAuth login inside a workspace
 

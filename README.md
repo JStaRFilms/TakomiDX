@@ -1,64 +1,58 @@
 # TakomiDX
 
-**Run multiple coding agents locally without losing the plot.**
+**The CLI-First Local Control Plane for Managed and Attached Agent Workspaces.**
 
-TakomiDX is a local-first control plane for multi-agent coding. It gives each task a durable workspace capsule with its own git worktree, isolated runtime, preview identity, auth routing, logs, validation evidence, and a single Mission Control surface to supervise it all.
+TakomiDX is a local control plane for multi-agent coding. It gives you terminal-native observability and lifecycle management for both Takomi-managed task capsules and existing projects where you've "attached" Takomi to track and validate agent runs.
 
-Instead of juggling terminals, mystery ports, broken callbacks, and PRs you do not trust, TakomiDX makes each agent task feel like a first-class local object you can inspect, validate, and review.
+Instead of juggling mystery ports, drifting previews, and unverified PRs, TakomiDX makes every agent task—whether it's running in a managed container or directly in your current directory—a first-class local object you can inspect, validate, and review.
 
-**Last reviewed:** 2026-03-07
+**Last reviewed:** 2026-03-08 (CLI Pivot Milestone)
 
 ## Why It Exists
 
-Modern coding agents are no longer the main bottleneck.
+Modern coding agents are no longer the bottleneck. The bottleneck is the **environment** and the **supervision loop**.
 
-The bottleneck is the environment they run in.
-
-Once you try to run more than one or two agent tasks locally, the workflow gets messy fast:
-
+When you move beyond simple "edit-this-file" tasks to running multiple agents or complex multi-step workflows (like Codex or Claude Code), everything gets messy:
 - ports collide
-- previews drift
-- OAuth callbacks land in the wrong place
-- terminals stop being a useful source of truth
-- agents feel opaque
-- review quality drops because local validation is annoying
+- preview URLs are unstable
+- auth callbacks land in the wrong place
+- you lose track of cost and progress across parallel runs
+- you end up with "PR dumping" where you don't trust the code enough to merge it
 
-TakomiDX is built to solve that layer of the problem.
+TakomiDX provides the infrastructure to make these agent workflows trustworthy, observable, and repeatable.
 
 ## What This Repo Contains
 
 | Surface | Path | Role |
 | --- | --- | --- |
-| Mission Control | `apps/mission-control` | Next.js web app for creating and supervising workspace capsules |
-| `agentd` | `services/agentd` | Local control-plane daemon and source of truth for workspace state |
-| VS Code Companion | `apps/vscode-companion` | Read-only editor surface for previews, logs, traces, approvals, and deep links |
-| Shared Contracts | `packages/contracts` | Shared schemas and types across the monorepo |
-| Shared TS Config | `packages/tsconfig` | Shared TypeScript configuration package |
+| **CLI (`takomi`)** | `packages/takomidx` | **Primary direction.** Scaffolded terminal entrypoints for `run`, `attach`, `status`, `open`, and `logs`. |
+| `agentd` | `services/agentd` | Local control-plane daemon and source of truth for all runs and state. |
+| Mission Control | `apps/mission-control` | Secondary observability surface for reviewing traces, validation bundles, and histories. |
+| VS Code Companion | `apps/vscode-companion` | Companion surface for status, previews, and deep-linking into Mission Control. |
 
-## What You Can Do Today
+## The Hybrid Model
 
-- create isolated local workspaces for parallel agent tasks
-- supervise active workspaces from Mission Control instead of hunting through terminals
-- run container-backed preview runtimes
-- inspect workspace status, validation state, and approvals from the browser or VS Code
-- generate browser-aware validation bundles against the reachable preview URL
-- deep-link from VS Code into previews, logs, traces, worktrees, and Mission Control views
+TakomiDX supports two primary modes:
 
-## Honest MVP Boundaries
+1. **Managed Workspaces (`managed`)**: Fully orchestrated task capsules. Takomi creates a dedicated `git worktree`, boots an isolated container runtime, and manages the lifecycle through the existing managed-workspace surfaces.
+2. **Attached Projects (`attached`)**: Takomi tracks runs against your existing local project so the terminal, Mission Control, and VS Code all share the same workspace identity.
 
-TakomiDX is intentionally narrow right now:
+## Core Workflows
 
-- local-first, single-user workflow
-- container runtime only
-- VS Code is the only editor integration
-- Mission Control is the primary product surface
-- remote execution, microVM isolation, and team governance are future work
+### 1. Codex / CLI Wrapper Flow
+The approved terminal-native entrypoint for owned runs is `takomi run`:
+```bash
+takomi run -- "claude fix the styling on the checkout page"
+```
 
-Preview hosts now run through a Takomi-owned local edge listener:
+### 2. Attached Project Flow
+The approved terminal-native entrypoint for external sessions is `takomi attach`:
+```bash
+takomi attach
+```
 
-- `agentd` starts a machine-local HTTP proxy for `*.takomi.localhost`
-- Mission Control and the VS Code companion prefer the custom host when that proxy is live
-- the `127.0.0.1:<port>` fallback URL remains available only when the local edge proxy cannot bind or serve the route
+### 3. Managed Workspace Flow
+Managed workspaces remain part of the product model, but this repo milestone does not yet expose a `takomi create` command. In the current repo, managed provisioning still happens through the existing managed-workspace surfaces while the CLI-first pivot focuses on `run` and `attach`.
 
 ## Quick Start
 
@@ -70,163 +64,88 @@ Preview hosts now run through a Takomi-owned local edge listener:
 - VS Code if you want to use the companion extension
 - port `80` available if you want `http://<workspace-slug>.takomi.localhost/` to open without an explicit port
 
-### 1. Configure the environment
-
-Create a local env file from the template:
-
+### 1. Install and Bootstrap
 ```bash
-cp .env.example .env
-```
-
-Recommended minimum values are already documented in `.env.example`.
-
-If you plan to use LLM-backed review flows, fill in:
-
-- `GEMINI_API_KEY` or `GOOGLE_API_KEY`
-- `GROQ_API_KEY`
-
-### 2. Install dependencies
-
-```bash
+pnpm install
 pnpm bootstrap
 ```
 
-### 3. Start the main local surfaces
-
+### 2. Start the Control Plane
 ```bash
 pnpm dev
 ```
+This starts:
+- `agentd` (Local API and Source of Truth) at `http://127.0.0.1:4000`
+- Mission Control (Observability UI) at `http://127.0.0.1:3000`
 
-That starts:
-
-- Mission Control at `http://127.0.0.1:3000`
-- `agentd` at `http://127.0.0.1:4000`
+### 3. Build the CLI
+```bash
+cd packages/takomidx
+pnpm build
+# Optional: link the binary
+pnpm link --global
+```
 
 ## Common Commands
 
 ```bash
+# Core dev loop
 pnpm dev
 pnpm build
-pnpm lint
-pnpm typecheck
-pnpm test
 pnpm check
-```
 
-VS Code companion commands:
-
-```bash
-pnpm --filter takomi-vscode-companion build
-pnpm --filter takomi-vscode-companion typecheck
-pnpm --filter takomi-vscode-companion test
+# CLI Usage (current scaffold)
+takomi help
+takomi status
+takomi run -- "your agent command here"
+takomi attach
+takomi open
+takomi logs
 ```
 
 ## How It Works
 
-TakomiDX is built around the idea of a **workspace capsule**.
+TakomiDX is built around the **Run Capsule**. 
 
-Each workspace owns:
+Every agent execution is recorded as a **Run** within a **Workspace**. 
+- A **Managed Workspace** owns its worktree and runtime. 
+- An **Attached Workspace** maps to an existing directory on your machine.
 
-- a task identity
-- a git worktree
-- an isolated runtime
-- preview URLs
-- auth session routing
-- logs and traces
-- validation artifacts
-- approval and review state
-
-The user experience is simple:
-
-1. Create a workspace for a task.
-2. Let TakomiDX provision the worktree and runtime context.
-3. Supervise status, preview, validation, and review state from one place.
-
-The unit of the product is not a terminal tab. It is a task.
+Each run automatically captures:
+- Tool calls and reasoning traces
+- Token usage and cost
+- Runtime logs
+- Browser-aware validation (screenshots, console errors)
+- Approval and review status
 
 ## Repo Layout
-
 ```text
 apps/
-  mission-control/
-  vscode-companion/
+  mission-control/        # Secondary review surface
+  vscode-companion/       # Editor companion
 services/
-  agentd/
+  agentd/                 # Main control-plane daemon
 packages/
-  contracts/
-  tsconfig/
+  takomidx/               # Primary CLI package
+  contracts/              # Shared Zod schemas
+  tsconfig/               # Shared TS configuration
 docs/
-  features/
-  issues/
-  design/
+  features/               # Detailed product specs
+  tasks/                  # Current development tasks
 ```
 
-## Runtime Notes
+## Current Milestone: CLI-First Pivot
+The current milestone focuses on making the CLI the primary driver for agent tasks. Mission Control is being reframed as a "review plane" rather than the "creation plane."
 
-Mission Control's browser-side `Start Runtime` flow currently boots a Docker container for the workspace preview.
+Today, that means the repo has:
+- a scaffolded `takomi` CLI package centered on `run`, `attach`, `status`, `open`, and `logs`
+- `agentd` support for attached vs managed workspace modeling
+- Mission Control and the VS Code companion repositioned around hybrid tracking and review
 
-Keep these constraints in mind:
-
-- Docker Desktop must be installed and running before you use runtime controls
-- the first runtime boot needs network access to pull `node:22-alpine`
-- the current default image is about 57 MB compressed on `linux/amd64`
-- fresh worktrees do not include `node_modules`, so first boot installs dependencies
-- shared Docker volumes cache `corepack` and the pnpm store for later runs
-- workspace `node_modules` stays in the mounted workspace between container restarts
-- the local edge listener defaults to `127.0.0.1:80`, so any other process on port `80` will force Takomi to surface the fallback preview URL instead
-
-Recommended first-run check:
-
-```powershell
-docker pull node:22-alpine
-```
-
-Default runtime commands:
-
-```text
-Next.js: sh -lc "corepack enable && pnpm install && pnpm dev --hostname 0.0.0.0 --port 3000"
-Vite:    sh -lc "corepack enable && pnpm install && pnpm dev --host 0.0.0.0 --port 5173"
-```
-
-Practical rule:
-
-- run `Start Runtime` before `Run Validation`, otherwise validation will be blocked because there is no reviewable preview yet
-- once the runtime health check passes, open `http://<workspace-slug>.takomi.localhost/` first and only drop to `127.0.0.1:<port>` if Mission Control reports the local edge proxy as unavailable
-
-Local edge overrides:
-
-- `TAKOMI_EDGE_HOST` changes the bind host for the preview listener
-- `TAKOMI_EDGE_PORT` changes the bind port; use the default `80` if you want clean `.localhost` URLs without adding a port in the browser
-
-## Tech Stack
-
-- pnpm workspace monorepo
-- Turbo
-- TypeScript
-- Next.js App Router
-- React 19
-- Tailwind CSS 4
-- Node.js service shell for `agentd`
-- Vitest
-- Zod shared contracts
-
-## Docs Worth Reading
-
-- [Product brief](docs/Founder_Investor_Product_Brief.md)
-- [Project requirements](docs/Project_Requirements.md)
-- [Platform spec](docs/features/TakomiDX_Agent_Workspace_Platform_Spec.md)
-- [VS Code companion spec](docs/features/VSCode_Companion.md)
-- [Builder prompt](docs/Builder_Prompt.md)
-- [Coding guidelines](docs/Coding_Guidelines.md)
-
-## Current Direction
-
-The near-term goal is straightforward:
-
-Make local multi-agent coding trustworthy.
-
-That means better runtime identity, better routing, better auth handling, better observability, and better validation loops before anything gets called "done."
+**Deferred:**
+- Native chat-shell implementation
+- microVM runtime isolation (MVP uses containers or host side-by-side)
+- Multi-user collaboration
 
 ## License
-
 Personal project.
