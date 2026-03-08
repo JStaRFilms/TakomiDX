@@ -75,25 +75,25 @@ Excluded:
 
 ### Phase 1: Read-model integration
 
-- [ ] Identify the new fields needed from Task 02 in Mission Control and VS Code payloads.
-- [ ] Update data loaders and tree-model mapping accordingly.
+- [x] Identify the new fields needed from Task 02 in Mission Control and VS Code payloads.
+- [x] Update data loaders and tree-model mapping accordingly.
 
 ### Phase 2: Mission Control UX updates
 
-- [ ] Update overview and detail surfaces to distinguish attached vs managed workspaces.
-- [ ] Surface run ownership and capability state in the UI.
-- [ ] Adjust copy so the web app reads as observability/review, not the primary launcher.
+- [x] Update overview and detail surfaces to distinguish attached vs managed workspaces.
+- [x] Surface run ownership and capability state in the UI.
+- [x] Adjust copy so the web app reads as observability/review, not the primary launcher.
 
 ### Phase 3: VS Code companion updates
 
-- [ ] Update workspace tree labels and descriptions.
-- [ ] Ensure commands only offer valid actions for the current run type.
-- [ ] Keep preview, logs, trace, and repo/worktree actions coherent for attached sessions.
+- [x] Update workspace tree labels and descriptions.
+- [x] Ensure commands only offer valid actions for the current run type.
+- [x] Keep preview, logs, trace, and repo/worktree actions coherent for attached sessions.
 
 ### Phase 4: Verification
 
-- [ ] Verify attached-workspace payloads render without breaking existing managed ones.
-- [ ] Verify invalid actions are disabled or clearly messaged.
+- [x] Verify attached-workspace payloads render without breaking existing managed ones.
+- [x] Verify invalid actions are disabled or clearly messaged.
 
 ## Files To Inspect First
 

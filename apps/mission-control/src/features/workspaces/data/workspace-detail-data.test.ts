@@ -32,6 +32,11 @@ const workspace: WorkspaceSummary = {
     lastValidatedAt: null,
     bundleId: null,
   },
+  mode: "managed",
+  ownership: "owned",
+  toolFamily: "takomi",
+  cwd: "/workspaces/takomi",
+  pid: 1234,
 };
 
 function createRuntime(

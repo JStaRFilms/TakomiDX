@@ -15,6 +15,8 @@ interface WorkspaceDetailHeaderProps {
 }
 
 export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHeaderProps) {
+  const externalAgentLabel =
+    workspace.toolFamily?.replace(/_/g, " ") ?? workspace.agentType ?? "External agent";
   const runtimeStatus = deriveRuntimeWorkspaceStatus(runtime);
   const previewHref = resolveWorkspacePreviewUrl(workspace, runtime);
   const canOpenPreview =
@@ -32,6 +34,7 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-ink-faint)]">
+              <span className="rounded-sm bg-[var(--color-surface-2)] px-1.5 py-0.5 text-[10px] tracking-widest">{workspace.mode}</span>
               <span>{workspace.repoName}</span>
               <span>/</span>
               <span>{workspace.branch}</span>
@@ -49,6 +52,22 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
           </div>
 
           <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+            <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-[var(--color-primary)]">
+              {workspace.ownership === "external" ? `${externalAgentLabel} (ext)` : workspace.agentType}
+            </span>
+            {workspace.pid && (
+              <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-[var(--color-ink-muted)]">
+                PID {workspace.pid}
+              </span>
+            )}
+            {workspace.cwd && (
+              <span
+                className="max-w-[280px] truncate rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-[var(--color-ink-muted)]"
+                title={workspace.cwd}
+              >
+                CWD {workspace.cwd}
+              </span>
+            )}
             <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-[var(--color-ink-muted)]">
               ${workspace.tokenCostUsd.toFixed(2)}
             </span>

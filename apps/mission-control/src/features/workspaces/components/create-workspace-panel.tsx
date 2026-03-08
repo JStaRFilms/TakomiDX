@@ -104,14 +104,12 @@ export function CreateWorkspacePanel({
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--color-primary)]">
-            Create Workspace
+            Provision Managed Workspace
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
-            Create a real workspace from this dashboard. On Windows, paste a full path like
-            <span className="ml-1 font-mono text-[var(--color-ink)]">
-              C:\CreativeOS\01_Projects\Code\YourRepo
-            </span>
-            .
+            Spin up a container-isolated workspace for Takomi-owned runs. For local processes,
+            run <span className="font-mono text-[var(--color-ink)]">takomi attach</span> in your terminal
+            to track them here automatically.
           </p>
         </div>
 
@@ -124,15 +122,15 @@ export function CreateWorkspacePanel({
           }}
           className="cursor-pointer rounded-lg bg-[var(--color-primary)] px-4 py-2 font-mono text-sm font-semibold text-[var(--color-canvas)] transition-colors hover:bg-[var(--color-primary-dim)]"
         >
-          {open ? "Hide Form" : "New Workspace"}
+          {open ? "Hide Form" : "Provision Managed"}
         </button>
       </div>
 
       {(message || error) && (
         <div
           className={`mt-4 rounded-lg border px-3 py-3 text-sm ${error
-              ? "border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 text-[var(--color-danger)]"
-              : "border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 text-[var(--color-ink)]"
+            ? "border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 text-[var(--color-danger)]"
+            : "border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 text-[var(--color-ink)]"
             }`}
         >
           {error ?? message}
@@ -181,10 +179,9 @@ export function CreateWorkspacePanel({
           </label>
 
           <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)] lg:col-span-2">
-            This creates an <span className="font-mono text-[var(--color-ink)]">agent</span>{" "}
-            worktree with the <span className="font-mono text-[var(--color-ink)]">container</span>{" "}
-            runtime. After creation, the dashboard refreshes and you can open the workspace detail
-            screen immediately.
+            This provisions a <span className="font-mono text-[var(--color-ink)]">managed</span>{" "}
+            worktree within a Docker runtime. Managed workspaces allow full operator control
+            from this web interface.
           </div>
 
           <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
@@ -193,7 +190,7 @@ export function CreateWorkspacePanel({
               disabled={isSubmitting}
               className="cursor-pointer rounded-lg bg-[var(--color-primary)] px-4 py-2 font-mono text-sm font-semibold text-[var(--color-canvas)] transition-colors hover:bg-[var(--color-primary-dim)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Creating..." : "Create Workspace"}
+              {isSubmitting ? "Provisioning..." : "Provision Workspace"}
             </button>
             <button
               type="button"

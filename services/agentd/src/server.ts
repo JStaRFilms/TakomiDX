@@ -388,6 +388,11 @@ export function createAgentdServer(config: AgentdConfig) {
       pauseReason: run?.pauseReason ?? null,
       auth: null,
       validation,
+      mode: workspace.mode,
+      ownership: run?.ownership ?? null,
+      toolFamily: run?.toolFamily ?? null,
+      cwd: run?.cwd ?? null,
+      pid: run?.pid ?? null,
     };
   }
 

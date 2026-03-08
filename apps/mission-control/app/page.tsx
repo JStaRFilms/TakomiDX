@@ -15,10 +15,10 @@ export default async function HomePage() {
           <header className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-4 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <h1 className="font-mono text-2xl font-semibold tracking-[-0.03em] text-[var(--color-ink)]">
-                Workspace Grid
+                Local Tracking
               </h1>
               <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-                Supervise active workspace capsules without terminal hunting.
+                Supervise attached runs and managed workspaces across your environment.
               </p>
             </div>
 

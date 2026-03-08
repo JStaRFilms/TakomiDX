@@ -50,8 +50,8 @@ async function resolveWorkspaceAction(
 
   const action =
     (isWorkspaceCommandArgs(input) &&
-    input.action &&
-    input.action.target === target
+      input.action &&
+      input.action.target === target
       ? input.action
       : undefined) ?? findAction(workspace, target);
 
@@ -93,6 +93,14 @@ async function openLogs(
     action: EditorCompanionAction;
   },
 ) {
+  if (selection.workspace.mode === "attached") {
+    vscode.window.showInformationMessage(
+      "Attached workspaces stream logs to Mission Control observability instead of local Docker tails."
+    );
+    await openAction(selection.action);
+    return;
+  }
+
   try {
     const config = readTakomiConfig();
     const payload = await client.getWorkspaceLogs(
@@ -175,4 +183,4 @@ export function activate(context: vscode.ExtensionContext) {
   registerActionCommand("takomi.revealRepo", "repo");
 }
 
-export function deactivate() {}
+export function deactivate() { }

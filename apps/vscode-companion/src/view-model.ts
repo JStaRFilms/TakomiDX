@@ -17,8 +17,17 @@ export function humanizeToken(value: string) {
   return value.replace(/_/g, " ");
 }
 
+function describeAgentLabel(item: EditorCompanionWorkspaceItem) {
+  if (item.ownership === "external") {
+    return `${item.toolFamily ?? item.agentType ?? "External agent"} (ext)`;
+  }
+
+  return item.agentType;
+}
+
 export function describeWorkspace(item: EditorCompanionWorkspaceItem) {
-  return `${humanizeToken(item.status)} • ${item.branch}`;
+  const modeMarker = item.mode === "attached" ? "[Ext] " : "";
+  return `${modeMarker}${humanizeToken(item.status)} • ${item.branch}`;
 }
 
 export function createWorkspaceTooltip(item: EditorCompanionWorkspaceItem) {
@@ -30,6 +39,10 @@ export function createWorkspaceTooltip(item: EditorCompanionWorkspaceItem) {
     `Branch: ${item.branch}`,
     `Repo: ${item.repoPath}`,
     `Worktree: ${item.worktreePath ?? "not provisioned"}`,
+    `Agent: ${describeAgentLabel(item)}`,
+    `- Mode: ${item.mode}`,
+    `- PID: ${item.pid ?? "none"}`,
+    `- CWD: ${item.cwd ?? "none"}`,
     `Last action: ${item.lastAction}`,
   ];
 
@@ -82,7 +95,7 @@ export function buildWorkspaceInfoRows(
       detail: detail.workspace.validation.summary,
       tone:
         detail.workspace.validation.status === "failed" ||
-        detail.workspace.validation.status === "blocked"
+          detail.workspace.validation.status === "blocked"
           ? "warn"
           : detail.workspace.validation.status === "passed"
             ? "success"
@@ -96,6 +109,14 @@ export function buildWorkspaceInfoRows(
       tone: detail.workspace.approval.status === "pending" ? "warn" : "neutral",
     },
   ];
+
+  rows.push({
+    id: "run-context",
+    label: "Run context",
+    value: describeAgentLabel(detail.workspace),
+    detail: detail.workspace.mode === "attached" ? "Attached (External)" : "Managed",
+    tone: detail.workspace.mode === "attached" ? "info" : "neutral",
+  });
 
   const authRow = createAuthInfo(detail);
 

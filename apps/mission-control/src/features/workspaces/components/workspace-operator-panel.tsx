@@ -97,11 +97,13 @@ export function WorkspaceOperatorPanel({
   }, [runtime]);
 
   const activeRuntime = liveRuntime ?? runtime;
-  const canStartRun = !workspace.activeRunId;
+  const isManaged = workspace.mode !== "attached";
+  const canStartRun = isManaged && !workspace.activeRunId;
   const runtimeStatus = deriveRuntimeWorkspaceStatus(activeRuntime);
   const isLivePreviewHost = isWorkspacePreviewLive(activeRuntime);
   const isFallbackPreview = isWorkspacePreviewUsingFallback(activeRuntime);
   const canStartRuntime =
+    isManaged &&
     !isBusy &&
     (!activeRuntime ||
       activeRuntime.lifecycle === "failed" ||
@@ -244,8 +246,9 @@ export function WorkspaceOperatorPanel({
             Operator Controls
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
-            Start a run, boot a preview runtime, and trigger browser validation without leaving
-            Mission Control.
+            {workspace.mode === "attached"
+              ? "Attached workspaces are managed externally. Start the runtime and run using your local terminal, then use Mission Control for validation and review."
+              : "Start a run, boot a preview runtime, and trigger browser validation without leaving Mission Control."}
           </p>
         </div>
 
@@ -313,7 +316,7 @@ export function WorkspaceOperatorPanel({
               </button>
             ) : (
               <div className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-center font-mono text-sm text-[var(--color-ink-muted)]">
-                Run Active
+                {workspace.mode === "attached" ? "Attached (External)" : "Run Active"}
               </div>
             )}
             <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">

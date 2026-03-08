@@ -10,6 +10,7 @@ interface WorkspaceGridProps {
 }
 
 type FilterStatus = "all" | "active" | "attention" | "waiting" | "done" | "failed";
+type ModeFilter = "all" | "managed" | "attached";
 
 const GROUPS = [
   {
@@ -51,10 +52,13 @@ function matchesFilter(workspace: WorkspaceSummary, filter: FilterStatus) {
 
 export function WorkspaceGrid({ initialWorkspaces }: WorkspaceGridProps) {
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [modeFilter, setModeFilter] = useState<ModeFilter>("all");
 
-  const filteredWorkspaces = initialWorkspaces.filter((workspace) =>
-    matchesFilter(workspace, filter),
-  );
+  const filteredWorkspaces = initialWorkspaces.filter((workspace) => {
+    const matchesStatus = matchesFilter(workspace, filter);
+    const matchesMode = modeFilter === "all" || workspace.mode === modeFilter;
+    return matchesStatus && matchesMode;
+  });
 
   const groupedWorkspaces = GROUPS.map((group) => ({
     ...group,
@@ -80,6 +84,15 @@ export function WorkspaceGrid({ initialWorkspaces }: WorkspaceGridProps) {
       return `${base} bg-[var(--color-primary)]/10 text-[var(--color-primary)]`;
     }
     return `${base} text-[var(--color-ink-muted)] hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)]`;
+  };
+
+  const getModeFilterClass = (mode: ModeFilter) => {
+    const base =
+      "cursor-pointer rounded-md px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors";
+    if (modeFilter === mode) {
+      return `${base} bg-[var(--color-primary)] text-[var(--color-canvas)]`;
+    }
+    return `${base} border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-primary)]`;
   };
 
   const getSummaryClass = (status: Extract<FilterStatus, "active" | "attention" | "done">) => {
@@ -140,6 +153,27 @@ export function WorkspaceGrid({ initialWorkspaces }: WorkspaceGridProps) {
               </button>
               <button onClick={() => setFilter("done")} className={getFilterClass("done")}>
                 Done
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 border-l border-[var(--color-border)] pl-3">
+              <button
+                onClick={() => setModeFilter("all")}
+                className={getModeFilterClass("all")}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setModeFilter("managed")}
+                className={getModeFilterClass("managed")}
+              >
+                Managed
+              </button>
+              <button
+                onClick={() => setModeFilter("attached")}
+                className={getModeFilterClass("attached")}
+              >
+                Attached
               </button>
             </div>
 

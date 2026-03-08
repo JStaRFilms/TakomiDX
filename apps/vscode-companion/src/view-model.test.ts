@@ -32,6 +32,11 @@ const workspace = {
     detail: "Filesystem destructive command needs a human decision.",
   },
   actions: [],
+  mode: "managed" as const,
+  ownership: "owned" as const,
+  toolFamily: "takomi" as const,
+  cwd: "/workspaces/takomi",
+  pid: 1042,
 };
 
 describe("editor view model helpers", () => {
@@ -118,6 +123,7 @@ describe("editor view model helpers", () => {
       "status",
       "validation",
       "approval",
+      "run-context",
       "auth",
       "review",
     ]);
@@ -127,5 +133,54 @@ describe("editor view model helpers", () => {
     expect(resolveActionCommandId("preview")).toBe("takomi.openPreview");
     expect(resolveActionCommandId("trace")).toBe("takomi.openTrace");
     expect(resolveActionCommandId("repo")).toBe("takomi.revealRepo");
+  });
+
+  it("falls back to the agent type for external workspaces without tool metadata", () => {
+    const attachedWorkspace = {
+      ...workspace,
+      mode: "attached" as const,
+      ownership: "external" as const,
+      toolFamily: null,
+    };
+
+    expect(createWorkspaceTooltip(attachedWorkspace)).toContain("Agent: Codex (ext)");
+    expect(
+      buildWorkspaceInfoRows({
+        workspace: attachedWorkspace,
+        metadata: {
+          metadataVersion: 1,
+          id: "ws_abcd1234",
+          slug: "billing-fix",
+          repoPath: "C:/repos/takomi",
+          worktreePath: "C:/repos/.takomi/worktrees/ws_abcd1234",
+          branch: "agent/billing-fix",
+          baseBranch: "main",
+          branchType: "agent",
+          runtimeType: "container",
+          mode: "attached",
+          previewHost: "billing-fix.takomi.localhost",
+          previewUrlHint: null,
+          status: "awaiting_human",
+          createdAt: "2026-03-07T03:07:31.000Z",
+          updatedAt: "2026-03-07T03:17:31.000Z",
+          archivedAt: null,
+          lastError: null,
+          artifacts: {
+            root: "C:/repos/.takomi/workspaces/ws_abcd1234",
+            logsDir: "C:/repos/.takomi/workspaces/ws_abcd1234/logs",
+            tracesDir: "C:/repos/.takomi/workspaces/ws_abcd1234/traces",
+            reviewDir: "C:/repos/.takomi/workspaces/ws_abcd1234/review",
+            browserDir: "C:/repos/.takomi/workspaces/ws_abcd1234/browser",
+          },
+        },
+        runtime: null,
+        run: null,
+        recentEvents: [],
+        recentSpans: [],
+        authSessions: [],
+        validationBundle: null,
+        reviewBundle: null,
+      }).find((row) => row.id === "run-context")?.value,
+    ).toBe("Codex (ext)");
   });
 });

@@ -636,6 +636,11 @@ export const workspaceSummarySchema = z.object({
   pauseReason: z.string().min(1).nullable().default(null),
   auth: workspaceAuthSummarySchema.nullable().default(null),
   validation: workspaceValidationSummarySchema.nullable().default(null),
+  mode: workspaceModeSchema.default("managed"),
+  ownership: runOwnershipSchema.nullable().default(null),
+  toolFamily: toolFamilySchema.nullable().default(null),
+  cwd: z.string().min(1).nullable().default(null),
+  pid: z.number().int().positive().nullable().default(null),
 });
 
 export const containerRuntimeSpecSchema = z.object({
@@ -763,6 +768,11 @@ export const editorCompanionWorkspaceItemSchema = z.object({
   validation: workspaceValidationSummarySchema,
   approval: editorCompanionApprovalStateSchema,
   actions: z.array(editorCompanionActionSchema).default([]),
+  mode: workspaceModeSchema.default("managed"),
+  ownership: runOwnershipSchema.nullable().default(null),
+  toolFamily: toolFamilySchema.nullable().default(null),
+  cwd: z.string().min(1).nullable().default(null),
+  pid: z.number().int().positive().nullable().default(null),
 });
 export const editorCompanionWorkspaceListResponseSchema = z.object({
   items: z.array(editorCompanionWorkspaceItemSchema),

@@ -132,6 +132,25 @@ describe("Attached Workspace Lifecycle", () => {
   });
 
   it("reports preview health appropriately in mission control read model", async () => {
+    const runResponse = await fetch(
+      `http://127.0.0.1:${port}/api/v1/observability/runs`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId,
+          agentType: "Codex",
+          ownership: "external",
+          toolFamily: "codex",
+          cwd: "/mock/local/path",
+          pid: 8421,
+        }),
+      },
+    );
+    expect(runResponse.status).toBe(201);
+
     const response = await fetch(
       `http://127.0.0.1:${port}/api/v1/mission-control/workspaces/${workspaceId}`,
     );
@@ -141,9 +160,19 @@ describe("Attached Workspace Lifecycle", () => {
       workspace: {
         id: string;
         health: string;
+        mode: string;
+        ownership: string | null;
+        toolFamily: string | null;
+        cwd: string | null;
+        pid: number | null;
       };
     };
     expect(detail.workspace.id).toBe(workspaceId);
     expect(detail.workspace.health).toBe("healthy");
+    expect(detail.workspace.mode).toBe("attached");
+    expect(detail.workspace.ownership).toBe("external");
+    expect(detail.workspace.toolFamily).toBe("codex");
+    expect(detail.workspace.cwd).toBe("/mock/local/path");
+    expect(detail.workspace.pid).toBe(8421);
   });
 });

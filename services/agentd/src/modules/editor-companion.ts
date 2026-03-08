@@ -223,6 +223,11 @@ export function buildEditorCompanionWorkspaceItem(
     validation: input.validationSummary,
     approval,
     actions: buildActions(input.workspace, previewUrl),
+    mode: input.workspace.mode,
+    ownership: input.run?.ownership ?? null,
+    toolFamily: input.run?.toolFamily ?? null,
+    cwd: input.run?.cwd ?? null,
+    pid: input.run?.pid ?? null,
   });
 }
 

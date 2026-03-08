@@ -21,6 +21,8 @@ const getCardShadow = (status: WorkspaceSummary["status"]) => {
 };
 
 export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
+  const externalAgentLabel =
+    workspace.toolFamily?.replace(/_/g, " ") ?? workspace.agentType ?? "External agent";
   const isDanger = workspace.status === "failed";
   const isWarning = workspace.status === "awaiting_human";
   const isValidating = workspace.status === "validating";
@@ -50,12 +52,12 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
     >
       <div
         className={`absolute left-0 top-0 h-1 w-full rounded-t-xl bg-gradient-to-r ${isDanger
-            ? "from-transparent via-[var(--color-danger)]/40 to-transparent"
-            : isWarning
-              ? "from-transparent via-[var(--color-warning)]/40 to-transparent"
-              : isValidating
-                ? "from-transparent via-[var(--color-accent)]/40 to-transparent"
-                : "from-transparent via-[var(--color-primary)]/20 to-transparent"
+          ? "from-transparent via-[var(--color-danger)]/40 to-transparent"
+          : isWarning
+            ? "from-transparent via-[var(--color-warning)]/40 to-transparent"
+            : isValidating
+              ? "from-transparent via-[var(--color-accent)]/40 to-transparent"
+              : "from-transparent via-[var(--color-primary)]/20 to-transparent"
           } opacity-60 transition-opacity group-hover:opacity-100`}
       />
 
@@ -80,7 +82,9 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
         </div>
         <div className="flex items-center justify-between py-1">
           <dt className="text-[var(--color-ink-muted)]">Agent</dt>
-          <dd className="font-mono text-[var(--color-ink)]">{workspace.agentType}</dd>
+          <dd className="font-mono text-[var(--color-ink)]">
+            {workspace.mode === "attached" ? `${externalAgentLabel} (Ext)` : workspace.agentType}
+          </dd>
         </div>
         <div className="flex items-center justify-between border-b border-[var(--color-border)] py-1 pb-2">
           <dt className="text-[var(--color-ink-muted)]">Preview</dt>
@@ -106,12 +110,12 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
 
       <div
         className={`mt-4 flex-1 rounded-lg border px-3 py-2 font-mono text-xs ${isDanger
-            ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/5 text-[var(--color-danger)]"
-            : isWarning
-              ? "border-[var(--color-warning)]/20 bg-[var(--color-warning)]/5 text-[var(--color-warning)]"
-              : isValidating
-                ? "border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)]"
-                : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]"
+          ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/5 text-[var(--color-danger)]"
+          : isWarning
+            ? "border-[var(--color-warning)]/20 bg-[var(--color-warning)]/5 text-[var(--color-warning)]"
+            : isValidating
+              ? "border-[var(--color-accent)]/20 bg-[var(--color-accent)]/5 text-[var(--color-accent)]"
+              : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]"
           }`}
       >
         <span className={isDanger ? "mr-1" : isWarning ? "mr-1" : "mr-1 text-[var(--color-primary)]"}>
@@ -124,10 +128,10 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
         <Link
           href={`/workspaces/${workspace.id}`}
           className={`flex-1 rounded-lg py-2 text-center font-mono text-xs font-semibold transition-all ${isDanger
-              ? "border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
-              : isWarning
-                ? "bg-[var(--color-warning)] text-[var(--color-canvas)] hover:opacity-90"
-                : "bg-[var(--color-primary)] text-[var(--color-canvas)] hover:bg-[var(--color-primary-dim)]"
+            ? "border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink)] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)]"
+            : isWarning
+              ? "bg-[var(--color-warning)] text-[var(--color-canvas)] hover:opacity-90"
+              : "bg-[var(--color-primary)] text-[var(--color-canvas)] hover:bg-[var(--color-primary-dim)]"
             }`}
         >
           {isDanger ? "Inspect" : isWarning ? "Review" : "Open"}
@@ -136,8 +140,8 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
           href={secondaryHref}
           target={hasLivePreview ? "_blank" : undefined}
           className={`flex items-center justify-center rounded-lg border px-3 py-2 transition-colors ${isDanger
-              ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/20"
-              : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            ? "border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/20"
+            : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
             }`}
           title={hasLivePreview ? "Open preview in new tab" : `Open ${secondaryLabel.toLowerCase()} surface`}
         >
