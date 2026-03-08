@@ -297,6 +297,19 @@ describe("runtime executor and route registry", () => {
 
     const secondExecutor = createRuntimeExecutor({
       workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          throw new Error("start should not be called");
+        },
+        async inspect() {
+          return {
+            containerId: "ctr-ws_restore02",
+            hostPort: 45231,
+            isRunning: true,
+            processId: 1234,
+          };
+        },
+      },
       fetchImpl: async () =>
         new Response(null, {
           status: 200,
@@ -312,6 +325,116 @@ describe("runtime executor and route registry", () => {
     const refreshed = await secondExecutor.refreshHealth("ws_restore02");
     expect(refreshed).not.toBeNull();
     expect(refreshed?.healthStatus).toBe("healthy");
+  });
+
+  it("marks a persisted runtime as stopped when Docker is unavailable during refresh", async () => {
+    const root = createTempDir();
+    const firstExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_docker01",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    await firstExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_docker01",
+        workspaceSlug: "docker-unavailable",
+      }),
+    );
+
+    const secondExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          throw new Error("start should not be called");
+        },
+        async inspect() {
+          throw new Error("Cannot connect to the Docker daemon at unix:///var/run/docker.sock");
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    const refreshed = await secondExecutor.refreshHealth("ws_docker01");
+    expect(refreshed).toMatchObject({
+      lifecycle: "stopped",
+      healthStatus: "degraded",
+      assignedHostPort: 45231,
+    });
+    expect(refreshed?.lastError).toContain("Docker is unavailable");
+  });
+
+  it("reconciles restored runtimes during executor startup recovery", async () => {
+    const root = createTempDir();
+    const firstExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_reconcile",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    await firstExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_reconcile",
+        workspaceSlug: "reconcile-runtime",
+      }),
+    );
+
+    const secondExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          throw new Error("start should not be called");
+        },
+        async inspect() {
+          return {
+            containerId: "ctr-ws_reconcile",
+            hostPort: 45231,
+            isRunning: false,
+            processId: null,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    expect(secondExecutor.get("ws_reconcile")).toMatchObject({
+      lifecycle: "running",
+      assignedHostPort: 45231,
+    });
+
+    await secondExecutor.reconcileAll();
+
+    expect(secondExecutor.get("ws_reconcile")).toMatchObject({
+      lifecycle: "stopped",
+      healthStatus: "degraded",
+      assignedHostPort: 45231,
+    });
   });
 
   it("keeps runtime booting while preview health is still unavailable", async () => {
@@ -376,5 +499,131 @@ describe("runtime executor and route registry", () => {
     expect(envFile).toContain("PNPM_STORE_DIR=/var/cache/takomi/pnpm/store");
     expect(envFile).toContain("npm_config_store_dir=/var/cache/takomi/pnpm/store");
     expect(envFile).toContain("pnpm_config_store_dir=/var/cache/takomi/pnpm/store");
+  });
+
+  it("marks a persisted runtime as stopped when its container is no longer running", async () => {
+    const root = createTempDir();
+    const firstExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_stopped1",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    await firstExecutor.boot(
+      defineRuntimeConfig({
+        workspaceId: "ws_stopped1",
+        workspaceSlug: "stopped-runtime",
+      }),
+    );
+
+    const secondExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          throw new Error("start should not be called");
+        },
+        async inspect() {
+          return {
+            containerId: "ctr-ws_stopped1",
+            hostPort: 45231,
+            isRunning: false,
+            processId: null,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    const refreshed = await secondExecutor.refreshHealth("ws_stopped1");
+    expect(refreshed).toMatchObject({
+      lifecycle: "stopped",
+      healthStatus: "degraded",
+      assignedHostPort: 45231,
+    });
+    expect(refreshed?.lastError).toContain("stopped");
+  });
+
+  it("restarts an existing stopped container instead of creating a new one", async () => {
+    const root = createTempDir();
+    const initialExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          return {
+            containerId: "ctr-ws_resume01",
+            hostPort: 45231,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    const config = defineRuntimeConfig({
+      workspaceId: "ws_resume01",
+      workspaceSlug: "resume-runtime",
+    });
+    await initialExecutor.boot(config);
+
+    let startCalls = 0;
+    let restartCalls = 0;
+    let isRunning = false;
+    const resumedExecutor = createRuntimeExecutor({
+      workspacesDir: path.join(root, "workspaces"),
+      driver: {
+        async start() {
+          startCalls += 1;
+          return {
+            containerId: "ctr-new",
+            hostPort: 49999,
+          };
+        },
+        async inspect() {
+          return {
+            containerId: "ctr-ws_resume01",
+            hostPort: 45231,
+            isRunning,
+            processId: isRunning ? 1234 : null,
+          };
+        },
+        async startExisting() {
+          restartCalls += 1;
+          isRunning = true;
+          return {
+            containerId: "ctr-ws_resume01",
+            hostPort: 45231,
+            processId: 1234,
+          };
+        },
+      },
+      fetchImpl: async () =>
+        new Response(null, {
+          status: 200,
+        }),
+    });
+
+    const resumed = await resumedExecutor.boot(config);
+    expect(startCalls).toBe(0);
+    expect(restartCalls).toBe(1);
+    expect(resumed).toMatchObject({
+      containerId: "ctr-ws_resume01",
+      assignedHostPort: 45231,
+      lifecycle: "running",
+    });
   });
 });

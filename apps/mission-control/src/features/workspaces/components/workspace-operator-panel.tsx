@@ -31,7 +31,17 @@ async function requestJson<T>(
   init?: RequestInit,
 ): Promise<T> {
   const response = await fetch(pathname, init);
-  const payload = (await response.json()) as T & ApiErrorResponse;
+
+  // Handle empty responses gracefully to prevent "Unexpected end of JSON input"
+  const text = await response.text();
+  if (!text.trim()) {
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    return undefined as T;
+  }
+
+  const payload = JSON.parse(text) as T & ApiErrorResponse;
 
   if (!response.ok) {
     throw new Error(payload.message ?? "Request failed.");
@@ -91,13 +101,34 @@ export function WorkspaceOperatorPanel({
   const runtimeStatus = deriveRuntimeWorkspaceStatus(activeRuntime);
   const isLivePreviewHost = isWorkspacePreviewLive(activeRuntime);
   const isFallbackPreview = isWorkspacePreviewUsingFallback(activeRuntime);
-  const canStartRuntime = !isBusy && (!activeRuntime || runtimeStatus === "failed");
+  const canStartRuntime =
+    !isBusy &&
+    (!activeRuntime ||
+      activeRuntime.lifecycle === "failed" ||
+      activeRuntime.lifecycle === "stopped");
+
+  // Validation can only run when runtime is ready (running and healthy)
+  const canRunValidation =
+    !isBusy &&
+    activeRuntime !== null &&
+    runtimeStatus === "running" &&
+    activeRuntime.healthStatus === "healthy";
+  const validationDisabledReason = !activeRuntime
+    ? "Runtime is not started"
+    : runtimeStatus !== "running"
+      ? `Runtime is ${runtimeStatus}, not ready`
+      : activeRuntime.healthStatus !== "healthy"
+        ? `Runtime health is ${activeRuntime.healthStatus}`
+        : null;
+
   const runtimeActionLabel =
-    runtimeStatus === "running"
+    activeRuntime?.lifecycle === "running"
       ? "Runtime Active"
-      : runtimeStatus === "booting"
+      : activeRuntime?.lifecycle === "booting"
         ? "Runtime Booting"
-        : "Start Runtime";
+        : activeRuntime?.lifecycle === "stopped"
+          ? "Restart Runtime"
+          : "Start Runtime";
 
   useEffect(() => {
     if (!activeRuntime) {
@@ -228,11 +259,10 @@ export function WorkspaceOperatorPanel({
 
       {(message || error) && (
         <div
-          className={`mt-4 rounded-lg border px-3 py-3 text-sm ${
-            error
-              ? "border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 text-[var(--color-danger)]"
-              : "border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 text-[var(--color-ink)]"
-          }`}
+          className={`mt-4 rounded-lg border px-3 py-3 text-sm ${error
+            ? "border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 text-[var(--color-danger)]"
+            : "border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 text-[var(--color-ink)]"
+            }`}
         >
           {error ?? message}
         </div>
@@ -379,15 +409,16 @@ export function WorkspaceOperatorPanel({
             </button>
             <button
               type="button"
-              disabled={isBusy}
+              disabled={!canRunValidation}
               onClick={() =>
                 runAction("Run validation", () =>
                   postJson(`/api/workspaces/${workspace.id}/validation`, {}),
                 )
               }
               className="cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 font-mono text-sm text-[var(--color-ink)] transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+              title={validationDisabledReason ?? "Run browser validation"}
             >
-              Run Validation
+              {canRunValidation ? "Run Validation" : "Validation Unavailable"}
             </button>
           </div>
         </section>
@@ -457,6 +488,58 @@ export function WorkspaceOperatorPanel({
           </div>
         </section>
       )}
+
+      {/* Workspace Lifecycle Section - Archive/Delete controls */}
+      <section className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4">
+        <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-ink-faint)]">
+          Workspace Lifecycle
+        </h3>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+          Archive a workspace to clean up resources while preserving metadata. Delete an archived workspace to remove it entirely.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {workspace.status !== "archived" ? (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() =>
+                runAction("Archive workspace", () =>
+                  postJson(`/api/workspaces/${workspace.id}/archive`, {})
+                )
+              }
+              className="cursor-pointer rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-4 py-2 font-mono text-sm text-[var(--color-warning)] transition-colors hover:bg-[var(--color-warning)]/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Archive Workspace
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={() => {
+                const confirmDelete = window.confirm(
+                  "Are you sure you want to delete this archived workspace? This action cannot be undone.",
+                );
+                if (confirmDelete) {
+                  runAction("Delete workspace", () =>
+                    postJson(`/api/workspaces/${workspace.id}/delete`, {
+                      confirm: true,
+                      deleteBranch: true,
+                    })
+                  );
+                }
+              }}
+              className="cursor-pointer rounded-lg border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10 px-4 py-2 font-mono text-sm text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/20 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Delete Workspace
+            </button>
+          )}
+        </div>
+        {workspace.status === "archived" && (
+          <div className="mt-3 rounded-lg border border-[var(--color-warning)]/20 bg-[var(--color-warning)]/8 px-3 py-3 text-sm leading-6 text-[var(--color-ink-muted)]">
+            This workspace is archived. You can delete it to remove all local data, or leave it archived.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

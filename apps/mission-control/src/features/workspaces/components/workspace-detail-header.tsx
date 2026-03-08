@@ -41,7 +41,10 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
                 {workspace.slug}
               </h1>
               <StatusBadge status={workspace.status} />
-              {runtime && <StatusBadge status={runtimeStatus} className="opacity-80" />}
+              {/* Show runtime status badge only when it differs from workspace status - avoids duplicate pills */}
+              {runtime && runtimeStatus !== workspace.status && (
+                <StatusBadge status={runtimeStatus} className="opacity-80" />
+              )}
             </div>
           </div>
 
@@ -100,16 +103,6 @@ export function WorkspaceDetailHeader({ workspace, runtime }: WorkspaceDetailHea
         )}
 
         <div className="flex flex-wrap gap-2">
-          {workspace.status === "awaiting_human" && (
-            <button className="cursor-pointer rounded-lg bg-[var(--color-warning)] px-4 py-2 font-mono text-sm font-semibold text-[var(--color-canvas)] hover:opacity-90">
-              Approve Payload
-            </button>
-          )}
-          {workspace.status === "failed" && (
-            <button className="cursor-pointer rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 px-4 py-2 font-mono text-sm font-semibold text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/20">
-              Restart Agent
-            </button>
-          )}
           {canOpenPreview && (
             <Link
               href={previewHref}

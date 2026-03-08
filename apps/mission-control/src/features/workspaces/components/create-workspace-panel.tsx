@@ -81,6 +81,10 @@ export function CreateWorkspacePanel({
 
       setMessage(`Created ${payload.slug}. Refreshing workspace grid...`);
       setOpen(false);
+      // Clear message after refresh burst completes (15s max delay from scheduleRefreshBurst)
+      setTimeout(() => {
+        setMessage(null);
+      }, 16000);
       startTransition(() => {
         router.refresh();
       });
@@ -126,11 +130,10 @@ export function CreateWorkspacePanel({
 
       {(message || error) && (
         <div
-          className={`mt-4 rounded-lg border px-3 py-3 text-sm ${
-            error
+          className={`mt-4 rounded-lg border px-3 py-3 text-sm ${error
               ? "border-[var(--color-danger)]/30 bg-[var(--color-danger)]/8 text-[var(--color-danger)]"
               : "border-[var(--color-primary)]/20 bg-[var(--color-primary)]/8 text-[var(--color-ink)]"
-          }`}
+            }`}
         >
           {error ?? message}
         </div>

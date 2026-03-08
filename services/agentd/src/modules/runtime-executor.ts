@@ -31,8 +31,17 @@ export interface ContainerStartResult {
   processId?: number | null;
 }
 
+export interface ContainerInspectionResult {
+  containerId: string;
+  hostPort: number | null;
+  isRunning: boolean;
+  processId?: number | null;
+}
+
 export interface ContainerRuntimeDriver {
   start(input: ContainerStartRequest): Promise<ContainerStartResult>;
+  inspect?(containerName: string): Promise<ContainerInspectionResult | null>;
+  startExisting?(containerName: string): Promise<ContainerStartResult>;
 }
 
 export interface CreateRuntimeExecutorOptions {
@@ -147,6 +156,73 @@ function parseDockerPortMapping(output: string): number {
   return Number(match[1]);
 }
 
+function parseDockerInspectionPort(
+  inspection: {
+    NetworkSettings?: {
+      Ports?: Record<string, Array<{ HostPort?: string }> | null>;
+    };
+  },
+) {
+  const ports = inspection.NetworkSettings?.Ports ?? {};
+
+  for (const bindings of Object.values(ports)) {
+    const hostPort = bindings?.[0]?.HostPort;
+
+    if (hostPort) {
+      return Number(hostPort);
+    }
+  }
+
+  return null;
+}
+
+async function inspectContainer(containerName: string) {
+  try {
+    const output = await runCommand("docker", [
+      "container",
+      "inspect",
+      containerName,
+      "--format",
+      "{{json .}}",
+    ]);
+
+    return JSON.parse(output) as {
+      Id: string;
+      State?: {
+        Running?: boolean;
+        Pid?: number;
+      };
+      NetworkSettings?: {
+        Ports?: Record<string, Array<{ HostPort?: string }> | null>;
+      };
+    };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("No such object") || error.message.includes("No such container"))
+    ) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+function isDockerUnavailableError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+
+  return (
+    message.includes("docker daemon") ||
+    message.includes("error during connect") ||
+    message.includes("cannot connect to the docker daemon") ||
+    message.includes("the system cannot find the file specified")
+  );
+}
+
 export function createDockerContainerDriver(): ContainerRuntimeDriver {
   return {
     async start(input) {
@@ -155,7 +231,6 @@ export function createDockerContainerDriver(): ContainerRuntimeDriver {
         "container",
         "run",
         "--detach",
-        "--rm",
         "--name",
         containerName,
         "--workdir",
@@ -185,6 +260,48 @@ export function createDockerContainerDriver(): ContainerRuntimeDriver {
         containerId,
         hostPort: parseDockerPortMapping(portOutput),
         processId: null,
+      };
+    },
+
+    async inspect(containerName) {
+      const inspection = await inspectContainer(containerName);
+
+      if (!inspection) {
+        return null;
+      }
+
+      return {
+        containerId: inspection.Id,
+        hostPort: parseDockerInspectionPort(inspection),
+        isRunning: inspection.State?.Running === true,
+        processId:
+          typeof inspection.State?.Pid === "number" && inspection.State.Pid > 0
+            ? inspection.State.Pid
+            : null,
+      };
+    },
+
+    async startExisting(containerName) {
+      await runCommand("docker", ["container", "start", containerName]);
+      const inspection = await inspectContainer(containerName);
+
+      if (!inspection) {
+        throw new Error(`Runtime container ${containerName} could not be inspected after start.`);
+      }
+
+      const hostPort = parseDockerInspectionPort(inspection);
+
+      if (!hostPort) {
+        throw new Error(`Runtime container ${containerName} did not expose a host port.`);
+      }
+
+      return {
+        containerId: inspection.Id,
+        hostPort,
+        processId:
+          typeof inspection.State?.Pid === "number" && inspection.State.Pid > 0
+            ? inspection.State.Pid
+            : null,
       };
     },
   };
@@ -281,15 +398,95 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
 
   restorePersistedRuntimes();
 
+  async function inspectRuntimeContainer(
+    state: WorkspaceRuntimeState,
+  ) {
+    if (!state.containerName || !driver.inspect) {
+      return null;
+    }
+
+    return driver.inspect(state.containerName);
+  }
+
   async function probeRuntimeState(
     state: WorkspaceRuntimeState,
     config: WorkspaceRuntimeConfig,
   ) {
-    if (!state.assignedHostPort) {
+    let inspection: ContainerInspectionResult | null = null;
+
+    try {
+      inspection = driver.inspect ? await inspectRuntimeContainer(state) : null;
+    } catch (error) {
+      if (!driver.inspect || !isDockerUnavailableError(error)) {
+        throw error;
+      }
+
+      const stoppedState = workspaceRuntimeStateSchema.parse({
+        ...state,
+        lifecycle: "stopped",
+        healthStatus: "degraded",
+        processId: null,
+        lastError:
+          "Docker is unavailable. Start Docker and restart the runtime to restore the preview.",
+      });
+
+      persistState(stoppedState);
+      return stoppedState;
+    }
+
+    if (driver.inspect) {
+      if (!inspection) {
+        const missingState = workspaceRuntimeStateSchema.parse({
+          ...state,
+          lifecycle: "failed",
+          healthStatus: "failed",
+          assignedHostPort: null,
+          processId: null,
+          lastError: "Runtime container is missing. Start the runtime again to restore the preview.",
+        });
+
+        persistState(missingState);
+        return missingState;
+      }
+
+      if (!inspection.isRunning) {
+        const stoppedState = workspaceRuntimeStateSchema.parse({
+          ...state,
+          lifecycle: "stopped",
+          healthStatus: "degraded",
+          containerId: inspection.containerId,
+          assignedHostPort: inspection.hostPort ?? state.assignedHostPort,
+          processId: inspection.processId ?? null,
+          lastError: "Runtime container is stopped. Start the runtime again to restore the preview.",
+        });
+
+        persistState(stoppedState);
+        return stoppedState;
+      }
+
+      if (!inspection.hostPort) {
+        const failedState = workspaceRuntimeStateSchema.parse({
+          ...state,
+          lifecycle: "failed",
+          healthStatus: "failed",
+          containerId: inspection.containerId,
+          assignedHostPort: null,
+          processId: inspection.processId ?? null,
+          lastError: "Runtime container is running but no published host port was found.",
+        });
+
+        persistState(failedState);
+        return failedState;
+      }
+    }
+
+    const hostPort = inspection?.hostPort ?? state.assignedHostPort;
+
+    if (!hostPort) {
       return state;
     }
 
-    const target = createRuntimeTarget(state.assignedHostPort);
+    const target = createRuntimeTarget(hostPort);
     const health = await probePreviewHealth(
       createManualFallbackUrl(
         target,
@@ -301,6 +498,9 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
 
     const nextState = workspaceRuntimeStateSchema.parse({
       ...state,
+      containerId: inspection?.containerId ?? state.containerId,
+      assignedHostPort: hostPort,
+      processId: inspection?.processId ?? state.processId ?? null,
       lifecycle: health.healthStatus === "healthy" ? "running" : "booting",
       healthStatus: health.healthStatus,
       lastError: health.lastError,
@@ -342,12 +542,30 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
       persistState(bootingState);
 
       try {
-        const result = await driver.start({
-          config,
-          containerName,
-          envFilePath,
-          workspaceDir,
-        });
+        const existingRuntime = runtimes.get(config.workspaceId) ?? null;
+        const existingInspection =
+          existingRuntime && existingRuntime.containerName === containerName
+            ? await inspectRuntimeContainer(existingRuntime)
+            : null;
+        const result =
+          existingInspection && existingInspection.isRunning
+            ? {
+              containerId: existingInspection.containerId,
+              hostPort: existingInspection.hostPort ?? 0,
+              processId: existingInspection.processId ?? null,
+            }
+            : existingInspection && !existingInspection.isRunning && driver.startExisting
+            ? await driver.startExisting(containerName)
+            : await driver.start({
+              config,
+              containerName,
+              envFilePath,
+              workspaceDir,
+            });
+
+        if (!result.hostPort) {
+          throw new Error(`Runtime container ${containerName} did not expose a host port.`);
+        }
 
         const startedState = workspaceRuntimeStateSchema.parse({
           ...bootingState,
@@ -355,7 +573,7 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
           containerId: result.containerId,
           processId: result.processId ?? null,
           assignedHostPort: result.hostPort,
-          startedAt: now().toISOString(),
+          startedAt: existingRuntime?.startedAt ?? now().toISOString(),
         });
 
         persistState(startedState);
@@ -410,6 +628,22 @@ export function createRuntimeExecutor(options: CreateRuntimeExecutorOptions) {
       }
 
       return probeRuntimeState(current, config);
+    },
+
+    async reconcileAll() {
+      for (const workspaceId of Array.from(runtimes.keys())) {
+        const config = configs.get(workspaceId);
+
+        if (!config) {
+          continue;
+        }
+
+        try {
+          await this.refreshHealth(workspaceId);
+        } catch {
+          // Keep startup resilient if one runtime cannot be reconciled.
+        }
+      }
     },
 
     get(workspaceId: string) {

@@ -8,6 +8,7 @@ import type {
   WorkspaceSummary,
 } from "@takomi/contracts";
 import { resolveMissionControlEnv } from "@/lib/env";
+import { AgentdConnectionError } from "@/lib/agentd-server";
 import { sampleWorkspaces } from "./sample-workspaces";
 
 export interface WorkspaceActivityItem {
@@ -58,6 +59,8 @@ export interface WorkspaceReviewBundleModel {
   diagnostics: string[];
   artifacts: WorkspaceReviewArtifactItem[];
 }
+
+export type WorkspaceRuntimeDisplayStatus = WorkspaceSummary["status"] | "stopped";
 
 export interface WorkspaceDetailModel {
   mission: string;
@@ -555,7 +558,7 @@ export function resolveWorkspacePreviewUrl(
 
 export function deriveRuntimeWorkspaceStatus(
   runtime: WorkspaceRuntimeState | null,
-): WorkspaceSummary["status"] {
+): WorkspaceRuntimeDisplayStatus {
   if (!runtime) {
     return "queued";
   }
@@ -570,6 +573,10 @@ export function deriveRuntimeWorkspaceStatus(
 
   if (runtime.lifecycle === "running") {
     return "running";
+  }
+
+  if (runtime.lifecycle === "stopped") {
+    return "stopped";
   }
 
   return "queued";
@@ -615,7 +622,7 @@ function mapActivityKind(event: AgentEvent): WorkspaceActivityItem["kind"] {
 }
 
 function derivePreviewState(runtime: WorkspaceRuntimeState | null): WorkspaceDetailModel["previewState"] {
-  if (!runtime || runtime.lifecycle === "failed") {
+  if (!runtime || runtime.lifecycle === "failed" || runtime.lifecycle === "stopped") {
     return "offline";
   }
 
@@ -797,53 +804,65 @@ function buildDetailFromAgentdResponse(
       validationItems.length > 0
         ? validationItems
         : [
-            {
-              label: "Runtime health",
-              status:
-                payload.runtime?.healthStatus === "failed"
-                  ? "failed"
-                  : payload.runtime?.lifecycle === "booting" ||
-                      payload.runtime?.lifecycle === "running"
-                    ? "running"
-                    : "queued",
-              detail:
-                payload.runtime?.preview?.lastError ??
-                payload.runtime?.lastError ??
-                "Waiting for validation events to arrive from the active run.",
-            },
-          ],
+          {
+            label: "Runtime health",
+            status:
+              payload.runtime?.healthStatus === "failed"
+                ? "failed"
+                : payload.runtime?.lifecycle === "booting" ||
+                  payload.runtime?.lifecycle === "running"
+                  ? "running"
+                  : "queued",
+            detail:
+              payload.runtime?.preview?.lastError ??
+              payload.runtime?.lastError ??
+              "Waiting for validation events to arrive from the active run.",
+          },
+        ],
     reviewBundle: payload.reviewBundle
       ? {
-          previewUrl: payload.reviewBundle.previewUrl,
-          validationStatus: payload.reviewBundle.validationStatus,
-          generatedAt: payload.reviewBundle.generatedAt,
-          testSummary: payload.reviewBundle.testSummary,
-          recommendedAction: payload.reviewBundle.recommendedAction,
-          diagnostics: payload.reviewBundle.diagnostics,
-          artifacts: payload.reviewBundle.artifactLinks.map((artifact) => ({
-            label: artifact.label,
-            path: artifact.path,
-            kind: artifact.kind,
-          })),
-        }
+        previewUrl: payload.reviewBundle.previewUrl,
+        validationStatus: payload.reviewBundle.validationStatus,
+        generatedAt: payload.reviewBundle.generatedAt,
+        testSummary: payload.reviewBundle.testSummary,
+        recommendedAction: payload.reviewBundle.recommendedAction,
+        diagnostics: payload.reviewBundle.diagnostics,
+        artifacts: payload.reviewBundle.artifactLinks.map((artifact) => ({
+          label: artifact.label,
+          path: artifact.path,
+          kind: artifact.kind,
+        })),
+      }
       : null,
   };
 }
 
 async function fetchAgentdJson<T>(pathname: string): Promise<T> {
   const env = resolveMissionControlEnv();
-  const response = await fetch(
-    `${env.public.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL}${pathname}`,
-    {
-      cache: "no-store",
-    },
-  );
 
-  if (!response.ok) {
-    throw new Error(`Agentd request failed for ${pathname} (${response.status}).`);
+  try {
+    const response = await fetch(
+      `${env.public.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL}${pathname}`,
+      {
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Agentd request failed for ${pathname} (${response.status}).`);
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    // Convert fetch network errors to typed connection errors
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      throw new AgentdConnectionError(
+        `Mission Control could not reach agentd. The daemon may be unavailable or restarting.`,
+        error,
+      );
+    }
+    throw error;
   }
-
-  return (await response.json()) as T;
 }
 
 export async function loadWorkspaceList(): Promise<WorkspaceListLoadResult> {
@@ -862,6 +881,15 @@ export async function loadWorkspaceList(): Promise<WorkspaceListLoadResult> {
         workspaces: sampleWorkspaces,
         errorMessage:
           "Mission Control could not reach agentd. Showing sample workspace data because TAKOMI_ENABLE_SAMPLE_DATA=true.",
+      };
+    }
+
+    // Handle connection errors gracefully
+    if (error instanceof AgentdConnectionError) {
+      return {
+        workspaces: [],
+        errorMessage:
+          "Mission Control could not reach the runtime daemon. The daemon may be unavailable or restarting. Please wait a moment and refresh.",
       };
     }
 
@@ -895,6 +923,10 @@ export async function getWorkspace(workspaceId: string): Promise<WorkspaceSummar
       return null;
     }
 
+    if (error instanceof AgentdConnectionError) {
+      throw error;
+    }
+
     throw error;
   }
 }
@@ -908,8 +940,16 @@ export async function getWorkspaceRuntime(
     );
 
     return payload.runtime;
-  } catch {
-    return null;
+  } catch (error) {
+    if (isAgentdNotFoundError(error)) {
+      return null;
+    }
+
+    if (error instanceof AgentdConnectionError) {
+      throw error;
+    }
+
+    throw error;
   }
 }
 
@@ -929,6 +969,10 @@ export async function getWorkspaceDetail(
 
     if (isAgentdNotFoundError(error)) {
       return null;
+    }
+
+    if (error instanceof AgentdConnectionError) {
+      throw error;
     }
 
     throw error;

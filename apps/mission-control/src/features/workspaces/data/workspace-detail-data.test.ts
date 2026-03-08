@@ -1,8 +1,13 @@
 import type { WorkspaceRuntimeState, WorkspaceSummary } from "@takomi/contracts";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AgentdConnectionError } from "@/lib/agentd-server";
 import {
+  getWorkspace,
+  getWorkspaceDetail,
+  getWorkspaceRuntime,
   isWorkspacePreviewLive,
   isWorkspacePreviewUsingFallback,
+  loadWorkspaceList,
   resolveWorkspacePreviewUrl,
 } from "./workspace-detail-data";
 
@@ -62,6 +67,32 @@ function createRuntime(
   };
 }
 
+const originalFetch = global.fetch;
+const originalAgentdBaseUrl = process.env.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL;
+const originalSampleDataFlag = process.env.TAKOMI_ENABLE_SAMPLE_DATA;
+
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL = "http://127.0.0.1:4000";
+  delete process.env.TAKOMI_ENABLE_SAMPLE_DATA;
+});
+
+afterEach(() => {
+  global.fetch = originalFetch;
+  if (originalAgentdBaseUrl === undefined) {
+    delete process.env.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL;
+  } else {
+    process.env.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL = originalAgentdBaseUrl;
+  }
+
+  if (originalSampleDataFlag === undefined) {
+    delete process.env.TAKOMI_ENABLE_SAMPLE_DATA;
+  } else {
+    process.env.TAKOMI_ENABLE_SAMPLE_DATA = originalSampleDataFlag;
+  }
+
+  vi.restoreAllMocks();
+});
+
 describe("workspace preview routing", () => {
   it("prefers the custom host when the local edge route is live", () => {
     const runtime = createRuntime();
@@ -84,5 +115,28 @@ describe("workspace preview routing", () => {
     expect(resolveWorkspacePreviewUrl(workspace, runtime)).toBe(
       "http://127.0.0.1:3000/",
     );
+  });
+});
+
+describe("workspace data loading", () => {
+  it("keeps the workspace list renderable when agentd is unavailable", async () => {
+    global.fetch = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+
+    await expect(loadWorkspaceList()).resolves.toMatchObject({
+      workspaces: [],
+      errorMessage: expect.stringContaining("could not reach the runtime daemon"),
+    });
+  });
+
+  it("preserves typed connection errors for workspace routes", async () => {
+    global.fetch = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+
+    await expect(getWorkspace("ws_abcd1234")).rejects.toBeInstanceOf(AgentdConnectionError);
+    await expect(getWorkspaceDetail("ws_abcd1234")).rejects.toBeInstanceOf(AgentdConnectionError);
+    await expect(getWorkspaceRuntime("ws_abcd1234")).rejects.toBeInstanceOf(AgentdConnectionError);
   });
 });

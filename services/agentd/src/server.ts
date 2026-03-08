@@ -30,7 +30,11 @@ import {
   buildEditorCompanionWorkspaceDetail,
   buildEditorCompanionWorkspaceItem,
 } from "./modules/editor-companion";
-import { createServer as createHttpServer, type IncomingMessage } from "node:http";
+import {
+  createServer as createHttpServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import path from "node:path";
 import {
   createObservabilityPolicyBoundary,
@@ -68,6 +72,54 @@ async function readJsonBody(request: IncomingMessage) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
+export function isRecoverableConnectionError(error: unknown): error is NodeJS.ErrnoException {
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (
+      error.code === "ECONNABORTED" ||
+      error.code === "ECONNRESET" ||
+      error.code === "ERR_STREAM_DESTROYED"
+    ),
+  );
+}
+
+function logRecoverableConnectionError(
+  scope: string,
+  error: NodeJS.ErrnoException,
+) {
+  console.warn(`[agentd] ${scope}: ${error.code ?? "unknown"} ${error.message}`);
+}
+
+export async function writeResponseSafely(
+  response: Pick<ServerResponse, "destroyed" | "writableEnded" | "writeHead" | "end">,
+  result: Response,
+) {
+  if (response.destroyed || response.writableEnded) {
+    return false;
+  }
+
+  const body = await result.text();
+
+  if (response.destroyed || response.writableEnded) {
+    return false;
+  }
+
+  try {
+    response.writeHead(result.status, Object.fromEntries(result.headers));
+    response.end(body);
+    return true;
+  } catch (error) {
+    if (isRecoverableConnectionError(error)) {
+      logRecoverableConnectionError("response write aborted", error);
+      return false;
+    }
+
+    throw error;
+  }
 }
 
 function minutesSince(timestamp: string | null) {
@@ -305,65 +357,80 @@ export function createAgentdServer(config: AgentdConfig) {
   }
 
   const httpServer = createHttpServer(async (request, response) => {
-    const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+    let requestAborted = false;
+    request.once("aborted", () => {
+      requestAborted = true;
+    });
+    response.once("error", (error) => {
+      if (isRecoverableConnectionError(error)) {
+        logRecoverableConnectionError("response stream error", error);
+        return;
+      }
+
+      console.error("[agentd] Response stream failed:", error);
+    });
+
     let result: Response;
-    const authCallbackMatch = url.pathname.match(
-      /^\/callback\/([a-z0-9]+(?:[-_][a-z0-9]+)*)\/(ws_[a-z0-9]{8,})$/,
-    );
-    const authSessionMatch = url.pathname.match(
-      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})$/,
-    );
-    const authRedeemMatch = url.pathname.match(
-      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/redeem$/,
-    );
-    const authDeviceResolveMatch = url.pathname.match(
-      /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/device\/resolve$/,
-    );
-    const runtimeWorkspaceMatch = url.pathname.match(
-      /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})$/,
-    );
-    const runtimeWorkspaceLogsMatch = url.pathname.match(
-      /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/logs$/,
-    );
-    const refreshHealthMatch = url.pathname.match(
-      /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/refresh-health$/,
-    );
-    const workspaceMatch = url.pathname.match(
-      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})$/,
-    );
-    const workspaceArchiveMatch = url.pathname.match(
-      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/archive$/,
-    );
-    const workspaceDeleteMatch = url.pathname.match(
-      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/delete$/,
-    );
-    const workspaceEventsMatch = url.pathname.match(
-      /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/events$/,
-    );
-    const missionControlWorkspaceMatch = url.pathname.match(
-      /^\/api\/v1\/mission-control\/workspaces\/(ws_[a-z0-9]{8,})$/,
-    );
-    const editorWorkspaceMatch = url.pathname.match(
-      /^\/api\/v1\/editor\/workspaces\/(ws_[a-z0-9]{8,})$/,
-    );
-    const observabilityRunMatch = url.pathname.match(
-      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})$/,
-    );
-    const observabilityRunEventsMatch = url.pathname.match(
-      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/events$/,
-    );
-    const observabilityRunCompleteMatch = url.pathname.match(
-      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/complete$/,
-    );
-    const observabilityRunSpansMatch = url.pathname.match(
-      /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/spans$/,
-    );
-    const validationWorkspaceMatch = url.pathname.match(
-      /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})$/,
-    );
-    const validationWorkspaceRunMatch = url.pathname.match(
-      /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})\/run$/,
-    );
+
+    try {
+      const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+      const authCallbackMatch = url.pathname.match(
+        /^\/callback\/([a-z0-9]+(?:[-_][a-z0-9]+)*)\/(ws_[a-z0-9]{8,})$/,
+      );
+      const authSessionMatch = url.pathname.match(
+        /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})$/,
+      );
+      const authRedeemMatch = url.pathname.match(
+        /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/redeem$/,
+      );
+      const authDeviceResolveMatch = url.pathname.match(
+        /^\/api\/v1\/auth\/sessions\/(auth_[a-z0-9]{8,})\/device\/resolve$/,
+      );
+      const runtimeWorkspaceMatch = url.pathname.match(
+        /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})$/,
+      );
+      const runtimeWorkspaceLogsMatch = url.pathname.match(
+        /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/logs$/,
+      );
+      const refreshHealthMatch = url.pathname.match(
+        /^\/api\/v1\/runtime\/workspaces\/(ws_[a-z0-9]{8,})\/refresh-health$/,
+      );
+      const workspaceMatch = url.pathname.match(
+        /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})$/,
+      );
+      const workspaceArchiveMatch = url.pathname.match(
+        /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/archive$/,
+      );
+      const workspaceDeleteMatch = url.pathname.match(
+        /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/delete$/,
+      );
+      const workspaceEventsMatch = url.pathname.match(
+        /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/events$/,
+      );
+      const missionControlWorkspaceMatch = url.pathname.match(
+        /^\/api\/v1\/mission-control\/workspaces\/(ws_[a-z0-9]{8,})$/,
+      );
+      const editorWorkspaceMatch = url.pathname.match(
+        /^\/api\/v1\/editor\/workspaces\/(ws_[a-z0-9]{8,})$/,
+      );
+      const observabilityRunMatch = url.pathname.match(
+        /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})$/,
+      );
+      const observabilityRunEventsMatch = url.pathname.match(
+        /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/events$/,
+      );
+      const observabilityRunCompleteMatch = url.pathname.match(
+        /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/complete$/,
+      );
+      const observabilityRunSpansMatch = url.pathname.match(
+        /^\/api\/v1\/observability\/runs\/(run_[a-z0-9]{8,})\/spans$/,
+      );
+      const validationWorkspaceMatch = url.pathname.match(
+        /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})$/,
+      );
+      const validationWorkspaceRunMatch = url.pathname.match(
+        /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})\/run$/,
+      );
 
     if (request.method === "GET" && url.pathname === "/healthz") {
       result = json({
@@ -403,15 +470,15 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = context
         ? json({
-            item: buildEditorCompanionWorkspaceDetail(context),
-          })
+          item: buildEditorCompanionWorkspaceDetail(context),
+        })
         : json(
-            {
-              error: "workspace_not_found",
-              message: `No workspace is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/mission-control/workspaces"
@@ -431,23 +498,23 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = workspace
         ? json({
-            workspace,
-            run,
-            runtime: runtimeExecutor.get(workspaceId),
-            events: observability.listEvents({ workspaceId }).slice(0, 50),
-            spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
-            authSessions: authBroker.list(workspaceId),
-            policies: observability.listPolicyRules(),
-            validationBundle: validationBundles.getBundle(workspaceId),
-            reviewBundle: validationBundles.getReviewBundle(workspaceId),
-          })
+          workspace,
+          run,
+          runtime: runtimeExecutor.get(workspaceId),
+          events: observability.listEvents({ workspaceId }).slice(0, 50),
+          spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
+          authSessions: authBroker.list(workspaceId),
+          policies: observability.listPolicyRules(),
+          validationBundle: validationBundles.getBundle(workspaceId),
+          reviewBundle: validationBundles.getReviewBundle(workspaceId),
+        })
         : json(
-            {
-              error: "workspace_not_found",
-              message: `No workspace is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (
       request.method === "GET" &&
       url.pathname === "/api/v1/observability/policies"
@@ -497,12 +564,12 @@ export function createAgentdServer(config: AgentdConfig) {
       result = run
         ? json(run)
         : json(
-            {
-              error: "run_not_found",
-              message: `No run is registered for ${runId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "run_not_found",
+            message: `No run is registered for ${runId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "POST" && observabilityRunCompleteMatch) {
       const runId = observabilityRunCompleteMatch[1]!;
 
@@ -559,18 +626,18 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = workspace
         ? json({
-            workspaceId,
-            summary: validationBundles.getSummary(workspaceId),
-            bundle: validationBundles.getBundle(workspaceId),
-            reviewBundle: validationBundles.getReviewBundle(workspaceId),
-          })
+          workspaceId,
+          summary: validationBundles.getSummary(workspaceId),
+          bundle: validationBundles.getBundle(workspaceId),
+          reviewBundle: validationBundles.getReviewBundle(workspaceId),
+        })
         : json(
-            {
-              error: "workspace_not_found",
-              message: `No workspace is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "POST" && validationWorkspaceRunMatch) {
       const workspaceId = validationWorkspaceRunMatch[1]!;
       const workspace = workspaceManager.get(workspaceId);
@@ -776,12 +843,12 @@ export function createAgentdServer(config: AgentdConfig) {
       result = session
         ? json(session)
         : json(
-            {
-              error: "session_not_found",
-              message: `No auth session is registered for ${sessionId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "session_not_found",
+            message: `No auth session is registered for ${sessionId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "POST" && authRedeemMatch) {
       try {
         const sessionId = authRedeemMatch[1]!;
@@ -995,15 +1062,15 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = workspace
         ? json({
-            items: workspaceManager.listEvents(workspaceId),
-          })
+          items: workspaceManager.listEvents(workspaceId),
+        })
         : json(
-            {
-              error: "workspace_not_found",
-              message: `No workspace is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "GET" && workspaceMatch) {
       const workspaceId = workspaceMatch[1]!;
       const workspace = workspaceManager.get(workspaceId);
@@ -1011,12 +1078,12 @@ export function createAgentdServer(config: AgentdConfig) {
       result = workspace
         ? json(workspace)
         : json(
-            {
-              error: "workspace_not_found",
-              message: `No workspace is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "workspace_not_found",
+            message: `No workspace is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "POST" && workspaceArchiveMatch) {
       try {
         const workspaceId = workspaceArchiveMatch[1]!;
@@ -1108,12 +1175,12 @@ export function createAgentdServer(config: AgentdConfig) {
       result = runtime
         ? json(runtime)
         : json(
-            {
-              error: "not_found",
-              message: `No runtime is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "not_found",
+            message: `No runtime is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "GET" && runtimeWorkspaceLogsMatch) {
       const workspaceId = runtimeWorkspaceLogsMatch[1]!;
       const runtime = runtimeExecutor.get(workspaceId);
@@ -1124,21 +1191,21 @@ export function createAgentdServer(config: AgentdConfig) {
 
       result = runtime
         ? json({
-            workspaceId,
-            containerName: runtime.containerName,
-            lifecycle: runtime.lifecycle,
-            tail,
-            logs: runtime.containerName
-              ? await readContainerLogs(runtime.containerName, tail)
-              : "Runtime container is not attached yet.",
-          })
+          workspaceId,
+          containerName: runtime.containerName,
+          lifecycle: runtime.lifecycle,
+          tail,
+          logs: runtime.containerName
+            ? await readContainerLogs(runtime.containerName, tail)
+            : "Runtime container is not attached yet.",
+        })
         : json(
-            {
-              error: "not_found",
-              message: `No runtime is registered for ${workspaceId}.`,
-            },
-            { status: 404 },
-          );
+          {
+            error: "not_found",
+            message: `No runtime is registered for ${workspaceId}.`,
+          },
+          { status: 404 },
+        );
     } else if (request.method === "POST" && url.pathname === "/api/v1/runtime/boot") {
       try {
         const body = await readJsonBody(request);
@@ -1267,8 +1334,47 @@ export function createAgentdServer(config: AgentdConfig) {
       );
     }
 
-    response.writeHead(result.status, Object.fromEntries(result.headers));
-    response.end(await result.text());
+    } catch (error) {
+      if (requestAborted || response.destroyed || response.writableEnded) {
+        return;
+      }
+
+      if (isRecoverableConnectionError(error)) {
+        logRecoverableConnectionError("request aborted", error);
+        return;
+      }
+
+      console.error("[agentd] Request handling failed:", error);
+      result = json(
+        {
+          error: "internal_server_error",
+          message: "agentd could not complete the request.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (requestAborted || response.destroyed || response.writableEnded) {
+      return;
+    }
+
+    await writeResponseSafely(response, result);
+  });
+
+  // Handle client connection errors gracefully to prevent daemon crashes
+  // These errors occur when clients abort connections during log streaming or polling
+  httpServer.on("clientError", (err: NodeJS.ErrnoException, socket) => {
+    if (
+      err.code === "ECONNABORTED" ||
+      err.code === "ECONNRESET" ||
+      err.code === "ERR_STREAM_DESTROYED"
+    ) {
+      socket.destroy();
+      return;
+    }
+
+    console.error(`[agentd] Client error: ${err.message}`);
+    socket.destroy();
   });
 
   return {
@@ -1279,6 +1385,8 @@ export function createAgentdServer(config: AgentdConfig) {
       for (const preview of restoredPreviews) {
         runtimeExecutor.attachPreview(preview.workspaceId, preview);
       }
+
+      await runtimeExecutor.reconcileAll();
     },
   };
 }
