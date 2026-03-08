@@ -1,12 +1,12 @@
 import type { WorkspaceSummary } from "@takomi/contracts";
 
 interface StatusBadgeProps {
-  status: WorkspaceSummary["status"];
+  status: WorkspaceSummary["status"] | "stopped";
   className?: string;
 }
 
 const statusConfig: Record<
-  WorkspaceSummary["status"],
+  WorkspaceSummary["status"] | "stopped",
   {
     label: string;
     bg: string;
@@ -77,6 +77,13 @@ const statusConfig: Record<
     border: "border-[var(--color-border)]",
     text: "text-[var(--color-ink-faint)]",
     dotBg: "bg-[var(--color-border-bright)]",
+  },
+  stopped: {
+    label: "stopped",
+    bg: "bg-[var(--color-warning)]/10",
+    border: "border-[var(--color-warning)]/20",
+    text: "text-[var(--color-warning)]",
+    dotBg: "bg-[var(--color-warning)]",
   },
 };
 

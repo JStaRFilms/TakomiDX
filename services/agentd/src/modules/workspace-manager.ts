@@ -127,6 +127,40 @@ async function runGitCommand(repoPath: string, args: string[]) {
   }
 }
 
+function isWindowsPathLengthError(error: unknown) {
+  if (process.platform !== "win32") {
+    return false;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    "code" in error && error.code === "ENAMETOOLONG" ||
+    error.message.includes("Filename too long") ||
+    error.message.includes("ENAMETOOLONG")
+  );
+}
+
+function toLongPath(filePath: string) {
+  if (process.platform !== "win32") {
+    return filePath;
+  }
+
+  const normalized = path.resolve(filePath).replace(/\//g, "\\");
+  return normalized.startsWith("\\\\?\\") ? normalized : `\\\\?\\${normalized}`;
+}
+
+function removeDirectoryTree(filePath: string) {
+  rmSync(toLongPath(filePath), {
+    force: true,
+    recursive: true,
+    maxRetries: 3,
+    retryDelay: 50,
+  });
+}
+
 export function createGitWorktreeDriver(): GitWorktreeDriver {
   return {
     async add(input) {
@@ -141,12 +175,21 @@ export function createGitWorktreeDriver(): GitWorktreeDriver {
     },
 
     async remove(input) {
-      await runGitCommand(input.repoPath, [
-        "worktree",
-        "remove",
-        input.worktreePath,
-        "--force",
-      ]);
+      try {
+        await runGitCommand(input.repoPath, [
+          "worktree",
+          "remove",
+          input.worktreePath,
+          "--force",
+        ]);
+      } catch (error) {
+        if (!isWindowsPathLengthError(error) || !existsSync(input.worktreePath)) {
+          throw error;
+        }
+
+        removeDirectoryTree(input.worktreePath);
+        await runGitCommand(input.repoPath, ["worktree", "prune"]);
+      }
     },
 
     async deleteBranch(input) {

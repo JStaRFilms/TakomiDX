@@ -19,20 +19,20 @@ Docs are now aligned: `*.takomi.localhost` is the primary local preview path whe
 
 ### 1. Base Surfaces
 
-- [ ] Start the system and confirm the base surfaces load.
-- [ ] Open Mission Control at `http://127.0.0.1:3000`.
-- [ ] Confirm it is using live `agentd` data, not sample or fake data.
+- [x] Start the system and confirm the base surfaces load.
+- [x] Open Mission Control at `http://127.0.0.1:3000`.
+- [x] Confirm it is using live `agentd` data, not sample or fake data.
 
 Covers: Task 01, Task 05, Task 09, FR-003
 
 ### 2. Workspace Creation
 
-- [ ] Create one new workspace from the UI.
-- [ ] Use a real task name.
-- [ ] Select a base branch if the UI exposes it.
-- [ ] Confirm the workspace appears immediately in the grid.
-- [ ] Confirm the workspace detail view opens correctly.
-- [ ] Confirm the workspace has stable identity and no duplicate card appears.
+- [x] Create one new workspace from the UI.
+- [x] Use a real task name.
+- [x] Select a base branch if the UI exposes it.
+- [x] Confirm the workspace appears immediately in the grid.
+- [x] Confirm the workspace detail view opens correctly.
+- [x] Confirm the workspace has stable identity and no duplicate card appears.
 
 Expected:
 - no silent failure
@@ -43,8 +43,8 @@ Covers: Task 02, FR-001, FR-003
 
 ### 3. Workspace Persistence
 
-- [ ] Reload Mission Control and confirm the workspace still exists.
-- [ ] If practical, stop and restart the local app stack.
+- [x] Reload Mission Control and confirm the workspace still exists.
+- [ ] If practical, stop and restart the local app stack. NOTE: There is presently no stop button on the app anywhere lmao only starts lol.
 - [ ] Confirm the workspace restores with the same identity and expected state.
 
 Expected:
@@ -52,7 +52,7 @@ Expected:
 
 Covers: Task 02, FR-001
 
-### 4. Archive and Delete Safety
+### 4. Archive and Delete Safety Note: I am not sure how to do this archiving I am not sure it's in the UI yet and deleting too like deleting an agent what not and the worktree that needs to be implemented well
 
 - [ ] Archive the workspace.
 - [ ] Confirm it disappears from active views or is clearly marked archived.
@@ -68,12 +68,12 @@ Covers: Task 02, FR-001
 
 ### 5. Parallel Runtime Boot
 
-- [ ] Create two workspaces.
-- [ ] Start runtimes for both.
-- [ ] Watch statuses during boot.
-- [ ] Confirm both runtimes boot without port collision.
-- [ ] Confirm each workspace gets its own preview target and runtime state.
-- [ ] Confirm logs and status update live.
+- [x] Create two workspaces.
+- [x] Start runtimes for both.
+- [x] Watch statuses during boot.
+- [x] Confirm both runtimes boot without port collision.
+- [-] Confirm each workspace gets its own preview target and runtime state.
+- [x] Confirm logs and status update live.
 
 Expected:
 - no port collision
@@ -83,11 +83,11 @@ Covers: Task 03, Task 05, FR-002, FR-003
 
 ### 6. Preview Routing Truth Check
 
-- [ ] For each running workspace, open `http://<slug>.takomi.localhost/`.
-- [ ] Also open the shown fallback `127.0.0.1:<port>` URL.
-- [ ] Confirm which one Mission Control presents as the primary preview.
-- [ ] Confirm the custom host works if the edge proxy is actually healthy.
-- [ ] Confirm fallback is only used when the proxy is degraded or unavailable.
+- [x] For each running workspace, open `http://<slug>.takomi.localhost/`.
+- [x] Also open the shown fallback `127.0.0.1:<port>` URL.
+- [x] Confirm which one Mission Control presents as the primary preview.
+- [x] Confirm the custom host works if the edge proxy is actually healthy.
+- [x] Confirm fallback is only used when the proxy is degraded or unavailable.
 
 Expected:
 - custom host should be primary if edge proxy is truly working

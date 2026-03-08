@@ -1,0 +1,1018 @@
+pages=23
+
+--- PAGE 1 ---
+i noticed that after I added the first project right the work tree created well but then the page still kept on showing
+the "Created flighttrack. Refreshing workspace grid..." banner and didin't go till I manually refreshed the page so idk
+it's either it didn't refresh the page as claimed or just refused to go
+Similar thing happened when I opened the actual project and I hit Runtime start or whatever and then I can now
+see two botting pills at the top beside the name of the project lmao
+I noticed that the terminal is updating at an ungoly rate lmao is that meant to be or is that the best way about this lol
+
+--- PAGE 2 ---
+the pnpm store that's been used is the one from my actuall pc right?
+what does this mean
+what does it mean by observabilty run record only what's that and how does that help us hehe
+
+--- PAGE 3 ---
+Anything I hit run vaildation before I hit start runtime I always get this error and I am not sure why and also it never
+goes after the error shows sigh
+and pressing the restart agent doesn't do anything or maybe I am missing something hehe
+"
+ "
+And as you can see even after restarting the thing it's still like this sigh
+just hta tone of the booting pills is now failed lmao and the restart agent button is there but it doesn't do anythign to
+my understanding
+ok so I suddenly got this error while trying to open the
+"http://flighttrack.takomi.localhost/"
+note it opened succesfuly but when I wet back to the dashboard to look at he stuffs at
+"http://localhost:3000/workspaces/ws_mgt6cl9eca"
+it crashed and gave me
+Error Type
+Runtime TypeError
+Error Message
+fetch failed
+Next.js version: 15.5.12 (Webpack)
+@takomi/mission-control:dev: GET /workspaces/ws_mgt6cl9eca 200 in 479ms
+
+--- PAGE 4 ---
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 200 in 246ms
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 200 in 251ms
+@takomi/mission-control:dev: GET /workspaces/ws_mgt6cl9eca 200 in 383ms
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 200 in 141ms
+@takomi/agentd:dev: node:events:486
+@takomi/agentd:dev: throw er; // Unhandled 'error' event
+@takomi/agentd:dev: ^
+@takomi/agentd:dev:
+@takomi/agentd:dev: Error: write ECONNABORTED
+@takomi/agentd:dev: at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+@takomi/agentd:dev: at writeGeneric (node:internal/stream_base_commons:150:3)
+@takomi/agentd:dev: at Socket._writeGeneric (node:net:966:11)
+@takomi/agentd:dev: at Socket._write (node:net:978:8)
+@takomi/agentd:dev: at writeOrBuffer (node:internal/streams/writable:570:12)
+@takomi/agentd:dev: at _write (node:internal/streams/writable:499:10)
+@takomi/agentd:dev: at Writable.write (node:internal/streams/writable:508:10)
+@takomi/agentd:dev: at Socket.ondata (node:internal/streams/readable:1008:24)
+@takomi/agentd:dev: at Socket.emit (node:events:508:28)
+@takomi/agentd:dev: at addChunk (node:internal/streams/readable:559:12)
+@takomi/agentd:dev: Emitted 'error' event on Socket instance at:
+@takomi/agentd:dev: at Socket.onerror (node:internal/streams/readable:1031:14)
+@takomi/agentd:dev: at Socket.emit (node:events:508:28)
+@takomi/agentd:dev: at emitErrorNT (node:internal/streams/destroy:170:8)
+@takomi/agentd:dev: at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+@takomi/agentd:dev: at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+@takomi/agentd:dev: errno: -4079,
+@takomi/agentd:dev: code: 'ECONNABORTED',
+@takomi/agentd:dev: syscall: 'write'
+@takomi/agentd:dev: }
+@takomi/agentd:dev:
+@takomi/agentd:dev: Node.js v24.11.0
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: [Error: read ECONNRESET] {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'read'
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: POST /api/workspaces/ws_mgt6cl9eca/runtime/refresh-health 500 in 958ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+
+--- PAGE 5 ---
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: [Error: read ECONNRESET] {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'read'
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 762ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: [Error: read ECONNRESET] {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'read'
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: POST /api/workspaces/ws_mgt6cl9eca/runtime/refresh-health 500 in 881ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: [Error: read ECONNRESET] {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'read'
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 986ms
+@takomi/mission-control:dev: ⨯  [TypeError: fetch failed] {
+@takomi/mission-control:dev: digest: '4245000239',
+@takomi/mission-control:dev: [cause]: Error: write ECONNRESET
+@takomi/mission-control:dev: at new Promise () {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'write'
+
+--- PAGE 6 ---
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: ⨯  [TypeError: fetch failed] {
+@takomi/mission-control:dev: digest: '4245000239',
+@takomi/mission-control:dev: [cause]: Error: write ECONNRESET
+@takomi/mission-control:dev: at new Promise () {
+@takomi/mission-control:dev: errno: -4077,
+@takomi/mission-control:dev: code: 'ECONNRESET',
+@takomi/mission-control:dev: syscall: 'write'
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 132ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 245ms
+@takomi/mission-control:dev: GET /workspaces/ws_mgt6cl9eca 200 in 1173ms
+@takomi/mission-control:dev: TypeError: fetch failed
+
+--- PAGE 7 ---
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 232ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 280ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+
+--- PAGE 8 ---
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 238ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 243ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 213ms
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+
+--- PAGE 9 ---
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 213ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 217ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 186ms
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+
+--- PAGE 10 ---
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 232ms
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 246ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+
+--- PAGE 11 ---
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 196ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 217ms
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 203ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+
+--- PAGE 12 ---
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 175ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 199ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 187ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+
+--- PAGE 13 ---
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 155ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: GET /api/workspaces/ws_mgt6cl9eca/runtime/logs?tail=120 500 in 171ms
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+
+--- PAGE 14 ---
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 151ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 130ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 208ms
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+
+--- PAGE 15 ---
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 94ms
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 213ms
+@takomi/mission-control:dev: ⨯  [TypeError: fetch failed] {
+@takomi/mission-control:dev: digest: '1732824737',
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: ⨯  [TypeError: fetch failed] {
+@takomi/mission-control:dev: digest: '1732824737',
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+
+--- PAGE 16 ---
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 600ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 740ms
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+
+--- PAGE 17 ---
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 328ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 292ms
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: GET /workspaces/ws_mgt6cl9eca 200 in 5654ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 90ms
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+
+--- PAGE 18 ---
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 210ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 87ms
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+
+--- PAGE 19 ---
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 176ms
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 95ms
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 169ms
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async POST (app\api\workspaces[workspaceId]\runtime\refresh-
+health\route.ts:9:20)
+@takomi/mission-control:dev: 7 | ) {
+@takomi/mission-control:dev: 8 | const { workspaceId } = await context.params;
+@takomi/mission-control:dev: > 9 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+
+--- PAGE 20 ---
+@takomi/mission-control:dev: 10 | /api/v1/runtime/workspaces/${workspaceId}/refresh-health,
+@takomi/mission-control:dev: 11 | {
+@takomi/mission-control:dev: 12 | method: "POST", {
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: POST /api/workspaces/ws_h3e6uia387/runtime/refresh-health 500 in 109ms
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: TypeError: fetch failed
+@takomi/mission-control:dev: at async GET (app\api\workspaces[workspaceId]\runtime\logs\route.ts:11:20)
+@takomi/mission-control:dev: 9 | const url = new URL(request.url);
+@takomi/mission-control:dev: 10 | const tail = Math.max(20, Math.min(200, Number(url.searchParams.get("tail") ??
+"80") || 80));
+@takomi/mission-control:dev: > 11 | const response = await agentdFetch(
+@takomi/mission-control:dev: | ^
+@takomi/mission-control:dev: 12 | /api/v1/runtime/workspaces/${workspaceId}/logs?tail=${tail},
+@takomi/mission-control:dev: 13 | );
+@takomi/mission-control:dev: 14 | {
+@takomi/mission-control:dev: GET /api/workspaces/ws_h3e6uia387/runtime/logs?tail=120 500 in 191ms
+@takomi/mission-control:dev: [cause]: Error: connect ECONNREFUSED 127.0.0.1:4000
+@takomi/mission-control:dev: at (Error: connect ECONNREFUSED 127.0.0.1:4000) {
+@takomi/mission-control:dev: errno: -4078,
+@takomi/mission-control:dev: code: 'ECONNREFUSED',
+@takomi/mission-control:dev: syscall: 'connect',
+@takomi/mission-control:dev: address: '127.0.0.1',
+@takomi/mission-control:dev: port: 4000
+@takomi/mission-control:dev: }
+@takomi/mission-control:dev: }
+then another error
+"## Error Type
+Runtime TypeError
+Error Message
+fetch failed
+Code Frame
+833 | async function fetchAgentdJson(pathname: string): Promise {
+834 | const env = resolveMissionControlEnv();
+835 | const response = await fetch(
+at fetchAgentdJson (src\features\workspaces\data\workspace-detail-data.ts:835:20)
+at getWorkspaceDetail (src\features\workspaces\data\workspace-detail-data.ts:920:21)
+at WorkspaceActivityPage (app\workspaces\[workspaceId]\activity\page.tsx:10:18)
+|                    ^
+
+--- PAGE 21 ---
+836 | ${env.public.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL}${pathname},
+837 | {
+838 | cache: "no-store",
+Next.js version: 15.5.12 (Webpack)
+"
+"asdadas"
+ULTIMATELY I HAD TO RESTART THE APP
+the docker containes kept running which is good though
+after the restart the two pills that were showing booting now changed to running becuase that docker images had
+actualyl finished booting since but it was glitching on the ui ad not switching to running consistenyl it was like going
+back and forth so maybethere is a race condition or something
+I notieced that even though the rpeview was read and actualyl working in anothr tab the stuff just didn't work in thei
+app dashbaor
+I tried opening the diff view and it broke the app again lmao
+Error Type
+Runtime TypeError
+Error Message
+fetch failed
+Code Frame
+833 | async function fetchAgentdJson(pathname: string): Promise {
+834 | const env = resolveMissionControlEnv();
+at fetchAgentdJson (src\features\workspaces\data\workspace-detail-data.ts:835:20)
+at getWorkspaceDetail (src\features\workspaces\data\workspace-detail-data.ts:920:21)
+at WorkspaceDiffPage (app\workspaces\[workspaceId]\diff\page.tsx:11:18)
+
+--- PAGE 22 ---
+835 | const response = await fetch(
+836 | ${env.public.NEXT_PUBLIC_TAKOMI_AGENTD_BASE_URL}${pathname},
+837 | {
+838 | cache: "no-store",
+Next.js version: 15.5.12 (Webpack)
+so after the container ran succesfuly i rean the validation astuff again and now it valideated succesfully
+so I thinkwe shouldn't let the run validation button work if you are gonna straignt up give erros lmao
+let it dependin on if the docker container is fully booted and what not
+also as you can see in the image despite the validation working now the failed pill is still there and hte restart agent
+button is still there
+then also on one of them particularly the oe with the hwhel failed validation problem on the sumary page I Can see
+this card
+"## Review Bundle
+failed
+Validation failed with 0 failed checks, 0 console errors, and 1 network failures.
+Inspect the diagnostics, fix the failing behavior, and re-run validation before the run can complete.
+Preview URL
+http://vibeforge3.takomi.localhost/"
+but then on the one that deosn't have any error I can't see the card despite everthing running fine at the moment
+I tried running the validation on the one that has been working all this while and I am getting this weird
+"fetch failed"
+"Latest probe:Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+|                    ^
+
+--- PAGE 23 ---
+so IDK
+let's looka t these issues first before we move on

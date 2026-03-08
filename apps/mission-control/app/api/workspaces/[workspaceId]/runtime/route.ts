@@ -25,7 +25,11 @@ export async function POST(
     const workspace = await getWorkspaceMetadata(workspaceId);
     const existingRuntime = await getWorkspaceRuntimeMetadata(workspaceId);
 
-    if (existingRuntime && existingRuntime.lifecycle !== "failed") {
+    if (
+      existingRuntime &&
+      existingRuntime.lifecycle !== "failed" &&
+      existingRuntime.lifecycle !== "stopped"
+    ) {
       return NextResponse.json(
         {
           error: "runtime_already_active",
