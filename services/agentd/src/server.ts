@@ -178,59 +178,136 @@ function deriveWorkspaceStatus(
   return workspaceStatus;
 }
 
-function derivePreviewAvailability(runtime: {
-  healthStatus: "healthy" | "degraded" | "failed";
-  preview?: {
-    routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+function derivePreviewAvailability(
+  runtime: {
+    healthStatus: "healthy" | "degraded" | "failed";
+    preview?: {
+      routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+      proxyStatus: "starting" | "ready" | "unavailable" | "failed";
+    } | null;
+  } | null,
+  route: {
+    healthStatus: "healthy" | "degraded" | "failed";
+    status: "pending" | "registered" | "degraded" | "failed" | "removed";
     proxyStatus: "starting" | "ready" | "unavailable" | "failed";
-  } | null;
-} | null) {
-  if (!runtime) {
-    return "degraded" as const;
+  } | null = null,
+) {
+  if (runtime) {
+    if (runtime.healthStatus === "failed" || runtime.preview?.routeStatus === "failed") {
+      return "failed" as const;
+    }
+
+    if (
+      runtime.healthStatus === "degraded" ||
+      runtime.preview?.routeStatus === "degraded" ||
+      runtime.preview?.proxyStatus !== undefined && runtime.preview.proxyStatus !== "ready"
+    ) {
+      return "degraded" as const;
+    }
+
+    return "healthy" as const;
   }
 
-  if (runtime.healthStatus === "failed" || runtime.preview?.routeStatus === "failed") {
-    return "failed" as const;
+  if (route) {
+    if (route.healthStatus === "failed" || route.status === "failed") {
+      return "failed" as const;
+    }
+    if (
+      route.healthStatus === "degraded" ||
+      route.status === "degraded" ||
+      route.proxyStatus !== "ready"
+    ) {
+      return "degraded" as const;
+    }
+    return "healthy" as const;
   }
 
-  if (
-    runtime.healthStatus === "degraded" ||
-    runtime.preview?.routeStatus === "degraded" ||
-    runtime.preview?.proxyStatus !== undefined && runtime.preview.proxyStatus !== "ready"
-  ) {
-    return "degraded" as const;
-  }
-
-  return "healthy" as const;
+  return "degraded" as const;
 }
 
-function resolvePreviewUrlPreference(runtime: {
-  preview?: {
-    url: string;
-    manualFallbackUrl: string;
-    routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+function resolvePreviewUrlPreference(
+  runtime: {
+    preview?: {
+      url: string;
+      manualFallbackUrl: string;
+      routeStatus: "pending" | "registered" | "degraded" | "failed" | "removed";
+      proxyStatus: "starting" | "ready" | "unavailable" | "failed";
+    } | null;
+  } | null,
+  route: {
+    host: string;
+    protocol: "http" | "https";
+    proxyPort: number;
+    status: "pending" | "registered" | "degraded" | "failed" | "removed";
     proxyStatus: "starting" | "ready" | "unavailable" | "failed";
-  } | null;
-} | null) {
-  if (!runtime?.preview) {
-    return null;
-  }
+    target: string;
+  } | null = null,
+) {
+  if (runtime?.preview) {
+    if (
+      runtime.preview.routeStatus === "registered" &&
+      runtime.preview.proxyStatus === "ready"
+    ) {
+      return runtime.preview.url;
+    }
 
-  if (
-    runtime.preview.routeStatus === "registered" &&
-    runtime.preview.proxyStatus === "ready"
-  ) {
+    if (
+      runtime.preview.proxyStatus === "failed" ||
+      runtime.preview.proxyStatus === "unavailable"
+    ) {
+      return runtime.preview.manualFallbackUrl;
+    }
+
     return runtime.preview.url;
   }
 
-  if (
-    runtime.preview.proxyStatus === "failed" ||
-    runtime.preview.proxyStatus === "unavailable"
-  ) {
-    return runtime.preview.manualFallbackUrl;
+  if (route) {
+    const isStandardPort = route.proxyPort === 80 || route.proxyPort === 443;
+    const url = createPreviewUrl(route.host, route.protocol, undefined, isStandardPort ? undefined : route.proxyPort);
+
+    // We create the fallback using the literal target port
+    const targetParts = route.target.split(":");
+    const manualFallbackUrl = createPreviewUrl(targetParts[0]!, route.protocol, undefined, Number(targetParts[1] ?? 80));
+
+    if (route.status === "registered" && route.proxyStatus === "ready") {
+      return url;
+    }
+    if (route.proxyStatus === "failed" || route.proxyStatus === "unavailable") {
+      return manualFallbackUrl;
+    }
+    return url;
   }
 
-  return runtime.preview.url;
+  return null;
+}
+
+async function probeAttachedPreviewTarget(
+  targetPort: number,
+  protocol: "http" | "https" = "http",
+  healthPath: string = "/",
+) {
+  try {
+    const response = await fetch(
+      createPreviewUrl("127.0.0.1", protocol, healthPath, targetPort),
+      {
+        method: "GET",
+        signal: AbortSignal.timeout(1_000),
+      },
+    );
+
+    return {
+      healthStatus: response.ok ? "healthy" : "degraded",
+      lastError: response.ok ? null : `Preview responded with ${response.status}.`,
+    } as const;
+  } catch (error) {
+    return {
+      healthStatus: "degraded",
+      lastError:
+        error instanceof Error
+          ? error.message
+          : "Preview upstream could not be reached.",
+    } as const;
+  }
 }
 
 export function createAgentdServer(config: AgentdConfig) {
@@ -306,7 +383,7 @@ export function createAgentdServer(config: AgentdConfig) {
       previewHost: workspace.previewHost,
       tokenCostUsd: run?.tokenCostUsd ?? 0,
       elapsedMinutes: minutesSince(run?.startedAt ?? workspace.createdAt),
-      health: derivePreviewAvailability(runtime),
+      health: derivePreviewAvailability(runtime, routeRegistry.get(workspaceId)),
       activeRunId: run?.id ?? null,
       pauseReason: run?.pauseReason ?? null,
       auth: null,
@@ -351,7 +428,7 @@ export function createAgentdServer(config: AgentdConfig) {
     const runtime = runtimeExecutor.get(workspaceId);
 
     return (
-      resolvePreviewUrlPreference(runtime) ??
+      resolvePreviewUrlPreference(runtime, routeRegistry.get(workspaceId)) ??
       createPreviewUrl(workspace.previewHost)
     );
   }
@@ -398,6 +475,9 @@ export function createAgentdServer(config: AgentdConfig) {
       const workspaceMatch = url.pathname.match(
         /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})$/,
       );
+      const workspacePreviewMatch = url.pathname.match(
+        /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/preview$/,
+      );
       const workspaceArchiveMatch = url.pathname.match(
         /^\/api\/v1\/workspaces\/(ws_[a-z0-9]{8,})\/archive$/,
       );
@@ -432,322 +512,220 @@ export function createAgentdServer(config: AgentdConfig) {
         /^\/api\/v1\/validation\/workspaces\/(ws_[a-z0-9]{8,})\/run$/,
       );
 
-    if (request.method === "GET" && url.pathname === "/healthz") {
-      result = json({
-        ...buildHealthPayload(config),
-        boundaries: [
-          createWorkspaceManagerBoundary(
-            workspaceManager.list().length,
-            workspaceManager.listEvents().length,
-          ),
-          createRuntimeExecutorBoundary(runtimeExecutor.list().length),
-          createRouteRegistryBoundary(
-            routeRegistry.list().length,
-            routeRegistry.getEdgeState(),
-          ),
-          createAuthBrokerBoundary(authBroker.list().length),
-          createObservabilityPolicyBoundary(
-            observability.listRuns().length,
-            observability.listEvents().length,
-          ),
-        ],
-      });
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/editor/workspaces"
-    ) {
-      result = json({
-        items: workspaceManager
-          .list()
-          .filter((workspace) => workspace.status !== "archived")
-          .map((workspace) => buildWorkspaceContext(workspace.id))
-          .filter((context) => context !== null)
-          .map((context) => buildEditorCompanionWorkspaceItem(context)),
-      });
-    } else if (request.method === "GET" && editorWorkspaceMatch) {
-      const workspaceId = editorWorkspaceMatch[1]!;
-      const context = buildWorkspaceContext(workspaceId);
-
-      result = context
-        ? json({
-          item: buildEditorCompanionWorkspaceDetail(context),
-        })
-        : json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/mission-control/workspaces"
-    ) {
-      result = json({
-        items: workspaceManager
-          .list()
-          .map((workspace) => buildMissionControlWorkspace(workspace.id)),
-      });
-    } else if (request.method === "GET" && missionControlWorkspaceMatch) {
-      const workspaceId = missionControlWorkspaceMatch[1]!;
-      const workspace = buildMissionControlWorkspace(workspaceId);
-      const run =
-        observability.getActiveRun(workspaceId) ??
-        observability.listRuns(workspaceId)[0] ??
-        null;
-
-      result = workspace
-        ? json({
-          workspace,
-          run,
-          runtime: runtimeExecutor.get(workspaceId),
-          events: observability.listEvents({ workspaceId }).slice(0, 50),
-          spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
-          authSessions: authBroker.list(workspaceId),
-          policies: observability.listPolicyRules(),
-          validationBundle: validationBundles.getBundle(workspaceId),
-          reviewBundle: validationBundles.getReviewBundle(workspaceId),
-        })
-        : json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/observability/policies"
-    ) {
-      result = json({
-        items: observability.listPolicyRules(),
-      });
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/observability/events"
-    ) {
-      const workspaceId = url.searchParams.get("workspaceId");
-      const runId = url.searchParams.get("runId");
-      result = json({
-        items: observability.listEvents({
-          ...(workspaceId ? { workspaceId } : {}),
-          ...(runId ? { runId } : {}),
-        }),
-      });
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/observability/runs"
-    ) {
-      result = json({
-        items: observability.listRuns(url.searchParams.get("workspaceId") ?? undefined),
-      });
-    } else if (
-      request.method === "POST" &&
-      url.pathname === "/api/v1/observability/runs"
-    ) {
-      try {
-        const body = await readJsonBody(request);
-        result = json(observability.startRun(body ?? {}), { status: 201 });
-      } catch (error) {
-        result = json(
-          {
-            error: "invalid_observability_run_request",
-            message: error instanceof Error ? error.message : "Run request is invalid.",
-          },
-          { status: 400 },
-        );
-      }
-    } else if (request.method === "GET" && observabilityRunMatch) {
-      const runId = observabilityRunMatch[1]!;
-      const run = observability.getRun(runId);
-
-      result = run
-        ? json(run)
-        : json(
-          {
-            error: "run_not_found",
-            message: `No run is registered for ${runId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "POST" && observabilityRunCompleteMatch) {
-      const runId = observabilityRunCompleteMatch[1]!;
-
-      try {
-        const body = await readJsonBody(request);
-        result = json(
-          observability.completeRun(runId, body?.summary ?? "Run completed."),
-        );
-      } catch (error) {
-        result = json(
-          {
-            error: "run_complete_failed",
-            message:
-              error instanceof Error
-                ? error.message
-                : "The run could not be completed.",
-          },
-          { status: 400 },
-        );
-      }
-    } else if (request.method === "GET" && observabilityRunEventsMatch) {
-      const runId = observabilityRunEventsMatch[1]!;
-      result = json({
-        items: observability.listEvents({ runId }),
-      });
-    } else if (request.method === "POST" && observabilityRunEventsMatch) {
-      const runId = observabilityRunEventsMatch[1]!;
-
-      try {
-        const body = await readJsonBody(request);
-        result = json(observability.recordRunEvent(runId, body ?? {}), {
-          status: 201,
+      if (request.method === "GET" && url.pathname === "/healthz") {
+        result = json({
+          ...buildHealthPayload(config),
+          boundaries: [
+            createWorkspaceManagerBoundary(
+              workspaceManager.list().length,
+              workspaceManager.listEvents().length,
+            ),
+            createRuntimeExecutorBoundary(runtimeExecutor.list().length),
+            createRouteRegistryBoundary(
+              routeRegistry.list().length,
+              routeRegistry.getEdgeState(),
+            ),
+            createAuthBrokerBoundary(authBroker.list().length),
+            createObservabilityPolicyBoundary(
+              observability.listRuns().length,
+              observability.listEvents().length,
+            ),
+          ],
         });
-      } catch (error) {
-        result = json(
-          {
-            error: "run_event_failed",
-            message:
-              error instanceof Error
-                ? error.message
-                : "The run event could not be recorded.",
-          },
-          { status: 400 },
-        );
-      }
-    } else if (request.method === "GET" && observabilityRunSpansMatch) {
-      const runId = observabilityRunSpansMatch[1]!;
-      result = json({
-        items: observability.listSpans(runId),
-      });
-    } else if (request.method === "GET" && validationWorkspaceMatch) {
-      const workspaceId = validationWorkspaceMatch[1]!;
-      const workspace = workspaceManager.get(workspaceId);
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/editor/workspaces"
+      ) {
+        result = json({
+          items: workspaceManager
+            .list()
+            .filter((workspace) => workspace.status !== "archived")
+            .map((workspace) => buildWorkspaceContext(workspace.id))
+            .filter((context) => context !== null)
+            .map((context) => buildEditorCompanionWorkspaceItem(context)),
+        });
+      } else if (request.method === "GET" && editorWorkspaceMatch) {
+        const workspaceId = editorWorkspaceMatch[1]!;
+        const context = buildWorkspaceContext(workspaceId);
 
-      result = workspace
-        ? json({
-          workspaceId,
-          summary: validationBundles.getSummary(workspaceId),
-          bundle: validationBundles.getBundle(workspaceId),
-          reviewBundle: validationBundles.getReviewBundle(workspaceId),
-        })
-        : json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "POST" && validationWorkspaceRunMatch) {
-      const workspaceId = validationWorkspaceRunMatch[1]!;
-      const workspace = workspaceManager.get(workspaceId);
-      const runtime = runtimeExecutor.get(workspaceId);
-      const run =
-        observability.getActiveRun(workspaceId) ??
-        observability.listRuns(workspaceId)[0] ??
-        null;
+        result = context
+          ? json({
+            item: buildEditorCompanionWorkspaceDetail(context),
+          })
+          : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/mission-control/workspaces"
+      ) {
+        result = json({
+          items: workspaceManager
+            .list()
+            .map((workspace) => buildMissionControlWorkspace(workspace.id)),
+        });
+      } else if (request.method === "GET" && missionControlWorkspaceMatch) {
+        const workspaceId = missionControlWorkspaceMatch[1]!;
+        const workspace = buildMissionControlWorkspace(workspaceId);
+        const run =
+          observability.getActiveRun(workspaceId) ??
+          observability.listRuns(workspaceId)[0] ??
+          null;
 
-      if (!workspace) {
-        result = json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-      } else {
-        try {
-          const body = (await readJsonBody(request)) as
-            | { checklist?: unknown }
-            | null;
-          const validation = await validationBundles.runValidation({
+        result = workspace
+          ? json({
             workspace,
-            runtime,
-            runId: run?.id ?? null,
-            ...(Array.isArray(body?.checklist)
-              ? { checklist: body.checklist }
-              : {}),
-          });
-
-          observability.recordRunEvent(run?.id ?? observability.startRun({
-            workspaceId,
-            agentType: "Validation sidecar",
-            budgetUsd: 0.1,
-            warningBudgetUsd: 0.08,
-          }).id, {
-            category: "validation",
-            type:
-              validation.bundle.status === "passed"
-                ? "validation.completed"
-                : validation.bundle.status === "blocked"
-                  ? "validation.blocked"
-                  : "validation.failed",
-            source: "browser-sidecar",
-            summary: validation.bundle.summary,
-            detail:
-              validation.review.diagnostics.join(" | ").slice(0, 400) || null,
-            outcome:
-              validation.bundle.status === "passed" ? "success" : "error",
-            trace: {
-              name: "validation.bundle",
-              kind: "internal",
-              durationMs: 0,
-              statusCode:
-                validation.bundle.status === "passed" ? "ok" : "error",
-              statusMessage: validation.bundle.summary,
+            run,
+            runtime: runtimeExecutor.get(workspaceId),
+            events: observability.listEvents({ workspaceId }).slice(0, 50),
+            spans: run ? observability.listSpans(run.id).slice(0, 50) : [],
+            authSessions: authBroker.list(workspaceId),
+            policies: observability.listPolicyRules(),
+            validationBundle: validationBundles.getBundle(workspaceId),
+            reviewBundle: validationBundles.getReviewBundle(workspaceId),
+          })
+          : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
             },
-            attributes: {
-              validationBundleId: validation.bundle.id,
-              validationStatus: validation.bundle.status,
-              previewUrl: validation.bundle.previewUrl,
-            },
-          });
-
-          result = json(validation, { status: 201 });
+            { status: 404 },
+          );
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/observability/policies"
+      ) {
+        result = json({
+          items: observability.listPolicyRules(),
+        });
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/observability/events"
+      ) {
+        const workspaceId = url.searchParams.get("workspaceId");
+        const runId = url.searchParams.get("runId");
+        result = json({
+          items: observability.listEvents({
+            ...(workspaceId ? { workspaceId } : {}),
+            ...(runId ? { runId } : {}),
+          }),
+        });
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/observability/runs"
+      ) {
+        result = json({
+          items: observability.listRuns(url.searchParams.get("workspaceId") ?? undefined),
+        });
+      } else if (
+        request.method === "POST" &&
+        url.pathname === "/api/v1/observability/runs"
+      ) {
+        try {
+          const body = await readJsonBody(request);
+          result = json(observability.startRun(body ?? {}), { status: 201 });
         } catch (error) {
           result = json(
             {
-              error: "validation_failed",
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "Validation failed unexpectedly.",
+              error: "invalid_observability_run_request",
+              message: error instanceof Error ? error.message : "Run request is invalid.",
             },
             { status: 400 },
           );
         }
-      }
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/auth/events"
-    ) {
-      result = json({
-        items: authBroker.listEvents(url.searchParams.get("workspaceId") ?? undefined),
-      });
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/auth/sessions"
-    ) {
-      result = json({
-        items: authBroker.list(url.searchParams.get("workspaceId") ?? undefined),
-      });
-    } else if (request.method === "POST" && url.pathname === "/api/v1/auth/sessions") {
-      try {
-        const body = (await readJsonBody(request)) as
-          | Record<string, unknown>
-          | null;
-        const workspaceId =
-          typeof body?.workspaceId === "string" ? body.workspaceId : null;
-        const provider = typeof body?.provider === "string" ? body.provider : null;
-        const flow =
-          body?.flow === "device_code" ? "device_code" : "browser_callback";
+      } else if (request.method === "GET" && observabilityRunMatch) {
+        const runId = observabilityRunMatch[1]!;
+        const run = observability.getRun(runId);
 
-        if (!workspaceId || !provider) {
-          throw new Error("workspaceId and provider are required.");
+        result = run
+          ? json(run)
+          : json(
+            {
+              error: "run_not_found",
+              message: `No run is registered for ${runId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (request.method === "POST" && observabilityRunCompleteMatch) {
+        const runId = observabilityRunCompleteMatch[1]!;
+
+        try {
+          const body = await readJsonBody(request);
+          result = json(
+            observability.completeRun(runId, body?.summary ?? "Run completed."),
+          );
+        } catch (error) {
+          result = json(
+            {
+              error: "run_complete_failed",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "The run could not be completed.",
+            },
+            { status: 400 },
+          );
         }
+      } else if (request.method === "GET" && observabilityRunEventsMatch) {
+        const runId = observabilityRunEventsMatch[1]!;
+        result = json({
+          items: observability.listEvents({ runId }),
+        });
+      } else if (request.method === "POST" && observabilityRunEventsMatch) {
+        const runId = observabilityRunEventsMatch[1]!;
 
+        try {
+          const body = await readJsonBody(request);
+          result = json(observability.recordRunEvent(runId, body ?? {}), {
+            status: 201,
+          });
+        } catch (error) {
+          result = json(
+            {
+              error: "run_event_failed",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "The run event could not be recorded.",
+            },
+            { status: 400 },
+          );
+        }
+      } else if (request.method === "GET" && observabilityRunSpansMatch) {
+        const runId = observabilityRunSpansMatch[1]!;
+        result = json({
+          items: observability.listSpans(runId),
+        });
+      } else if (request.method === "GET" && validationWorkspaceMatch) {
+        const workspaceId = validationWorkspaceMatch[1]!;
         const workspace = workspaceManager.get(workspaceId);
-        const previewUrl = resolveWorkspacePreviewUrl(workspaceId);
+
+        result = workspace
+          ? json({
+            workspaceId,
+            summary: validationBundles.getSummary(workspaceId),
+            bundle: validationBundles.getBundle(workspaceId),
+            reviewBundle: validationBundles.getReviewBundle(workspaceId),
+          })
+          : json(
+            {
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (request.method === "POST" && validationWorkspaceRunMatch) {
+        const workspaceId = validationWorkspaceRunMatch[1]!;
+        const workspace = workspaceManager.get(workspaceId);
+        const runtime = runtimeExecutor.get(workspaceId);
+        const run =
+          observability.getActiveRun(workspaceId) ??
+          observability.listRuns(workspaceId)[0] ??
+          null;
 
         if (!workspace) {
           result = json(
@@ -757,582 +735,763 @@ export function createAgentdServer(config: AgentdConfig) {
             },
             { status: 404 },
           );
-        } else if (flow === "device_code") {
-          const device =
-            body?.device && typeof body.device === "object" ? body.device : null;
-          const ttlSeconds =
-            typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
-          const forwardPath =
-            typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
+        } else {
+          try {
+            const body = (await readJsonBody(request)) as
+              | { checklist?: unknown }
+              | null;
+            const validation = await validationBundles.runValidation({
+              workspace,
+              runtime,
+              runId: run?.id ?? null,
+              ...(Array.isArray(body?.checklist)
+                ? { checklist: body.checklist }
+                : {}),
+            });
 
-          if (!device) {
-            throw new Error("device flow requests require a device payload.");
+            observability.recordRunEvent(run?.id ?? observability.startRun({
+              workspaceId,
+              agentType: "Validation sidecar",
+              budgetUsd: 0.1,
+              warningBudgetUsd: 0.08,
+            }).id, {
+              category: "validation",
+              type:
+                validation.bundle.status === "passed"
+                  ? "validation.completed"
+                  : validation.bundle.status === "blocked"
+                    ? "validation.blocked"
+                    : "validation.failed",
+              source: "browser-sidecar",
+              summary: validation.bundle.summary,
+              detail:
+                validation.review.diagnostics.join(" | ").slice(0, 400) || null,
+              outcome:
+                validation.bundle.status === "passed" ? "success" : "error",
+              trace: {
+                name: "validation.bundle",
+                kind: "internal",
+                durationMs: 0,
+                statusCode:
+                  validation.bundle.status === "passed" ? "ok" : "error",
+                statusMessage: validation.bundle.summary,
+              },
+              attributes: {
+                validationBundleId: validation.bundle.id,
+                validationStatus: validation.bundle.status,
+                previewUrl: validation.bundle.previewUrl,
+              },
+            });
+
+            result = json(validation, { status: 201 });
+          } catch (error) {
+            result = json(
+              {
+                error: "validation_failed",
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Validation failed unexpectedly.",
+              },
+              { status: 400 },
+            );
           }
-
-          result = json(
-            authBroker.createDeviceSession({
-              workspaceId,
-              previewHost: workspace.previewHost,
-              ...(previewUrl ? { previewUrl } : {}),
-              provider,
-              device: device as never,
-              ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
-              ...(forwardPath ? { forwardPath } : {}),
-            }),
-            { status: 201 },
-          );
-        } else {
-          const ttlSeconds =
-            typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
-          const forwardPath =
-            typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
-
-          result = json(
-            authBroker.createBrowserSession({
-              workspaceId,
-              previewHost: workspace.previewHost,
-              ...(previewUrl ? { previewUrl } : {}),
-              provider,
-              ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
-              ...(forwardPath ? { forwardPath } : {}),
-            }),
-            { status: 201 },
-          );
         }
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          result = json(
-            {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
-            },
-            { status: 400 },
-          );
-        } else if (error instanceof AuthBrokerError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-              detail: error.errorDetail,
-              session: error.session,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "invalid_auth_request",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "auth_request_failed",
-              message: "The auth session could not be created.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (request.method === "GET" && authSessionMatch) {
-      const sessionId = authSessionMatch[1]!;
-      const session = authBroker.get(sessionId);
-
-      result = session
-        ? json(session)
-        : json(
-          {
-            error: "session_not_found",
-            message: `No auth session is registered for ${sessionId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "POST" && authRedeemMatch) {
-      try {
-        const sessionId = authRedeemMatch[1]!;
-        const body = (await readJsonBody(request)) as
-          | Record<string, unknown>
-          | null;
-        const handoffToken =
-          typeof body?.handoffToken === "string" ? body.handoffToken : null;
-
-        if (!handoffToken) {
-          throw new Error("handoffToken is required.");
-        }
-
-        result = json(
-          authBroker.redeemCallback({
-            sessionId,
-            handoffToken,
-          }),
-        );
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          result = json(
-            {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
-            },
-            { status: 400 },
-          );
-        } else if (error instanceof AuthBrokerError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-              detail: error.errorDetail,
-              session: error.session,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "invalid_auth_request",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "auth_redeem_failed",
-              message: "The auth handoff could not be redeemed.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (request.method === "POST" && authDeviceResolveMatch) {
-      try {
-        const sessionId = authDeviceResolveMatch[1]!;
-        const body = (await readJsonBody(request)) as
-          | Record<string, unknown>
-          | null;
-        const outcome =
-          body?.outcome === "denied" || body?.outcome === "expired"
-            ? body.outcome
-            : "authorized";
-
-        result = json(
-          authBroker.resolveDeviceSession({
-            sessionId,
-            outcome,
-          }),
-        );
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          result = json(
-            {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
-            },
-            { status: 400 },
-          );
-        } else if (error instanceof AuthBrokerError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-              detail: error.errorDetail,
-              session: error.session,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "invalid_auth_request",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "auth_request_failed",
-              message: "The device auth session could not be resolved.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (request.method === "GET" && authCallbackMatch) {
-      try {
-        const provider = authCallbackMatch[1]!;
-        const workspaceId = authCallbackMatch[2]!;
-        const resolution = authBroker.handleCallback({
-          provider,
-          workspaceId,
-          state: url.searchParams.get("state"),
-          code: url.searchParams.get("code"),
-          error: url.searchParams.get("error"),
-          errorDescription: url.searchParams.get("error_description"),
-          errorUri: url.searchParams.get("error_uri"),
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/auth/events"
+      ) {
+        result = json({
+          items: authBroker.listEvents(url.searchParams.get("workspaceId") ?? undefined),
         });
-
-        result = redirect(resolution.redirectUrl);
-      } catch (error) {
-        if (error instanceof AuthBrokerError && error.redirectUrl) {
-          result = redirect(error.redirectUrl);
-        } else if (error instanceof AuthBrokerError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-              detail: error.errorDetail,
-              session: error.session,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "auth_callback_failed",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "auth_callback_failed",
-              message: "The auth callback could not be processed.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/workspaces/events"
-    ) {
-      result = json({
-        items: workspaceManager.listEvents(),
-      });
-    } else if (request.method === "GET" && url.pathname === "/api/v1/workspaces") {
-      result = json({
-        items: workspaceManager.list(),
-      });
-    } else if (request.method === "POST" && url.pathname === "/api/v1/workspaces") {
-      try {
-        const body = await readJsonBody(request);
-        const workspace = await workspaceManager.create(body ?? {});
-        result = json(workspace, { status: 201 });
-      } catch (error) {
-        if (error instanceof WorkspaceLifecycleError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof SyntaxError) {
-          result = json(
-            {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
-            },
-            { status: 400 },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "invalid_workspace_request",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "workspace_create_failed",
-              message: "The workspace could not be created.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (request.method === "GET" && workspaceEventsMatch) {
-      const workspaceId = workspaceEventsMatch[1]!;
-      const workspace = workspaceManager.get(workspaceId);
-
-      result = workspace
-        ? json({
-          items: workspaceManager.listEvents(workspaceId),
-        })
-        : json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "GET" && workspaceMatch) {
-      const workspaceId = workspaceMatch[1]!;
-      const workspace = workspaceManager.get(workspaceId);
-
-      result = workspace
-        ? json(workspace)
-        : json(
-          {
-            error: "workspace_not_found",
-            message: `No workspace is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "POST" && workspaceArchiveMatch) {
-      try {
-        const workspaceId = workspaceArchiveMatch[1]!;
-        const workspace = await workspaceManager.archive(workspaceId);
-        result = json(workspace);
-      } catch (error) {
-        if (error instanceof WorkspaceLifecycleError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "workspace_archive_failed",
-              message: error.message,
-            },
-            { status: 500 },
-          );
-        } else {
-          result = json(
-            {
-              error: "workspace_archive_failed",
-              message: "The workspace could not be archived.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (request.method === "POST" && workspaceDeleteMatch) {
-      try {
-        const workspaceId = workspaceDeleteMatch[1]!;
-        const body = await readJsonBody(request);
-        const deletion = await workspaceManager.delete(workspaceId, body ?? {});
-        result = json(deletion);
-      } catch (error) {
-        if (error instanceof WorkspaceLifecycleError) {
-          result = json(
-            {
-              error: error.code,
-              message: error.message,
-            },
-            { status: error.status },
-          );
-        } else if (error instanceof SyntaxError) {
-          result = json(
-            {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
-            },
-            { status: 400 },
-          );
-        } else if (error instanceof Error) {
-          result = json(
-            {
-              error: "workspace_delete_failed",
-              message: error.message,
-            },
-            { status: 400 },
-          );
-        } else {
-          result = json(
-            {
-              error: "workspace_delete_failed",
-              message: "The workspace could not be deleted.",
-            },
-            { status: 500 },
-          );
-        }
-      }
-    } else if (
-      request.method === "GET" &&
-      url.pathname === "/api/v1/runtime/workspaces"
-    ) {
-      result = json({
-        items: runtimeExecutor.list(),
-      });
-    } else if (request.method === "GET" && url.pathname === "/api/v1/runtime/routes") {
-      result = json({
-        items: routeRegistry.list(),
-      });
-    } else if (request.method === "GET" && runtimeWorkspaceMatch) {
-      const workspaceId = runtimeWorkspaceMatch[1]!;
-      const runtime = runtimeExecutor.get(workspaceId);
-
-      result = runtime
-        ? json(runtime)
-        : json(
-          {
-            error: "not_found",
-            message: `No runtime is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "GET" && runtimeWorkspaceLogsMatch) {
-      const workspaceId = runtimeWorkspaceLogsMatch[1]!;
-      const runtime = runtimeExecutor.get(workspaceId);
-      const tail = Math.max(
-        20,
-        Math.min(200, Number(url.searchParams.get("tail") ?? "80") || 80),
-      );
-
-      result = runtime
-        ? json({
-          workspaceId,
-          containerName: runtime.containerName,
-          lifecycle: runtime.lifecycle,
-          tail,
-          logs: runtime.containerName
-            ? await readContainerLogs(runtime.containerName, tail)
-            : "Runtime container is not attached yet.",
-        })
-        : json(
-          {
-            error: "not_found",
-            message: `No runtime is registered for ${workspaceId}.`,
-          },
-          { status: 404 },
-        );
-    } else if (request.method === "POST" && url.pathname === "/api/v1/runtime/boot") {
-      try {
-        const body = await readJsonBody(request);
-        const configInput = workspaceRuntimeConfigSchema.parse(body);
-        const runtime = await runtimeExecutor.boot(configInput);
-
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/auth/sessions"
+      ) {
+        result = json({
+          items: authBroker.list(url.searchParams.get("workspaceId") ?? undefined),
+        });
+      } else if (request.method === "POST" && url.pathname === "/api/v1/auth/sessions") {
         try {
-          const preview = await routeRegistry.register({
-            workspaceId: runtime.workspaceId,
-            host: configInput.previewHost,
-            target: createRuntimeTarget(runtime.assignedHostPort ?? 0),
-            targetPort: runtime.assignedHostPort ?? 0,
-            protocol: configInput.port.protocol,
-            healthPath: configInput.healthCheckPath,
-            healthStatus: runtime.healthStatus,
-            lastError: runtime.lastError,
-          });
+          const body = (await readJsonBody(request)) as
+            | Record<string, unknown>
+            | null;
+          const workspaceId =
+            typeof body?.workspaceId === "string" ? body.workspaceId : null;
+          const provider = typeof body?.provider === "string" ? body.provider : null;
+          const flow =
+            body?.flow === "device_code" ? "device_code" : "browser_callback";
 
-          result = json(runtimeExecutor.attachPreview(runtime.workspaceId, preview), {
-            status: 201,
-          });
+          if (!workspaceId || !provider) {
+            throw new Error("workspaceId and provider are required.");
+          }
+
+          const workspace = workspaceManager.get(workspaceId);
+          const previewUrl = resolveWorkspacePreviewUrl(workspaceId);
+
+          if (!workspace) {
+            result = json(
+              {
+                error: "workspace_not_found",
+                message: `No workspace is registered for ${workspaceId}.`,
+              },
+              { status: 404 },
+            );
+          } else if (flow === "device_code") {
+            const device =
+              body?.device && typeof body.device === "object" ? body.device : null;
+            const ttlSeconds =
+              typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
+            const forwardPath =
+              typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
+
+            if (!device) {
+              throw new Error("device flow requests require a device payload.");
+            }
+
+            result = json(
+              authBroker.createDeviceSession({
+                workspaceId,
+                previewHost: workspace.previewHost,
+                ...(previewUrl ? { previewUrl } : {}),
+                provider,
+                device: device as never,
+                ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+                ...(forwardPath ? { forwardPath } : {}),
+              }),
+              { status: 201 },
+            );
+          } else {
+            const ttlSeconds =
+              typeof body?.ttlSeconds === "number" ? body.ttlSeconds : undefined;
+            const forwardPath =
+              typeof body?.forwardPath === "string" ? body.forwardPath : undefined;
+
+            result = json(
+              authBroker.createBrowserSession({
+                workspaceId,
+                previewHost: workspace.previewHost,
+                ...(previewUrl ? { previewUrl } : {}),
+                provider,
+                ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
+                ...(forwardPath ? { forwardPath } : {}),
+              }),
+              { status: 201 },
+            );
+          }
         } catch (error) {
-          if (error instanceof RouteRegistrationError) {
-            const failedRuntime =
-              runtimeExecutor.attachPreview(runtime.workspaceId, error.payload) ??
-              runtime;
+          if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof AuthBrokerError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+                detail: error.errorDetail,
+                session: error.session,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_auth_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "auth_request_failed",
+                message: "The auth session could not be created.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (request.method === "GET" && authSessionMatch) {
+        const sessionId = authSessionMatch[1]!;
+        const session = authBroker.get(sessionId);
 
+        result = session
+          ? json(session)
+          : json(
+            {
+              error: "session_not_found",
+              message: `No auth session is registered for ${sessionId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (request.method === "POST" && authRedeemMatch) {
+        try {
+          const sessionId = authRedeemMatch[1]!;
+          const body = (await readJsonBody(request)) as
+            | Record<string, unknown>
+            | null;
+          const handoffToken =
+            typeof body?.handoffToken === "string" ? body.handoffToken : null;
+
+          if (!handoffToken) {
+            throw new Error("handoffToken is required.");
+          }
+
+          result = json(
+            authBroker.redeemCallback({
+              sessionId,
+              handoffToken,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof AuthBrokerError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+                detail: error.errorDetail,
+                session: error.session,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_auth_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "auth_redeem_failed",
+                message: "The auth handoff could not be redeemed.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (request.method === "POST" && authDeviceResolveMatch) {
+        try {
+          const sessionId = authDeviceResolveMatch[1]!;
+          const body = (await readJsonBody(request)) as
+            | Record<string, unknown>
+            | null;
+          const outcome =
+            body?.outcome === "denied" || body?.outcome === "expired"
+              ? body.outcome
+              : "authorized";
+
+          result = json(
+            authBroker.resolveDeviceSession({
+              sessionId,
+              outcome,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof AuthBrokerError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+                detail: error.errorDetail,
+                session: error.session,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_auth_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "auth_request_failed",
+                message: "The device auth session could not be resolved.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (request.method === "GET" && authCallbackMatch) {
+        try {
+          const provider = authCallbackMatch[1]!;
+          const workspaceId = authCallbackMatch[2]!;
+          const resolution = authBroker.handleCallback({
+            provider,
+            workspaceId,
+            state: url.searchParams.get("state"),
+            code: url.searchParams.get("code"),
+            error: url.searchParams.get("error"),
+            errorDescription: url.searchParams.get("error_description"),
+            errorUri: url.searchParams.get("error_uri"),
+          });
+
+          result = redirect(resolution.redirectUrl);
+        } catch (error) {
+          if (error instanceof AuthBrokerError && error.redirectUrl) {
+            result = redirect(error.redirectUrl);
+          } else if (error instanceof AuthBrokerError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+                detail: error.errorDetail,
+                session: error.session,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "auth_callback_failed",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "auth_callback_failed",
+                message: "The auth callback could not be processed.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/workspaces/events"
+      ) {
+        result = json({
+          items: workspaceManager.listEvents(),
+        });
+      } else if (request.method === "GET" && url.pathname === "/api/v1/workspaces") {
+        result = json({
+          items: workspaceManager.list(),
+        });
+      } else if (request.method === "POST" && url.pathname === "/api/v1/workspaces") {
+        try {
+          const body = await readJsonBody(request);
+          const workspace = await workspaceManager.create(body ?? {});
+          result = json(workspace, { status: 201 });
+        } catch (error) {
+          if (error instanceof WorkspaceLifecycleError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_workspace_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "workspace_create_failed",
+                message: "The workspace could not be created.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (request.method === "POST" && workspacePreviewMatch) {
+        try {
+          const workspaceId = workspacePreviewMatch[1]!;
+          const workspace = workspaceManager.get(workspaceId);
+
+          if (!workspace) {
+            result = json(
+              {
+                error: "workspace_not_found",
+                message: `No workspace is registered for ${workspaceId}.`,
+              },
+              { status: 404 },
+            );
+          } else {
+            const body = (await readJsonBody(request)) as {
+              targetPort?: number;
+              protocol?: "http" | "https";
+              healthPath?: string;
+            } | null;
+
+            if (typeof body?.targetPort !== "number") {
+              throw new Error("targetPort is required and must be a number");
+            }
+
+            const previewHealth = await probeAttachedPreviewTarget(
+              body.targetPort,
+              body.protocol ?? "http",
+              body.healthPath ?? "/",
+            );
+
+            const preview = await routeRegistry.register({
+              workspaceId,
+              host: workspace.previewHost,
+              target: createRuntimeTarget(body.targetPort),
+              targetPort: body.targetPort,
+              protocol: body.protocol ?? "http",
+              healthPath: body.healthPath ?? "/",
+              healthStatus: previewHealth.healthStatus,
+              lastError: previewHealth.lastError,
+            });
+
+            result = json(preview, { status: 201 });
+          }
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof RouteRegistrationError) {
             result = json(
               {
                 error: "route_registration_failed",
                 message: error.message,
-                runtime: failedRuntime,
                 route: error.route,
               },
               { status: 502 },
             );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
           } else {
-            throw error;
+            result = json(
+              {
+                error: "preview_registration_failed",
+                message: "The preview could not be registered.",
+              },
+              { status: 500 },
+            );
           }
         }
-      } catch (error) {
-        if (error instanceof RuntimeBootError) {
-          result = json(
+      } else if (request.method === "GET" && workspaceEventsMatch) {
+        const workspaceId = workspaceEventsMatch[1]!;
+        const workspace = workspaceManager.get(workspaceId);
+
+        result = workspace
+          ? json({
+            items: workspaceManager.listEvents(workspaceId),
+          })
+          : json(
             {
-              error: "runtime_boot_failed",
-              message: error.message,
-              runtime: error.state,
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
             },
-            { status: 502 },
+            { status: 404 },
           );
-        } else if (error instanceof SyntaxError) {
-          result = json(
+      } else if (request.method === "GET" && workspaceMatch) {
+        const workspaceId = workspaceMatch[1]!;
+        const workspace = workspaceManager.get(workspaceId);
+
+        result = workspace
+          ? json(workspace)
+          : json(
             {
-              error: "invalid_json",
-              message: "The request body must be valid JSON.",
+              error: "workspace_not_found",
+              message: `No workspace is registered for ${workspaceId}.`,
             },
-            { status: 400 },
+            { status: 404 },
           );
-        } else if (error instanceof Error) {
+      } else if (request.method === "POST" && workspaceArchiveMatch) {
+        try {
+          const workspaceId = workspaceArchiveMatch[1]!;
+          const workspace = await workspaceManager.archive(workspaceId);
+          result = json(workspace);
+        } catch (error) {
+          if (error instanceof WorkspaceLifecycleError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "workspace_archive_failed",
+                message: error.message,
+              },
+              { status: 500 },
+            );
+          } else {
+            result = json(
+              {
+                error: "workspace_archive_failed",
+                message: "The workspace could not be archived.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (request.method === "POST" && workspaceDeleteMatch) {
+        try {
+          const workspaceId = workspaceDeleteMatch[1]!;
+          const body = await readJsonBody(request);
+          const deletion = await workspaceManager.delete(workspaceId, body ?? {});
+          result = json(deletion);
+        } catch (error) {
+          if (error instanceof WorkspaceLifecycleError) {
+            result = json(
+              {
+                error: error.code,
+                message: error.message,
+              },
+              { status: error.status },
+            );
+          } else if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "workspace_delete_failed",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "workspace_delete_failed",
+                message: "The workspace could not be deleted.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+      } else if (
+        request.method === "GET" &&
+        url.pathname === "/api/v1/runtime/workspaces"
+      ) {
+        result = json({
+          items: runtimeExecutor.list(),
+        });
+      } else if (request.method === "GET" && url.pathname === "/api/v1/runtime/routes") {
+        result = json({
+          items: routeRegistry.list(),
+        });
+      } else if (request.method === "GET" && runtimeWorkspaceMatch) {
+        const workspaceId = runtimeWorkspaceMatch[1]!;
+        const runtime = runtimeExecutor.get(workspaceId);
+
+        result = runtime
+          ? json(runtime)
+          : json(
+            {
+              error: "not_found",
+              message: `No runtime is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (request.method === "GET" && runtimeWorkspaceLogsMatch) {
+        const workspaceId = runtimeWorkspaceLogsMatch[1]!;
+        const runtime = runtimeExecutor.get(workspaceId);
+        const tail = Math.max(
+          20,
+          Math.min(200, Number(url.searchParams.get("tail") ?? "80") || 80),
+        );
+
+        result = runtime
+          ? json({
+            workspaceId,
+            containerName: runtime.containerName,
+            lifecycle: runtime.lifecycle,
+            tail,
+            logs: runtime.containerName
+              ? await readContainerLogs(runtime.containerName, tail)
+              : "Runtime container is not attached yet.",
+          })
+          : json(
+            {
+              error: "not_found",
+              message: `No runtime is registered for ${workspaceId}.`,
+            },
+            { status: 404 },
+          );
+      } else if (request.method === "POST" && url.pathname === "/api/v1/runtime/boot") {
+        try {
+          const body = await readJsonBody(request);
+          const configInput = workspaceRuntimeConfigSchema.parse(body);
+          const runtime = await runtimeExecutor.boot(configInput);
+
+          try {
+            const preview = await routeRegistry.register({
+              workspaceId: runtime.workspaceId,
+              host: configInput.previewHost,
+              target: createRuntimeTarget(runtime.assignedHostPort ?? 0),
+              targetPort: runtime.assignedHostPort ?? 0,
+              protocol: configInput.port.protocol,
+              healthPath: configInput.healthCheckPath,
+              healthStatus: runtime.healthStatus,
+              lastError: runtime.lastError,
+            });
+
+            result = json(runtimeExecutor.attachPreview(runtime.workspaceId, preview), {
+              status: 201,
+            });
+          } catch (error) {
+            if (error instanceof RouteRegistrationError) {
+              const failedRuntime =
+                runtimeExecutor.attachPreview(runtime.workspaceId, error.payload) ??
+                runtime;
+
+              result = json(
+                {
+                  error: "route_registration_failed",
+                  message: error.message,
+                  runtime: failedRuntime,
+                  route: error.route,
+                },
+                { status: 502 },
+              );
+            } else {
+              throw error;
+            }
+          }
+        } catch (error) {
+          if (error instanceof RuntimeBootError) {
+            result = json(
+              {
+                error: "runtime_boot_failed",
+                message: error.message,
+                runtime: error.state,
+              },
+              { status: 502 },
+            );
+          } else if (error instanceof SyntaxError) {
+            result = json(
+              {
+                error: "invalid_json",
+                message: "The request body must be valid JSON.",
+              },
+              { status: 400 },
+            );
+          } else if (error instanceof Error) {
+            result = json(
+              {
+                error: "invalid_runtime_request",
+                message: error.message,
+              },
+              { status: 400 },
+            );
+          } else {
+            result = json(
+              {
+                error: "runtime_boot_failed",
+                message: "The runtime could not be started.",
+              },
+              { status: 502 },
+            );
+          }
+        }
+      } else if (request.method === "POST" && refreshHealthMatch) {
+        const workspaceId = refreshHealthMatch[1]!;
+        const runtime = await runtimeExecutor.refreshHealth(workspaceId);
+
+        if (!runtime) {
           result = json(
             {
-              error: "invalid_runtime_request",
-              message: error.message,
+              error: "not_found",
+              message: `No runtime is registered for ${workspaceId}.`,
             },
-            { status: 400 },
+            { status: 404 },
           );
         } else {
-          result = json(
-            {
-              error: "runtime_boot_failed",
-              message: "The runtime could not be started.",
-            },
-            { status: 502 },
-          );
-        }
-      }
-    } else if (request.method === "POST" && refreshHealthMatch) {
-      const workspaceId = refreshHealthMatch[1]!;
-      const runtime = await runtimeExecutor.refreshHealth(workspaceId);
+          try {
+            const preview = await routeRegistry.updateHealth(
+              workspaceId,
+              runtime.healthStatus,
+              runtime.lastError,
+            );
+            const updatedRuntime =
+              preview ? runtimeExecutor.attachPreview(workspaceId, preview) : runtime;
 
-      if (!runtime) {
+            result = json(updatedRuntime ?? runtime);
+          } catch (error) {
+            if (error instanceof RouteRegistrationError) {
+              const updatedRuntime =
+                runtimeExecutor.attachPreview(workspaceId, error.payload) ?? runtime;
+
+              result = json(
+                {
+                  error: "route_registration_failed",
+                  message: error.message,
+                  runtime: updatedRuntime,
+                  route: error.route,
+                },
+                { status: 502 },
+              );
+            } else {
+              throw error;
+            }
+          }
+        }
+      } else {
         result = json(
           {
             error: "not_found",
-            message: `No runtime is registered for ${workspaceId}.`,
+            message: "No route is registered for this path in the scaffold.",
           },
           { status: 404 },
         );
-      } else {
-        try {
-          const preview = await routeRegistry.updateHealth(
-            workspaceId,
-            runtime.healthStatus,
-            runtime.lastError,
-          );
-          const updatedRuntime =
-            preview ? runtimeExecutor.attachPreview(workspaceId, preview) : runtime;
-
-          result = json(updatedRuntime ?? runtime);
-        } catch (error) {
-          if (error instanceof RouteRegistrationError) {
-            const updatedRuntime =
-              runtimeExecutor.attachPreview(workspaceId, error.payload) ?? runtime;
-
-            result = json(
-              {
-                error: "route_registration_failed",
-                message: error.message,
-                runtime: updatedRuntime,
-                route: error.route,
-              },
-              { status: 502 },
-            );
-          } else {
-            throw error;
-          }
-        }
       }
-    } else {
-      result = json(
-        {
-          error: "not_found",
-          message: "No route is registered for this path in the scaffold.",
-        },
-        { status: 404 },
-      );
-    }
 
     } catch (error) {
       if (requestAborted || response.destroyed || response.writableEnded) {
