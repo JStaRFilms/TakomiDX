@@ -462,10 +462,10 @@ export function createObservabilityPolicyEngine(
     return span;
   }
 
-  function applyEventToRun(run: AgentRunSummary, event: AgentEvent) {
-    let nextRun = agentRunSummarySchema.parse({
-      ...run,
-      updatedAt: event.timestamp,
+function applyEventToRun(run: AgentRunSummary, event: AgentEvent) {
+  let nextRun = agentRunSummarySchema.parse({
+    ...run,
+    updatedAt: event.timestamp,
       lastAction: event.summary,
       lastEventId: event.id,
       totalTokens:
@@ -475,11 +475,17 @@ export function createObservabilityPolicyEngine(
         event.category === "tool"
           ? String(event.attributes.command ?? event.attributes.name ?? event.summary)
           : run.lastTool,
-    });
+      pid:
+        event.category === "run" &&
+        event.type === "process.started" &&
+        typeof event.attributes.pid === "number"
+          ? event.attributes.pid
+          : run.pid,
+  });
 
-    if (event.category === "preview" && event.outcome === "error") {
-      nextRun = agentRunSummarySchema.parse({
-        ...nextRun,
+  if (event.category === "preview" && event.outcome === "error") {
+    nextRun = agentRunSummarySchema.parse({
+      ...nextRun,
         status: "failed",
         stopReason: "runtime_failed",
         pauseReason: event.summary,
@@ -502,15 +508,32 @@ export function createObservabilityPolicyEngine(
         completedAt: event.timestamp,
         stopReason: "completed",
         pauseReason: null,
-        approvalRequired: false,
-      });
-    }
+      approvalRequired: false,
+    });
+  }
 
-    if (event.category === "run" && event.type === "run.cancelled") {
-      nextRun = agentRunSummarySchema.parse({
-        ...nextRun,
-        status: "cancelled",
-        completedAt: event.timestamp,
+  if (event.category === "run" && event.type === "process.exited") {
+    const exitCode =
+      typeof event.attributes.exitCode === "number"
+        ? event.attributes.exitCode
+        : null;
+    const exitedSuccessfully = exitCode === 0 || event.outcome === "success";
+
+    nextRun = agentRunSummarySchema.parse({
+      ...nextRun,
+      status: exitedSuccessfully ? "awaiting_human" : "failed",
+      completedAt: exitedSuccessfully ? null : event.timestamp,
+      stopReason: exitedSuccessfully ? null : "unknown",
+      pauseReason: exitedSuccessfully ? event.summary : null,
+      approvalRequired: false,
+    });
+  }
+
+  if (event.category === "run" && event.type === "run.cancelled") {
+    nextRun = agentRunSummarySchema.parse({
+      ...nextRun,
+      status: "cancelled",
+      completedAt: event.timestamp,
         stopReason: "cancelled",
         pauseReason: event.summary,
         approvalRequired: false,

@@ -370,7 +370,7 @@ describe("observability policy engine", () => {
     });
   });
 
-  it("blocks completion when validation has not passed", () => {
+  it("marks CLI-owned runs as awaiting review after a successful process exit", () => {
     const root = createTempDir();
     const now = createClock();
     const engine = createObservabilityPolicyEngine({
@@ -380,6 +380,60 @@ describe("observability policy engine", () => {
       runIdGenerator: () => "run_00000004",
       traceIdGenerator: () => "cccccccccccccccccccccccccccccccc",
       spanIdGenerator: () => "dddddddddddddddd",
+    });
+
+    const run = engine.startRun({
+      workspaceId: "ws_00000004",
+      agentType: "CLI Runner",
+      budgetUsd: 10,
+      ownership: "owned",
+      toolFamily: "takomi",
+      cwd: "C:/Temp/reviewable-run",
+    });
+
+    engine.recordRunEvent(run.id, {
+      category: "run",
+      type: "process.started",
+      source: "takomi-cli",
+      summary: "Process 4242 started",
+      outcome: "running",
+      attributes: {
+        pid: 4242,
+      },
+    });
+
+    const nextRun = engine.recordRunEvent(run.id, {
+      category: "run",
+      type: "process.exited",
+      source: "takomi-cli",
+      summary: "Process exited successfully. Run is waiting for validation or review.",
+      detail: "Process exited with code 0.",
+      outcome: "success",
+      attributes: {
+        exitCode: 0,
+      },
+    }).run;
+
+    expect(nextRun).toMatchObject({
+      status: "awaiting_human",
+      pid: 4242,
+      completedAt: null,
+      pauseReason: "Process exited successfully. Run is waiting for validation or review.",
+      ownership: "owned",
+      toolFamily: "takomi",
+    });
+  });
+
+  it("blocks completion when validation has not passed", () => {
+    const root = createTempDir();
+    const now = createClock();
+    const engine = createObservabilityPolicyEngine({
+      runsDir: path.join(root, "runs"),
+      stateDir: path.join(root, "state"),
+      now,
+      runIdGenerator: () => "run_00000005",
+      traceIdGenerator: () => "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      spanIdGenerator: () => "ffffffffffffffff",
       completionGuard: () => ({
         allowed: false,
         reason: "Validation has not run yet.",
