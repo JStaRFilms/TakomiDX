@@ -1,0 +1,35 @@
+# Task Completion Summary
+
+**Task:** 05_verification_and_review
+**Completed At:** 2026-03-08T17:15:00+01:00
+**Mode:** Review & Code
+
+## Results
+
+Completed the verification pass for the CLI-first pivot. Verified that the Takomi CLI can launch trackable runs (`takomi run`) and attach existing external sessions (`takomi attach`), with both flows correctly registering workspaces and runs in `agentd`. Confirmed that Mission Control and VS Code companion accurately represent the hybrid workspace model (managed vs attached) and reflect run ownership.
+
+During the review, identified and fixed high-priority issues:
+- Implemented robust error handling and fetch failure checks in the Takomi CLI (`packages/takomidx/src/cli.ts`).
+- Cast `parseArgs` results and fetch responses to fix TypeScript lints in the CLI.
+- Verified that `agentd` correctly handles process tracking events for local processes.
+
+## Files Created/Modified
+
+- `packages/takomidx/src/cli.ts` - Fully implemented `run` and `attach` logic with `agentd` integration and error handling.
+- `docs/tasks/orchestrator-sessions/orch-20260308-cli-pivot-01/completed/05_verification_and_review.done` - This summary.
+
+## Verification Status
+
+- [x] CLI `run` functional: PASS
+- [x] CLI `attach` functional: PASS
+- [x] Workspace hybrid model in UI: PASS
+- [x] VS Code companion updates: PASS
+- [x] TypeScript / Lint (CLI): PASS (after fixes)
+- [x] Existing tests (agentd): PASS
+
+## Residual Risks & Next Steps
+
+- **Process Closure Detection:** The CLI relies on `child.on("close")` to notify `agentd`. If the CLI process itself is killed (`SIGKILL`), the run might stay "active" in `agentd` until a timeout.
+- **CLI Command Completeness:** The `status`, `open`, and `logs` commands in the CLI are still placeholders and should be implemented next to complete the CLI surface.
+- **Edge Case: Re-attaching:** Attaching the same PID multiple times creates multiple run records. Deduplication logic in `agentd` could be refined.
+- **Managed Workspace Verification:** While the server support is verified by tests, a full manual end-to-end flow for managed workspaces (cloning + container boot) should be re-verified in the next session to ensure no regressions from the attached-workspace logic changes.
